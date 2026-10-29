@@ -639,6 +639,17 @@ isOneToOne: false
               "empate_tecnico": boolean,"time_id": string
             }[]
                            },
+"etapa5_campanha":
+{ Args: { "p_antes": number,"p_competicao": string,"p_time": string }; Returns: {
+              "aproveitamento": number,"nome": string,"ordem_fase": number,"pf": number,"posicao": number,"pts": number,"saldo": number,"time_id": string
+            }[]
+                           },
+"etapa5_gerar_jogos_proxima_fase":
+{ Args: { "p_fase_id": string,"p_times": (string)[] }; Returns: undefined
+                           },
+"etapa5_origem":
+{ Args: { "p_competicao": string,"p_origem": Json }; Returns: string
+                           },
 "evento_publicado":
 { Args: { "p_evento_id": string }; Returns: boolean
                            },

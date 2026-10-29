@@ -1,4 +1,6 @@
 export const QUERY_KEYS = {
+  // Etapa 5
+  bracket: (slug: string) => ['etapa5', 'bracket', slug] as const,
   // Etapa 4
   games: (id: string) => ['etapa4', 'games', id] as const,
   sheet: (competitionId: string, gameId: string) => ['etapa4', 'sheet', competitionId, gameId] as const,

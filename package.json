@@ -18,7 +18,8 @@
     "functions:serve": "supabase functions serve",
     "aceite:etapa1": "node scripts/aceite-etapa1.mjs",
     "aceite:etapa2": "node scripts/aceite-etapa2.mjs",
-    "aceite:etapa4": "node scripts/aceite-etapa4.mjs"
+    "aceite:etapa4": "node scripts/aceite-etapa4.mjs",
+    "aceite:etapa5": "node scripts/aceite-etapa5.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",
