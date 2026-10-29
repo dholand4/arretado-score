@@ -23,7 +23,83 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "categorias_estatistica": {
+            "ajustes_classificacao": {
+                  Row: {
+                    "atualizado_em": string,"fase_id": string,"grupo_id": string | null,"prioridade": number,"registrado_por": string,"time_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "atualizado_em"?: string,"fase_id": string,"grupo_id"?: string | null,"prioridade": number,"registrado_por": string,"time_id": string
+                  }
+                  Update: {
+                    "atualizado_em"?: string,"fase_id"?: string,"grupo_id"?: string | null,"prioridade"?: number,"registrado_por"?: string,"time_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "ajustes_classificacao_fase_id_fkey"
+      columns: ["fase_id"]
+isOneToOne: false
+      referencedRelation: "fases"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "ajustes_classificacao_grupo_id_fkey"
+      columns: ["grupo_id"]
+isOneToOne: false
+      referencedRelation: "grupos"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "ajustes_classificacao_registrado_por_fkey"
+      columns: ["registrado_por"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "ajustes_classificacao_time_id_fkey"
+      columns: ["time_id"]
+isOneToOne: false
+      referencedRelation: "times"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"ajustes_classificacao_historico": {
+                  Row: {
+                    "created_at": string,"fase_id": string,"grupo_id": string | null,"id": string,"prioridade": number | null,"registrado_por": string,"time_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"fase_id": string,"grupo_id"?: string | null,"id"?: string,"prioridade"?: number | null,"registrado_por": string,"time_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"fase_id"?: string,"grupo_id"?: string | null,"id"?: string,"prioridade"?: number | null,"registrado_por"?: string,"time_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "ajustes_classificacao_historico_fase_id_fkey"
+      columns: ["fase_id"]
+isOneToOne: false
+      referencedRelation: "fases"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "ajustes_classificacao_historico_grupo_id_fkey"
+      columns: ["grupo_id"]
+isOneToOne: false
+      referencedRelation: "grupos"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "ajustes_classificacao_historico_registrado_por_fkey"
+      columns: ["registrado_por"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "ajustes_classificacao_historico_time_id_fkey"
+      columns: ["time_id"]
+isOneToOne: false
+      referencedRelation: "times"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"categorias_estatistica": {
                   Row: {
                     "ativa": boolean,"competicao_id": string,"created_at": string,"id": string,"nome": string,"ordem": number | null,"sigla": string,"soma_no_placar": boolean,"titulo_ranking": string
                   }
@@ -527,9 +603,17 @@ isOneToOne: false
                 }
           }
           Functions: {
-            "categoria_placar_padrao":
+            "ajustar_classificacao":
+{ Args: { "p_fase_id": string,"p_grupo_id"?: string,"p_prioridade"?: number,"p_time_id"?: string }; Returns: undefined
+                           },
+"categoria_placar_padrao":
 { Args: { "modalidade": string }; Returns: {
               "nome": string,"sigla": string,"titulo_ranking": string
+            }[]
+                           },
+"classificacao_ordenada":
+{ Args: { "p_fase_id": string,"p_grupo_id"?: string }; Returns: {
+              "aproveitamento": number,"d": number,"e": number,"empate_tecnico": boolean,"j": number,"nome": string,"pc": number,"pf": number,"posicao": number,"pts": number,"saldo": number,"time_id": string,"v": number,"wo": number
             }[]
                            },
 "competicao_da_fase":
@@ -549,6 +633,11 @@ isOneToOne: false
                            },
 "criterios_desempate_validos":
 { Args: { "criterios": Json }; Returns: boolean
+                           },
+"desempatar_grupo":
+{ Args: { "p_fase": string,"p_grupo": string,"p_indice": number,"p_times": (string)[] }; Returns: {
+              "empate_tecnico": boolean,"time_id": string
+            }[]
                            },
 "evento_publicado":
 { Args: { "p_evento_id": string }; Returns: boolean
@@ -582,11 +671,22 @@ isOneToOne: false
               "ativo": boolean,"created_at": string,"email": string,"id": string,"nome": string,"papel": string,"precisa_trocar_senha": boolean,"ultimo_acesso": string
             }[]
                            },
+"melhores_extras":
+{ Args: { "p_fase_id": string,"p_posicao": number }; Returns: {
+              "aproveitamento": number,"grupo_id": string,"nome": string,"pf": number,"posicao": number,"pts": number,"saldo": number,"time_id": string
+            }[]
+                           },
 "pode_editar_estrutura":
 { Args: { "p_competicao_id": string }; Returns: boolean
                            },
 "pode_gerenciar_arquivo":
 { Args: { "p_bucket": string,"p_nome": string }; Returns: boolean
+                           },
+"pos_resultado_jogo":
+{ Args: { "p_jogo_id": string }; Returns: undefined
+                           },
+"registrar_resultado_jogo":
+{ Args: { "p_ausente"?: string,"p_casa"?: number,"p_fora"?: number,"p_jogadores"?: Json,"p_jogo_id": string,"p_modo": string }; Returns: undefined
                            },
 "try_uuid":
 { Args: { "valor": string }; Returns: string
