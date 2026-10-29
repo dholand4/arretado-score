@@ -20,6 +20,12 @@ export const ROUTE_PATTERNS = {
   competitionTeam: '/painel/competicoes/:competitionId/times/:teamId',
   competitionAdmins: '/painel/competicoes/:competitionId/admins',
   myTeam: '/painel/meus-times/:teamId',
+  // Etapa 3
+  competitionEvents: '/painel/competicoes/:competitionId/eventos',
+  // Etapa 4
+  competitionGames: '/painel/competicoes/:competitionId/jogos',
+  gameScoreSheet: '/painel/competicoes/:competitionId/jogos/:gameId/sumula',
+  publicStandings: '/c/:slug/tabela',
 } as const;
 
 // Construtores tipados dos caminhos com parâmetros.
@@ -32,6 +38,11 @@ export const paths = {
     `/painel/competicoes/${competitionId}/times/${teamId}` as const,
   competitionAdmins: (competitionId: string) => `/painel/competicoes/${competitionId}/admins` as const,
   myTeam: (teamId: string) => `/painel/meus-times/${teamId}` as const,
+  competitionEvents: (competitionId: string) => `/painel/competicoes/${competitionId}/eventos` as const,
+  competitionGames: (competitionId: string) => `/painel/competicoes/${competitionId}/jogos` as const,
+  gameScoreSheet: (competitionId: string, gameId: string) =>
+    `/painel/competicoes/${competitionId}/jogos/${gameId}/sumula` as const,
+  publicStandings: (slug: string) => `/c/${slug}/tabela` as const,
 };
 
 type StaticPath = (typeof ROUTES)[keyof typeof ROUTES];
@@ -41,6 +52,8 @@ export type RoutePath = StaticPath | DynamicPath;
 export interface IRouteParams {
   competitionId: string;
   teamId: string;
+  gameId: string;
+  slug: string;
 }
 
 // Estado aceito pela rota de login (para voltar à página que exigiu autenticação).

@@ -11,9 +11,12 @@ import { CompetitionAdminsScreen } from '@/view/competitionAdminsScreen';
 import { CompetitionOverviewScreen } from '@/view/competitionOverviewScreen';
 import { CompetitionsScreen } from '@/view/competitionsScreen';
 import { CompetitionWizardScreen } from '@/view/competitionWizardScreen';
+import { EventsScreen } from '@/view/eventsScreen';
+import { GamesScreen } from '@/view/gamesScreen';
 import { MyTeamDetailScreen } from '@/view/myTeamDetailScreen';
 import { MyTeamsScreen } from '@/view/myTeamsScreen';
 import { PanelScreen } from '@/view/panelScreen';
+import { ScoreSheetScreen } from '@/view/scoreSheetScreen';
 import { TeamDetailScreen } from '@/view/teamDetailScreen';
 import { TeamsScreen } from '@/view/teamsScreen';
 import { UsersScreen } from '@/view/usersScreen';
@@ -66,6 +69,8 @@ function CompetitionLayoutRoute() {
     { to: paths.competition(competitionId), label: 'Visão geral', end: true },
     { to: paths.competitionSettings(competitionId), label: 'Configuração' },
     { to: paths.competitionTeams(competitionId), label: 'Times' },
+    { to: paths.competitionEvents(competitionId), label: 'Dias de jogos' },
+    { to: paths.competitionGames(competitionId), label: 'Jogos' },
     ...(profile?.papel === 'master' ? [{ to: paths.competitionAdmins(competitionId), label: 'Admins' }] : []),
   ];
   return (
@@ -107,6 +112,11 @@ export const appStack: RouteObject = {
                 { path: ROUTE_PATTERNS.competitionSettings, element: <CompetitionWizardScreen /> },
                 { path: ROUTE_PATTERNS.competitionTeams, element: <TeamsScreen /> },
                 { path: ROUTE_PATTERNS.competitionTeam, element: <TeamDetailScreen /> },
+                // Etapa 3
+                { path: ROUTE_PATTERNS.competitionEvents, element: <EventsScreen /> },
+                // Etapa 4
+                { path: ROUTE_PATTERNS.competitionGames, element: <GamesScreen /> },
+                { path: ROUTE_PATTERNS.gameScoreSheet, element: <ScoreSheetScreen /> },
                 {
                   path: ROUTE_PATTERNS.competitionAdmins,
                   element: (

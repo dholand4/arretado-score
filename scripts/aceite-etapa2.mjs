@@ -134,7 +134,8 @@ ok(fotosOk, 'fotos enviadas e gravadas para um jogador de cada time');
 // ------------------------------------------------------------- anon
 console.log('\n— anon');
 {
-  ok((await anon.from('competicoes').select('id').in('id', [cid, SEED_COMP])).data.length === 0, 'anon não vê competições em rascunho');
+  ok((await anon.from('competicoes').select('id').eq('id', cid)).data.length === 0, 'anon não vê competição em rascunho');
+  ok((await anon.from('competicoes').select('id').eq('id', SEED_COMP)).data.length === 1, 'anon vê competição em andamento (liga do seed)');
   ok((await anon.from('times').select('id').eq('competicao_id', cid)).data.length === 0, 'anon não vê times de rascunho');
   ok((await anon.from('jogadores').select('id').eq('competicao_id', cid)).data.length === 0, 'anon não vê jogadores de rascunho');
   ok((await anon.rpc('criar_competicao', { p_nome: 'x', p_slug: `x-${stamp}`, p_modalidade: 'basquete' })).error, 'anon não cria competição');
@@ -151,7 +152,8 @@ console.log('\n— outro admin');
   ok(upd.data?.length === 0 || upd.error, 'outro admin não altera a competição');
   ok((await outro.from('times').insert({ competicao_id: cid, nome: 'Intruso' })).error, 'outro admin não cria time nela');
   ok((await upload(outro, 'logos', `${cid}/times/${times[0].id}.png`)).error, 'outro admin não envia logo nela');
-  ok((await outro.from('competicoes').select('id').eq('id', SEED_COMP)).data.length === 0, 'outro admin também não vê a liga do seed');
+  const ligaUpd = await outro.from('competicoes').update({ nome: 'Invadida' }).eq('id', SEED_COMP).select();
+  ok(ligaUpd.data?.length === 0 || ligaUpd.error, 'outro admin vê a liga pública, mas não altera');
 }
 
 // ------------------------------------------------------------- dono do time
@@ -187,7 +189,7 @@ console.log('\n— dono do time');
   ok((await admin.from('jogadores').select('id').eq('id', meu.id)).data.length === 1, 'dono não exclui jogador (só desativa)');
   ok(!(await dono.from('jogadores').update({ ativo: false }).eq('id', novo.data.id)).error, 'dono desativa jogador do próprio time');
 
-  ok((await dono.from('competicoes').select('id').eq('id', SEED_COMP)).data.length === 0, 'dono não vê competição onde não tem time');
+  ok((await dono.from('times').update({ nome: 'X' }).eq('id', 'a0000000-0000-0000-0000-000000000002').select()).data?.length === 0, 'dono não altera time de outra competição');
   ok((await donoSeed.from('jogadores').select('id').eq('competicao_id', cid)).data.length === 0, 'dono de outra competição não vê este elenco');
 }
 
