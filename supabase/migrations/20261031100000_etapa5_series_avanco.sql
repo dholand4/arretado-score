@@ -1,5 +1,5 @@
 -- Funções internas: acessíveis apenas pela RPC transacional de resultado.
-create function public.etapa5_origem(p_competicao uuid, p_origem jsonb) returns uuid
+create function public.resolver_origem_serie(p_competicao uuid, p_origem jsonb) returns uuid
 language plpgsql stable security definer set search_path = '' as $$
 declare f public.fases%rowtype; s public.series%rowtype; resultado uuid; g uuid; pos int;
 begin
@@ -38,7 +38,7 @@ end $$;
 
 -- Compara a última classificação anterior disponível; em grupos, posição e os
 -- critérios de melhores extras. Ordem alfabética e UUID encerram o empate.
-create function public.etapa5_campanha(p_competicao uuid, p_antes int, p_time uuid)
+create function public.campanha_do_time(p_competicao uuid, p_antes int, p_time uuid)
 returns table(ordem_fase int, posicao bigint, pts int, aproveitamento numeric, saldo int, pf int, nome text, time_id uuid)
 language sql stable security definer set search_path = '' as $$
   select f.ordem,c.posicao,c.pts,c.aproveitamento,c.saldo,c.pf,c.nome,c.time_id
@@ -49,21 +49,18 @@ language sql stable security definer set search_path = '' as $$
   order by f.ordem desc limit 1;
 $$;
 
-create function public.etapa5_gerar_jogos_proxima_fase(p_fase_id uuid, p_times uuid[]) returns void
+-- Próxima fase de todos contra todos ou grupos: usa a geração da Etapa 3.
+-- Grupos: sorteio equilibrado; se a fase for de distribuição manual, o admin
+-- redistribui depois pela RPC sortear_grupos (enquanto não houver súmula).
+create function public.gerar_jogos_proxima_fase(p_fase_id uuid, p_times uuid[]) returns void
 language plpgsql security definer set search_path = '' as $$
 declare f public.fases%rowtype;
 begin
  select * into f from public.fases where id=p_fase_id;
- if to_regprocedure('public.gerar_jogos_fase(uuid,uuid[])') is null then
-   raise exception 'Integração pendente: gerar_jogos_fase da Etapa 3 não está disponível.';
- end if;
  if f.tipo='grupos' then
-   if to_regprocedure('public.distribuir_grupos(uuid,uuid[],jsonb)') is null then
-     raise exception 'Integração pendente: distribuir_grupos da Etapa 3 não está disponível.';
-   end if;
-   execute 'select public.distribuir_grupos($1,$2,$3)' using p_fase_id,p_times,null::jsonb;
+   perform public.distribuir_grupos(p_fase_id,p_times,null);
  end if;
- execute 'select public.gerar_jogos_fase($1,$2)' using p_fase_id,p_times;
+ perform public.gerar_jogos_da_fase(p_fase_id,p_times);
 end $$;
 
 create or replace function public.pos_resultado_jogo(p_jogo_id uuid) returns void
@@ -136,23 +133,23 @@ begin
    if proxima.status='aguardando' then
      if f.tipo='todos_contra_todos' then select array_agg(c.time_id order by c.posicao) into ids from public.classificacao_ordenada(f.id,null) c where c.posicao<=f.classificam;
      elsif f.tipo='grupos' then select array_agg(c.time_id) into ids from public.grupos g cross join lateral public.classificacao_ordenada(f.id,g.id) c where g.fase_id=f.id and (c.posicao<=f.classificam or c.time_id in (select e.time_id from public.melhores_extras(f.id,f.classificam+1) e where e.posicao<=f.melhores_extras));
-     else select array_agg(vencedor_id order by codigo) into ids from public.series where fase_id=f.id and vencedor_id is not null; end if;
-     perform public.etapa5_gerar_jogos_proxima_fase(proxima.id,ids);
+     else select array_agg(vencedor_id order by public.numero_serie(codigo), codigo) into ids from public.series where fase_id=f.id and vencedor_id is not null; end if;
      update public.fases set status='em_andamento' where id=proxima.id;
+     perform public.gerar_jogos_proxima_fase(proxima.id,ids);
    end if;
    return;
  end if;
  if not exists(select 1 from public.series where fase_id=proxima.id) then
    raise exception 'A próxima fase não possui séries configuradas.';
  end if;
- for s in select * from public.series where fase_id=proxima.id order by codigo for update loop
-   a:=public.etapa5_origem(f.competicao_id,s.origem_a); b:=public.etapa5_origem(f.competicao_id,s.origem_b);
+ for s in select ss.* from public.series ss where ss.fase_id=proxima.id order by public.numero_serie(ss.codigo), ss.codigo for update loop
+   a:=public.resolver_origem_serie(f.competicao_id,s.origem_a); b:=public.resolver_origem_serie(f.competicao_id,s.origem_b);
    if a is null or b is null or a=b then raise exception 'Não foi possível resolver as origens da série %.', s.codigo; end if;
    -- A campanha precede a ordem das origens; sem classificação usa nome e ID.
    if (select row(coalesce(c.posicao,9223372036854775807),-coalesce(c.pts,0),-coalesce(c.aproveitamento,0),-coalesce(c.saldo,0),-coalesce(c.pf,0),t.nome,t.id)
-       from public.times t left join lateral public.etapa5_campanha(f.competicao_id,proxima.ordem,t.id) c on true where t.id=a)
+       from public.times t left join lateral public.campanha_do_time(f.competicao_id,proxima.ordem,t.id) c on true where t.id=a)
       > (select row(coalesce(c.posicao,9223372036854775807),-coalesce(c.pts,0),-coalesce(c.aproveitamento,0),-coalesce(c.saldo,0),-coalesce(c.pf,0),t.nome,t.id)
-       from public.times t left join lateral public.etapa5_campanha(f.competicao_id,proxima.ordem,t.id) c on true where t.id=b) then troca:=a; a:=b; b:=troca; end if;
+       from public.times t left join lateral public.campanha_do_time(f.competicao_id,proxima.ordem,t.id) c on true where t.id=b) then troca:=a; a:=b; b:=troca; end if;
    mudou := (s.time_a_id,s.time_b_id) is distinct from (a,b);
    if mudou then
      if exists(select 1 from public.jogos jj join public.fases ff on ff.id=jj.fase_id where ff.competicao_id=f.competicao_id and ff.ordem>=proxima.ordem and jj.status in ('encerrado','wo')) then
@@ -167,4 +164,4 @@ begin
  end loop;
  if proxima.status='aguardando' then update public.fases set status='em_andamento' where id=proxima.id; end if;
 end $$;
-revoke all on function public.etapa5_origem(uuid,jsonb), public.etapa5_campanha(uuid,int,uuid), public.etapa5_gerar_jogos_proxima_fase(uuid,uuid[]), public.pos_resultado_jogo(uuid) from public, anon, authenticated;
+revoke all on function public.resolver_origem_serie(uuid,jsonb), public.campanha_do_time(uuid,int,uuid), public.gerar_jogos_proxima_fase(uuid,uuid[]), public.pos_resultado_jogo(uuid) from public, anon, authenticated;

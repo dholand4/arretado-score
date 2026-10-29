@@ -83,12 +83,14 @@ grant execute on function public.registrar_resultado_jogo(uuid,text,int,int,text
 
 -- Ajuste só resolve empates técnicos; registra quem decidiu e quando.
 create table public.ajustes_classificacao (
+  id uuid primary key default gen_random_uuid(),
   fase_id uuid not null references public.fases on delete cascade,
   grupo_id uuid references public.grupos on delete cascade,
   time_id uuid not null references public.times on delete cascade,
   prioridade int not null check (prioridade > 0),
   registrado_por uuid not null references public.profiles,
   atualizado_em timestamptz not null default now(),
+  created_at timestamptz not null default now(),
   unique nulls not distinct (fase_id, grupo_id, time_id)
 );
 alter table public.ajustes_classificacao enable row level security;
