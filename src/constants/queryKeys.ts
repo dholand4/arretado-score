@@ -1,0 +1,15 @@
+export const QUERY_KEYS = {
+  profile: (userId: string) => ['profile', userId] as const,
+  users: ['users'] as const,
+  competitions: ['competitions'] as const,
+  publicCompetitions: ['competitions', 'public'] as const,
+  competition: (id: string) => ['competitions', id] as const,
+  categories: (competicaoId: string) => ['competitions', competicaoId, 'categories'] as const,
+  competitionAdmins: (competicaoId: string) => ['competitions', competicaoId, 'admins'] as const,
+  teams: (competicaoId: string) => ['competitions', competicaoId, 'teams'] as const,
+  team: (timeId: string) => ['teams', timeId] as const,
+  players: (timeId: string) => ['teams', timeId, 'players'] as const,
+  myTeams: (userId: string) => ['my-teams', userId] as const,
+  donos: ['people', 'donos'] as const,
+  adminUsers: ['people', 'admins'] as const,
+};

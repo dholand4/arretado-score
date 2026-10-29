@@ -1,0 +1,1 @@
+export { List, Meta, Name, TeamLink, Texts } from '@/view/teamsScreen/style';

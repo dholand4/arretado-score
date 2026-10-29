@@ -1,0 +1,23 @@
+# dependências e build
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# variáveis de ambiente (nunca versionar)
+.env
+.env.local
+.env.*.local
+supabase/functions/.env
+supabase/functions/.env.local
+
+# supabase CLI
+supabase/.temp/
+supabase/.branches/
+
+# sistema / editores
+.DS_Store
+*.log
+.vscode/*
+!.vscode/extensions.json
+.idea/
