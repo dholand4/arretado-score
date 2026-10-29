@@ -55,6 +55,11 @@ describe('ScoringFormGlobal', () => {
     expect(screen.getByText(/precisa ser maior/)).toBeInTheDocument();
   });
 
+  it('avisa que a tabela será recalculada', () => {
+    renderWithTheme(<ScoringFormGlobal initialValues={padrao} modalidade="basquete" warnRecalculation onSave={() => {}} />);
+    expect(screen.getByText(/tabela será recalculada/)).toBeInTheDocument();
+  });
+
   it('disables everything when locked', () => {
     renderWithTheme(<ScoringFormGlobal initialValues={padrao} modalidade="basquete" locked onSave={() => {}} />);
     expect(screen.getByLabelText('Vitória')).toBeDisabled();

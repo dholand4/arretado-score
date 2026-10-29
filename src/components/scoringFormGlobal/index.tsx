@@ -29,6 +29,7 @@ export function ScoringFormGlobal({
   initialValues,
   modalidade,
   locked = false,
+  warnRecalculation = false,
   saving = false,
   error,
   onSave,
@@ -88,6 +89,7 @@ export function ScoringFormGlobal({
 
   return (
     <Form onSubmit={handleSubmit} noValidate aria-label="Pontuação e W.O.">
+      {warnRecalculation && <AlertGlobal variant="warning" message="Ao alterar a pontuação ou os critérios, a tabela será recalculada." />}
       {locked && (
         <AlertGlobal
           variant="warning"

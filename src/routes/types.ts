@@ -26,6 +26,7 @@ export const ROUTE_PATTERNS = {
   competitionGames: '/painel/competicoes/:competitionId/jogos',
   gameScoreSheet: '/painel/competicoes/:competitionId/jogos/:gameId/sumula',
   publicStandings: '/c/:slug/tabela',
+  publicPlayoffs: '/c/:slug/playoffs',
 } as const;
 
 // Construtores tipados dos caminhos com parâmetros.
@@ -43,6 +44,7 @@ export const paths = {
   gameScoreSheet: (competitionId: string, gameId: string) =>
     `/painel/competicoes/${competitionId}/jogos/${gameId}/sumula` as const,
   publicStandings: (slug: string) => `/c/${slug}/tabela` as const,
+  publicPlayoffs: (slug: string) => `/c/${slug}/playoffs` as const,
 };
 
 type StaticPath = (typeof ROUTES)[keyof typeof ROUTES];
