@@ -64,7 +64,7 @@ export const WIZARD_STEPS = [
   { key: 'dados', label: 'Dados básicos', available: true },
   { key: 'pontuacao', label: 'Pontuação e W.O.', available: true },
   { key: 'estatisticas', label: 'Estatísticas', available: true },
-  { key: 'fases', label: 'Fases', available: false },
+  { key: 'fases', label: 'Fases', available: true },
   { key: 'cobranca', label: 'Cobrança', available: false },
   { key: 'revisao', label: 'Revisão', available: true },
 ] as const;

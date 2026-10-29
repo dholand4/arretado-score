@@ -1,4 +1,6 @@
 import type { ICategoria, ITimeResumo } from '@/@types/competition';
+import type { IJogoAndamento } from '@/@types/event';
+import type { IFase } from '@/@types/phase';
 import { MIN_TIMES_PARA_INICIAR, type WizardStepKey } from '@/constants/competition';
 import { pluralize } from './text';
 
@@ -9,10 +11,11 @@ export interface IChecklistItem {
   pending?: boolean;
   step?: WizardStepKey;
   goToTeams?: boolean;
+  goToEvents?: boolean;
 }
 
 // "Próximos passos" da visão geral da competição em rascunho.
-export function buildChecklist(categories: ICategoria[], teams: ITimeResumo[]): IChecklistItem[] {
+export function buildChecklist(categories: ICategoria[], teams: ITimeResumo[], phasesCount = 0): IChecklistItem[] {
   const semJogadores = teams.filter((t) => (t.jogadores[0]?.count ?? 0) === 0).length;
   const ativas = categories.filter((c) => c.ativa).length;
   return [
@@ -39,6 +42,41 @@ export function buildChecklist(categories: ICategoria[], teams: ITimeResumo[]): 
       done: teams.length > 0 && semJogadores === 0,
       goToTeams: true,
     },
-    { key: 'fases', label: 'Configurar as fases e iniciar (próxima etapa)', done: false, pending: true },
+    {
+      key: 'fases',
+      label: phasesCount > 0 ? `Fases: ${pluralize(phasesCount, 'configurada', 'configuradas')}` : 'Configure as fases',
+      done: phasesCount > 0,
+      step: 'fases',
+    },
+  ];
+}
+
+// "Próximos passos" com a competição em andamento: fase atual, jogos sem dia e súmulas que faltam.
+export function buildProgressChecklist(phases: IFase[], games: IJogoAndamento[]): IChecklistItem[] {
+  const atual = phases.find((p) => p.status === 'em_andamento');
+  if (!atual) return [];
+  const daFase = games.filter((g) => g.fase_id === atual.id);
+  const semDia = daFase.filter((g) => g.status === 'pendente').length;
+  const faltam = daFase.filter((g) => g.status === 'pendente' || g.status === 'agendado').length;
+
+  if (daFase.length === 0) {
+    return [{ key: 'jogos', label: `${atual.nome}: aguardando os jogos das séries`, done: false, pending: true }];
+  }
+  return [
+    {
+      key: 'dias',
+      label: semDia
+        ? `${pluralize(semDia, 'jogo', 'jogos')} da ${atual.nome} sem dia definido`
+        : `Todos os jogos da ${atual.nome} têm dia`,
+      done: semDia === 0,
+      goToEvents: true,
+    },
+    {
+      key: 'sumulas',
+      label: faltam
+        ? `Faltam ${pluralize(faltam, 'súmula', 'súmulas')} para fechar a ${atual.nome}`
+        : `Todas as súmulas da ${atual.nome} foram lançadas`,
+      done: faltam === 0,
+    },
   ];
 }

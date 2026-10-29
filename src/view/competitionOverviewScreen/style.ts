@@ -3,6 +3,7 @@ import styled from 'styled-components';
 export const Grid = styled.div`
   display: grid;
   grid-template-columns: 1fr;
+  align-items: start;
   gap: ${({ theme }) => theme.spacing.md}px;
 
   @media (min-width: ${({ theme }) => theme.breakpoints.md}px) {
@@ -76,4 +77,15 @@ export const StatLabel = styled.dt`
 export const Description = styled.p`
   font-size: ${({ theme }) => theme.fontSize.sm}px;
   color: ${({ theme }) => theme.colors.textMuted};
+`;
+
+export const Column = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.md}px;
+  min-width: 0;
+`;
+
+export const Feedback = styled.div`
+  margin-bottom: ${({ theme }) => theme.spacing.md}px;
 `;

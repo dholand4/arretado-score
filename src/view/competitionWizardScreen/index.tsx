@@ -1,16 +1,19 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import type { ICompeticao, ICompeticaoBasicos } from '@/@types/competition';
 import { AlertGlobal } from '@/components/alertGlobal';
 import { BasicInfoFormGlobal } from '@/components/basicInfoFormGlobal';
 import { ButtonGlobal } from '@/components/buttonGlobal';
+import { CardGlobal } from '@/components/cardGlobal';
 import { CategoriesEditorGlobal } from '@/components/categoriesEditorGlobal';
 import { CompetitionReviewGlobal } from '@/components/competitionReviewGlobal';
 import { ErrorStateGlobal } from '@/components/errorStateGlobal';
 import { FormActionsGlobal } from '@/components/formActionsGlobal';
+import { FormatSummaryGlobal } from '@/components/formatSummaryGlobal';
 import { LinkButtonGlobal } from '@/components/linkButtonGlobal';
 import { LoaderGlobal } from '@/components/loaderGlobal';
 import { PageHeaderGlobal } from '@/components/pageHeaderGlobal';
+import { PhasesEditorGlobal } from '@/components/phasesEditorGlobal';
 import { ScoringFormGlobal } from '@/components/scoringFormGlobal';
 import { StepperGlobal } from '@/components/stepperGlobal';
 import { INTERVALO_PADRAO_MIN, WIZARD_STEPS, type WizardStepKey } from '@/constants/competition';
@@ -18,12 +21,14 @@ import { useAppNavigate } from '@/hooks/useAppNavigate';
 import { useAuth } from '@/hooks/useAuth';
 import { useCategories } from '@/hooks/useCategories';
 import { useCompetition, useCreateCompetition } from '@/hooks/useCompetitions';
+import { usePhases } from '@/hooks/usePhases';
 import { useTeams } from '@/hooks/useTeams';
 import type { IRouteParams } from '@/routes/types';
 import { paths } from '@/routes/types';
 import { getErrorMessage } from '@/utils/appError';
+import { analyzeFormat, buildFormatSummary, phaseFromDb } from '@/utils/phaseFormat';
 import { isWizardStep, nextWizardStep } from '@/utils/wizard';
-import { Feedback } from './style';
+import { Feedback, Section } from './style';
 
 const STEPS = WIZARD_STEPS.map((step) => ({
   key: step.key,
@@ -89,6 +94,11 @@ function EditCompetitionWizard({ competitionId }: { competitionId: string }) {
   const { competition, isLoading, error, refetch, saveBasics, saveScoring } = useCompetition(competitionId);
   const categories = useCategories(competitionId);
   const { teams } = useTeams(competitionId);
+  const phases = usePhases(competitionId);
+  const formatSteps = useMemo(() => {
+    const forms = phases.phases.map(phaseFromDb);
+    return buildFormatSummary(forms, analyzeFormat(forms, teams.length));
+  }, [phases.phases, teams.length]);
 
   const goTo = (key: WizardStepKey) => {
     setSaved(false);
@@ -101,6 +111,13 @@ function EditCompetitionWizard({ competitionId }: { competitionId: string }) {
   if (error || !competition) return <ErrorStateGlobal error={error} onRetry={() => void refetch()} />;
 
   const locked = competition.estrutura_travada && profile?.papel !== 'master';
+  const phasesNotice = competition.estrutura_travada
+    ? locked
+      ? null
+      : 'A estrutura está travada porque já há súmula lançada. Como admin master, você pode alterar as fases; a tabela será recalculada.'
+    : competition.status !== 'rascunho'
+      ? 'A competição já começou: nas fases em andamento só é possível alterar o nome e os classificados.'
+      : null;
 
   return (
     <>
@@ -163,6 +180,24 @@ function EditCompetitionWizard({ competitionId }: { competitionId: string }) {
         </>
       )}
 
+      {step === 'fases' &&
+        (phases.isLoading ? (
+          <LoaderGlobal label="Carregando fases" />
+        ) : phases.error ? (
+          <ErrorStateGlobal error={phases.error} onRetry={() => void phases.refetch()} />
+        ) : (
+          <PhasesEditorGlobal
+            key={`fases-${competition.id}`}
+            initialPhases={phases.phases.map(phaseFromDb)}
+            teamsCount={teams.length}
+            locked={locked}
+            notice={phasesNotice}
+            saving={phases.savePhases.isPending}
+            error={phases.savePhases.error ? getErrorMessage(phases.savePhases.error) : null}
+            onSave={(payload, advance) => phases.savePhases.mutate(payload, { onSuccess: () => afterSave(advance) })}
+          />
+        ))}
+
       {step === 'revisao' && (
         <>
           <CompetitionReviewGlobal
@@ -171,6 +206,14 @@ function EditCompetitionWizard({ competitionId }: { competitionId: string }) {
             teamsCount={teams.length}
             onEditStep={goTo}
           />
+          <Section>
+            <CardGlobal
+              title="Formato"
+              actions={<ButtonGlobal label="Editar" size="sm" variant="ghost" onClick={() => goTo('fases')} />}
+            >
+              <FormatSummaryGlobal steps={formatSteps} emptyText="Nenhuma fase configurada ainda." />
+            </CardGlobal>
+          </Section>
           <FormActionsGlobal>
             <LinkButtonGlobal to={paths.competitionTeams(competitionId)} label="Ir para os times" variant="primary" />
           </FormActionsGlobal>

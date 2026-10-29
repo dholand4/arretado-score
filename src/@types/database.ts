@@ -527,7 +527,10 @@ isOneToOne: false
                 }
           }
           Functions: {
-            "categoria_placar_padrao":
+            "agendar_jogos_evento":
+{ Args: { "p_evento_id": string,"p_jogos": (string)[] }; Returns: undefined
+                           },
+"categoria_placar_padrao":
 { Args: { "modalidade": string }; Returns: {
               "nome": string,"sigla": string,"titulo_ranking": string
             }[]
@@ -547,11 +550,54 @@ isOneToOne: false
 "criar_competicao":
 { Args: { "p_descricao"?: string,"p_intervalo_jogos_min"?: number,"p_local_padrao"?: string,"p_modalidade": string,"p_nome": string,"p_slug": string }; Returns: string
                            },
+"criar_evento":
+{ Args: { "p_competicao_id": string,"p_data": string,"p_hora_inicio": string,"p_intervalo_min": number,"p_local": string,"p_observacoes"?: string,"p_permitir_duplo"?: boolean,"p_qtd_jogos": number }; Returns: Json
+                           },
+"criar_jogos_rodizio":
+{ Args: { "p_fase_id": string,"p_grupo_id": string,"p_times": (string)[],"p_turnos": number }; Returns: number
+                           },
 "criterios_desempate_validos":
 { Args: { "criterios": Json }; Returns: boolean
                            },
+"distribuir_grupos":
+{ Args: { "p_distribuicao": Json,"p_fase_id": string,"p_times": (string)[] }; Returns: undefined
+                           },
+"evento_para_editar":
+{ Args: { "p_evento_id": string,"p_exige_rascunho": boolean }; Returns: {
+              "competicao_id": string,
+"created_at": string,
+"data": string,
+"hora_inicio": string,
+"id": string,
+"intervalo_min": number,
+"local": string,
+"observacoes": string | null,
+"qtd_jogos": number,
+"status": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "eventos"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "evento_publicado":
 { Args: { "p_evento_id": string }; Returns: boolean
+                           },
+"excluir_evento":
+{ Args: { "p_evento_id": string }; Returns: number
+                           },
+"gerar_jogos_da_fase":
+{ Args: { "p_fase_id": string,"p_times": (string)[] }; Returns: number
+                           },
+"gerar_jogos_fase":
+{ Args: { "p_fase_id": string,"p_times"?: (string)[] }; Returns: number
+                           },
+"ids_da_selecao":
+{ Args: { "p_selecao": Json }; Returns: (string)[]
+                           },
+"iniciar_competicao":
+{ Args: { "p_competicao_id": string,"p_distribuicao"?: Json }; Returns: number
                            },
 "is_admin":
 { Args: Record<PropertyKey, never>; Returns: boolean
@@ -577,10 +623,75 @@ isOneToOne: false
 "jogo_publico":
 { Args: { "p_jogo_id": string }; Returns: boolean
                            },
+"jogos_candidatos":
+{ Args: { "p_competicao_id": string }; Returns: {
+              "competicao_id": string,
+"created_at": string,
+"evento_id": string | null,
+"fase_id": string,
+"grupo_id": string | null,
+"id": string,
+"inicio_previsto": string | null,
+"numero_na_serie": number | null,
+"ordem_no_evento": number | null,
+"placar_casa": number | null,
+"placar_fora": number | null,
+"rodada": number | null,
+"serie_id": string | null,
+"so_placar": boolean,
+"status": string,
+"time_casa_id": string,
+"time_fora_id": string,
+"vencedor_id": string | null,
+"wo_ausente": string | null
+            }[]
+                          SetofOptions: {
+        from: "*"
+        to: "jogos"
+        isOneToOne: false
+        isSetofReturn: true
+      } },
+"jogos_candidatos_evento":
+{ Args: { "p_competicao_id": string }; Returns: {
+              "competicao_id": string,
+"created_at": string,
+"evento_id": string | null,
+"fase_id": string,
+"grupo_id": string | null,
+"id": string,
+"inicio_previsto": string | null,
+"numero_na_serie": number | null,
+"ordem_no_evento": number | null,
+"placar_casa": number | null,
+"placar_fora": number | null,
+"rodada": number | null,
+"serie_id": string | null,
+"so_placar": boolean,
+"status": string,
+"time_casa_id": string,
+"time_fora_id": string,
+"vencedor_id": string | null,
+"wo_ausente": string | null
+            }[]
+                          SetofOptions: {
+        from: "*"
+        to: "jogos"
+        isOneToOne: false
+        isSetofReturn: true
+      } },
+"liberar_jogos_evento":
+{ Args: { "p_evento_id": string,"p_jogo_id"?: string }; Returns: number
+                           },
 "listar_usuarios":
 { Args: Record<PropertyKey, never>; Returns: {
               "ativo": boolean,"created_at": string,"email": string,"id": string,"nome": string,"papel": string,"precisa_trocar_senha": boolean,"ultimo_acesso": string
             }[]
+                           },
+"numero_serie":
+{ Args: { "p_codigo": string }; Returns: number
+                           },
+"origens_disponiveis_fase":
+{ Args: { "p_classificam": number,"p_codigos": (string)[],"p_fase_ordem": number,"p_melhores_extras": number,"p_qtd_grupos": number,"p_tipo": string }; Returns: Json
                            },
 "pode_editar_estrutura":
 { Args: { "p_competicao_id": string }; Returns: boolean
@@ -588,8 +699,46 @@ isOneToOne: false
 "pode_gerenciar_arquivo":
 { Args: { "p_bucket": string,"p_nome": string }; Returns: boolean
                            },
+"publicar_evento":
+{ Args: { "p_evento_id": string }; Returns: undefined
+                           },
+"qtd_classificados_fase":
+{ Args: { "p_classificam": number,"p_melhores_extras": number,"p_qtd_grupos": number,"p_qtd_series": number,"p_tipo": string }; Returns: number
+                           },
+"recalcular_horarios_evento":
+{ Args: { "p_evento_id": string }; Returns: undefined
+                           },
+"remover_jogo_evento":
+{ Args: { "p_jogo_id": string }; Returns: undefined
+                           },
+"reordenar_evento":
+{ Args: { "p_evento_id": string,"p_jogos": (string)[] }; Returns: undefined
+                           },
+"rodizio":
+{ Args: { "p_n": number,"p_turnos"?: number }; Returns: {
+              "casa": number,"fora": number,"rodada": number
+            }[]
+                           },
+"salvar_fases":
+{ Args: { "p_competicao_id": string,"p_fases": Json }; Returns: undefined
+                           },
+"selecionar_jogos_evento":
+{ Args: { "p_competicao_id": string,"p_evento_id"?: string,"p_permitir_duplo": boolean,"p_qtd": number }; Returns: Json
+                           },
+"sortear_evento":
+{ Args: { "p_evento_id": string,"p_permitir_duplo"?: boolean,"p_qtd_jogos"?: number }; Returns: Json
+                           },
+"sortear_grupos":
+{ Args: { "p_distribuicao"?: Json,"p_fase_id": string }; Returns: number
+                           },
+"trocar_jogo_evento":
+{ Args: { "p_jogo_entra": string,"p_jogo_sai": string }; Returns: undefined
+                           },
 "try_uuid":
 { Args: { "valor": string }; Returns: string
+                           },
+"validar_config_grupos":
+{ Args: { "p_classificam": number,"p_melhores_extras": number,"p_qtd_grupos": number,"p_times": number }; Returns: string
                            }
           }
           Enums: {

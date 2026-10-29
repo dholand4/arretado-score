@@ -12,4 +12,9 @@ export const QUERY_KEYS = {
   myTeams: (userId: string) => ['my-teams', userId] as const,
   donos: ['people', 'donos'] as const,
   adminUsers: ['people', 'admins'] as const,
+  // Etapa 3
+  phases: (competicaoId: string) => ['competitions', competicaoId, 'phases'] as const,
+  gamesProgress: (competicaoId: string) => ['competitions', competicaoId, 'games-progress'] as const,
+  events: (competicaoId: string) => ['competitions', competicaoId, 'events'] as const,
+  eventCandidates: (competicaoId: string) => ['competitions', competicaoId, 'event-candidates'] as const,
 };

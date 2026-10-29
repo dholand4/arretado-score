@@ -1,0 +1,73 @@
+import { BadgeGlobal } from '@/components/badgeGlobal';
+import { ButtonGlobal } from '@/components/buttonGlobal';
+import { CardGlobal } from '@/components/cardGlobal';
+import { OrderListGlobal } from '@/components/orderListGlobal';
+import { STATUS_EVENTO, STATUS_JOGO } from '@/constants/phase';
+import { doubledTeams, formatEventDate, formatTime, gameDetails, gameLabel, shortTime } from '@/utils/eventSchedule';
+import { pluralize } from '@/utils/text';
+import { Actions, Details, Game, Games, Meta, Texts, Time } from './style';
+import type { IEventCardProps } from './types';
+
+// Um dia de jogos: em rascunho pode ser reordenado (arrastar ou ↑/↓), trocado, sorteado de novo e publicado.
+export function EventCardGlobal({ event, busy = false, onReorder, onRemoveGame, onSwap, onRedraw, onPublish, onDelete }: IEventCardProps) {
+  const status = STATUS_EVENTO[event.status];
+  const draft = event.status === 'rascunho';
+  const duplos = doubledTeams(event.jogos);
+  const describe = (j: (typeof event.jogos)[number]) => {
+    const extras = [formatTime(j.inicio_previsto), gameDetails(j)];
+    if (duplos.has(j.time_casa_id) || duplos.has(j.time_fora_id)) extras.push('jogo duplo');
+    if (j.status !== 'agendado') extras.push(STATUS_JOGO[j.status]);
+    return extras.join(' · ');
+  };
+
+  return (
+    <CardGlobal
+      as="article"
+      title={`${formatEventDate(event.data)} · ${shortTime(event.hora_inicio)}`}
+      actions={<BadgeGlobal label={status.label} tone={status.tone} />}
+    >
+      <Meta>
+        {event.local} · intervalo de {event.intervalo_min} min · {pluralize(event.jogos.length, 'jogo', 'jogos')}
+        {event.jogos.length !== event.qtd_jogos && ` (pedido: ${event.qtd_jogos})`}
+      </Meta>
+      {event.observacoes && <Meta>{event.observacoes}</Meta>}
+
+      {event.jogos.length === 0 && <Meta>Nenhum jogo neste dia. Use “Sortear de novo” para montar.</Meta>}
+      {draft && event.jogos.length > 0 && (
+        <OrderListGlobal
+          ariaLabel={`Jogos de ${formatEventDate(event.data)}`}
+          items={event.jogos.map((j) => ({ id: j.id, label: gameLabel(j), description: describe(j) }))}
+          onChange={onReorder}
+          onRemove={onRemoveGame}
+          disabled={busy}
+        />
+      )}
+      {!draft && event.jogos.length > 0 && (
+        <Games aria-label={`Jogos de ${formatEventDate(event.data)}`}>
+          {event.jogos.map((j) => (
+            <Game key={j.id}>
+              <Time>{formatTime(j.inicio_previsto)}</Time>
+              <Texts>
+                <span>{gameLabel(j)}</span>
+                <Details>{gameDetails(j)}</Details>
+              </Texts>
+            </Game>
+          ))}
+        </Games>
+      )}
+
+      <Actions>
+        {draft && (
+          <>
+            <ButtonGlobal label="Trocar jogo" size="sm" variant="outline" disabled={busy || event.jogos.length === 0} onClick={onSwap} />
+            <ButtonGlobal label="Sortear de novo" size="sm" variant="outline" disabled={busy} onClick={onRedraw} />
+            <ButtonGlobal label="Publicar" size="sm" disabled={busy || event.jogos.length === 0} onClick={onPublish} />
+          </>
+        )}
+        <ButtonGlobal label="Excluir" size="sm" variant="ghost" disabled={busy} onClick={onDelete} />
+      </Actions>
+    </CardGlobal>
+  );
+}
+
+export type { IEventCardProps } from './types';
