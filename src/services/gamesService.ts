@@ -2,6 +2,7 @@ import type {
   IClassificacaoLinha,
   IJogosContexto,
   IJogoLista,
+  ILinhaMataMata,
   IMelhorExtra,
   IResultadoInput,
   ISumula,
@@ -178,7 +179,8 @@ export const gamesService = {
       .from('fases')
       .select('id, nome, ordem, tipo, classificam, melhores_extras')
       .eq('competicao_id', competicao.id)
-      .neq('tipo', 'mata_mata')
+      // Mata-mata só tem tabela quando leva melhores perdedores (repescagem).
+      .or('tipo.neq.mata_mata,melhores_extras.gt.0')
       .order('ordem');
     if (fasesError) throw fasesError;
     return { competicao, fases, grupos: await groupsOf(fases.map((f) => f.id)) };
@@ -191,6 +193,12 @@ export const gamesService = {
     });
     if (error) throw error;
     return data;
+  },
+
+  async getKnockoutTable(faseId: string): Promise<ILinhaMataMata[]> {
+    const { data, error } = await supabase.rpc('classificacao_mata_mata', { p_fase_id: faseId });
+    if (error) throw error;
+    return data as ILinhaMataMata[];
   },
 
   async getBestExtras(faseId: string, colocacao: number): Promise<IMelhorExtra[]> {

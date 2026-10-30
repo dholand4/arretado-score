@@ -192,6 +192,19 @@ export function PhaseFormGlobal({
               error={errors.cruzamento}
               onChange={(e) => changeCruzamento((e.target.value || null) as Cruzamento | null)}
             />
+            {!isLast && (
+              <InputGlobal
+                label="Melhores perdedores"
+                type="number"
+                inputMode="numeric"
+                min={0}
+                value={toText(phase.melhores_extras)}
+                disabled={disabled}
+                error={errors.melhores_extras}
+                hint="Quantos perdedores também avançam, quando os vencedores não fecham a próxima fase (ex.: 3 vencedores + 1 = 4)."
+                onChange={(e) => onChange({ melhores_extras: toNumber(e.target.value) ?? 0 })}
+              />
+            )}
           </>
         )}
 
@@ -226,6 +239,14 @@ export function PhaseFormGlobal({
         <Info>
           Chegam {pluralize(analysis.entram, 'time', 'times')} {fromOther ? 'da fase escolhida' : 'da fase anterior'} →{' '}
           {pluralize(Math.floor(analysis.entram / 2), 'confronto', 'confrontos')}.
+        </Info>
+      )}
+      {isKnockout && !isLast && phase.melhores_extras > 0 && (
+        <Info>
+          Avançam os vencedores e{' '}
+          {phase.melhores_extras === 1 ? 'o melhor perdedor' : `os ${phase.melhores_extras} melhores perdedores`}: quem perdeu
+          algum jogo por W.O. fica atrás; depois contam vitórias na série, saldo, pontos marcados e a campanha anterior. Na fase
+          seguinte, os melhores perdedores entram depois dos vencedores.
         </Info>
       )}
 

@@ -152,7 +152,7 @@ O admin pode adicionar quantas categorias quiser (ex.: no basquete, Rebotes, Ass
 - `sorteio_grupos text default 'aleatorio'` — `'aleatorio' | 'manual'`
 - `entrada jsonb` — de onde vêm os times desta fase (ver 4.4.1)
 - `classificam int` — quantos avançam (total, ou por grupo quando `tipo = 'grupos'`)
-- `melhores_extras int default 0` — só em `grupos`: quantos melhores colocados seguintes (ex.: melhores 3º) também avançam
+- `melhores_extras int default 0` — em `grupos`: quantos melhores colocados seguintes (ex.: melhores 3º) também avançam; em `mata_mata`: quantos **melhores perdedores** também avançam (repescagem, ver 6.6.1). Não vale na última fase.
 - `melhor_de int default 1` — só em `mata_mata`: 1, 3, 5 ou 7
 - `cruzamento text` — só em `mata_mata`: `'por_campanha' | 'cruzado_grupos' | 'vencedores' | 'outra_fase' | 'manual'`
 - `fase_origem int` — só com `cruzamento = 'outra_fase'`: `ordem` da fase de mata-mata anterior de onde saem os times
@@ -164,12 +164,13 @@ O admin pode adicionar quantas categorias quiser (ex.: no basquete, Rebotes, Ass
 - Fase 1: todos os times da competição.
 - Fases seguintes: a partir do resultado da fase anterior, conforme `classificam` / `melhores_extras` da fase anterior.
 - `mata_mata` define os confrontos pelo `cruzamento`:
-  - **`por_campanha`**: ordena os classificados pela campanha geral e cruza 1º x último, 2º x penúltimo… (com 4: 1º x 4º e 2º x 3º).
+  - **`por_campanha`**: ordena os classificados pela campanha geral e cruza 1º x último, 2º x penúltimo… (com 4: 1º x 4º e 2º x 3º). Também vale depois de um mata-mata com melhores perdedores: aí a ordem é a da tabela daquela fase (vencedores pela campanha, depois os melhores perdedores — ver 6.6.1).
   - **`cruzado_grupos`**: 1ºA x 2ºB, 1ºB x 2ºA, 1ºC x 2ºD, 1ºD x 2ºC…
-  - **`vencedores`**: vencedor da série 1 x vencedor da série 2, vencedor da 3 x vencedor da 4… (para rodadas seguintes do mata-mata). Com `disputa_terceiro`, cria também a série entre os perdedores.
+  - **`vencedores`**: vencedor da série 1 x vencedor da série 2, vencedor da 3 x vencedor da 4… (para rodadas seguintes do mata-mata). Com `disputa_terceiro`, cria também a série entre os perdedores. Não vale depois de um mata-mata com melhores perdedores (use `por_campanha` ou `manual`).
   - **`outra_fase`** (tela: "Vencedores ou perdedores de uma fase"): o admin escolhe uma fase de mata-mata anterior (`fase_origem`, não precisa ser a imediatamente anterior) e quem entra (`resultado_origem`): vencedor (ou perdedor) da série 1 x da série 2, da 3 x da 4… A fase de origem precisa ter ao menos 2 séries. A **última fase define o campeão**, por isso não pode usar perdedores.
     - Exemplo de 3º lugar: Fase 2 "Semifinal" (por campanha) → Fase 3 "3º lugar" = perdedores da Semifinal → Fase 4 "Final" = vencedores da Semifinal.
-  - **`manual`**: o admin define cada confronto na tela de configuração usando as origens disponíveis (posição X da fase anterior, posição X do grupo Y, vencedor/perdedor da série Z).
+  - **`manual`**: o admin define cada confronto na tela de configuração usando as origens disponíveis (posição X da fase anterior, posição X do grupo Y, vencedor/perdedor da série Z e, depois de um mata-mata com repescagem, o N-ésimo melhor perdedor).
+  - Uma fase com `outra_fase` + perdedores não pode tirar os times de uma fase que leva melhores perdedores adiante (o mesmo time estaria em duas fases).
 - Ao salvar a configuração, o sistema grava as séries do mata-mata com as **origens** já definidas (ex.: "1º colocado da Fase 1") e os times ainda nulos. Os times são preenchidos quando a fase anterior termina — ou, com `outra_fase`, quando a fase de origem termina.
 
 **`grupos`**
@@ -184,7 +185,7 @@ O admin pode adicionar quantas categorias quiser (ex.: no basquete, Rebotes, Ass
 **`series`** (confrontos de mata-mata)
 - `fase_id uuid references fases on delete cascade`
 - `codigo text` — "S1", "S2"…
-- `origem_a jsonb`, `origem_b jsonb` — ex.: `{"tipo":"posicao","fase_ordem":1,"posicao":1}`, `{"tipo":"posicao_grupo","fase_ordem":1,"grupo":"A","posicao":2}`, `{"tipo":"vencedor","serie":"S1"}`, `{"tipo":"perdedor","serie":"S1"}`
+- `origem_a jsonb`, `origem_b jsonb` — ex.: `{"tipo":"posicao","fase_ordem":1,"posicao":1}`, `{"tipo":"posicao_grupo","fase_ordem":1,"grupo":"A","posicao":2}`, `{"tipo":"vencedor","serie":"S1"}`, `{"tipo":"perdedor","serie":"S1"}`, `{"tipo":"melhor_perdedor","fase_ordem":2,"posicao":1}`; com `posicao` apontando para uma fase de mata-mata, vale a posição na tabela daquela fase (6.6.1)
 - `time_a_id uuid references times` (nullable até ser definido) — sempre o de **melhor campanha**
 - `time_b_id uuid references times` (nullable)
 - `melhor_de int`
@@ -266,6 +267,7 @@ Os números da tabela e dos rankings **não são armazenados**; são calculados 
 - `v_classificacao` — por fase (e grupo): J, V, E, D, WO, PTS, PF, PC, SALDO, APROVEITAMENTO.
 - `v_ranking_estatisticas` — por competição, categoria e (opcionalmente) fase: total, jogos disputados, média por jogo.
 - Função `classificacao_ordenada(fase_id, grupo_id)` que aplica os critérios de desempate (seção 6.3) e devolve a posição final.
+- Função `classificacao_mata_mata(fase_id)` — tabela de uma fase de mata-mata com melhores perdedores (6.6.1): posição, série, vitórias/derrotas, PF, PC, saldo, W.O., situação (`venceu`, `em_disputa`, `repescagem`, `eliminado`) e se avança.
 
 ---
 
@@ -358,6 +360,18 @@ Colunas: **J** (jogos), **V**, **E** (só se `permite_empate`), **D**, **WO** (d
 - Se uma fase deixa de estar concluída (edição de resultado), as fases que dependem dela voltam a `aguardando`; uma fase `outra_fase` cuja origem é anterior à fase editada não é afetada.
 - Até a fase concluir, a área pública mostra os confrontos futuros com as origens ("1º colocado x 4º colocado").
 
+#### 6.6.1 Melhores perdedores (repescagem)
+Para quando os vencedores de um mata-mata não fecham a fase seguinte. Ex.: 6 times → quartas 1º x 6º, 2º x 5º, 3º x 4º (melhor de 3) → 3 vencedores + **1 melhor perdedor** = 4 na semifinal. Com 4 ou 8 times não é preciso.
+- Configurada na fase de mata-mata (`melhores_extras`): menos que o número de séries, nunca na última fase, e sem `disputa_terceiro`. Vencedores + melhores perdedores precisam fechar a fase seguinte (número par, se for mata-mata).
+- **Tabela da fase** (`classificacao_mata_mata`):
+  1. Vencedores das séries, na ordem da campanha anterior (a mesma comparação usada para definir o time de melhor campanha da série).
+  2. Times com a série em andamento.
+  3. Perdedores, nesta ordem: quem perdeu algum jogo da série por **W.O.** fica atrás; depois **vitórias na série**, **saldo de pontos na série**, **pontos marcados na série** e, por fim, a **campanha anterior**. Os primeiros, até `melhores_extras`, avançam.
+  - Em melhor de 3, quem vence a série tem 2 vitórias e quem perde tem no máximo 1: os vencedores sempre ficam à frente, e a tabela decide só a vaga da repescagem. Quem perdeu de 2 a 1 sempre jogou 3 jogos e quem perdeu de 2 a 0 jogou 2, então o saldo só compara times com o mesmo número de jogos.
+  - Enquanto houver série em andamento, a repescagem é provisória.
+- **Fase seguinte**: recebe os vencedores e os melhores perdedores na ordem da tabela. Com `por_campanha`, cruza 1º x último… e o melhor perdedor entra sempre depois dos vencedores (ex.: 1º x 4º = melhor vencedor x melhor perdedor). O melhor perdedor **nunca tem o mando** contra um vencedor, mesmo com campanha anterior melhor.
+- Corrigir um resultado da fase antes da seguinte começar refaz a tabela e os confrontos.
+
 ### 6.7 Rankings de estatísticas
 - Um ranking por categoria ativa, com título personalizado (ex.: "Cestinha").
 - Colunas: posição, foto, jogador, time, total, jogos (presenças), média por jogo.
@@ -411,7 +425,7 @@ Colunas: **J** (jogos), **V**, **E** (só se `permite_empate`), **D**, **WO** (d
 | `/c/:slug` | Início da competição: próximos jogos (eventos publicados), últimos resultados, top 3 de cada ranking, atalho para tabela e playoffs |
 | `/c/:slug/jogos` | Jogos agrupados por dia (eventos publicados), com placar quando encerrados; filtros por fase e time |
 | `/c/:slug/jogos/:jogoId` | Detalhe: placar, data/local, estatísticas por jogador (box score) |
-| `/c/:slug/tabela` | Classificação por fase (abas) e por grupo; linhas dos classificados destacadas |
+| `/c/:slug/tabela` | Classificação por fase (abas) e por grupo; linhas dos classificados destacadas. Fases de mata-mata com melhores perdedores também aparecem, com a tabela da fase (6.6.1) |
 | `/c/:slug/playoffs` | Chaveamento visual das fases de mata-mata, com placar da série (ex.: 2–1) e origens pendentes |
 | `/c/:slug/rankings` | Rankings por categoria (abas com o título de cada uma) |
 | `/c/:slug/times` | Lista de times |

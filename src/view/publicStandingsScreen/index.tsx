@@ -2,11 +2,12 @@ import { useState } from 'react';
 import type { ITabelaPublica } from '@/@types/game';
 import { EmptyStateGlobal } from '@/components/emptyStateGlobal';
 import { ErrorStateGlobal } from '@/components/errorStateGlobal';
+import { KnockoutTableGlobal } from '@/components/knockoutTableGlobal';
 import { LoaderGlobal } from '@/components/loaderGlobal';
 import { PageHeaderGlobal } from '@/components/pageHeaderGlobal';
 import { SegmentedGlobal } from '@/components/segmentedGlobal';
 import { StandingsTableGlobal } from '@/components/standingsTableGlobal';
-import { useClassification, usePublicStandings } from '@/hooks/useClassification';
+import { useClassification, useKnockoutTable, usePublicStandings } from '@/hooks/useClassification';
 import { useRouteParams } from '@/hooks/useRouteParams';
 import { Stack } from './style';
 
@@ -28,6 +29,15 @@ function GroupStandings({ fase, grupoId, caption, showDraws }: { fase: Fase; gru
   );
 }
 
+// Mata-mata com melhores perdedores: tabela da fase (vencedores das séries + repescagem).
+function KnockoutStandings({ fase }: { fase: Fase }) {
+  const { linhas, provisoria, isLoading, error, refetch } = useKnockoutTable(fase.id);
+  if (isLoading) return <LoaderGlobal label="Carregando tabela da fase" />;
+  if (error) return <ErrorStateGlobal error={error} onRetry={refetch} />;
+  if (linhas.length === 0) return <EmptyStateGlobal title="Os confrontos desta fase ainda não foram definidos" />;
+  return <KnockoutTableGlobal rows={linhas} provisional={provisoria} />;
+}
+
 function Standings({ tabela }: { tabela: ITabelaPublica }) {
   const [faseId, setFaseId] = useState(tabela.fases[0]?.id ?? '');
   const fase = tabela.fases.find((item) => item.id === faseId);
@@ -46,7 +56,9 @@ function Standings({ tabela }: { tabela: ITabelaPublica }) {
           onChange={setFaseId}
         />
       )}
-      {fase.tipo === 'grupos' ? (
+      {fase.tipo === 'mata_mata' ? (
+        <KnockoutStandings fase={fase} />
+      ) : fase.tipo === 'grupos' ? (
         grupos.map((grupo) => (
           <GroupStandings key={grupo.id} fase={fase} grupoId={grupo.id} caption={`Grupo ${grupo.nome}`} showDraws={showDraws} />
         ))

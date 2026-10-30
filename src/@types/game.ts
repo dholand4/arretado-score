@@ -54,6 +54,12 @@ export interface IResultadoInput {
 
 export type IClassificacaoLinha = Database['public']['Functions']['classificacao_ordenada']['Returns'][number];
 export type IMelhorExtra = Database['public']['Functions']['melhores_extras']['Returns'][number];
+// Tabela de uma fase de mata-mata com melhores perdedores (repescagem).
+export type SituacaoMataMata = 'venceu' | 'em_disputa' | 'repescagem' | 'eliminado';
+export type ILinhaMataMata = Omit<
+  Database['public']['Functions']['classificacao_mata_mata']['Returns'][number],
+  'situacao'
+> & { situacao: SituacaoMataMata };
 
 export interface ITabelaPublica {
   competicao: Pick<Tables<'competicoes'>, 'id' | 'nome' | 'slug' | 'permite_empate'>;

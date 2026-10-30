@@ -39,6 +39,22 @@ export function useClassification(fase: IClassificationPhase, grupoId: string | 
   };
 }
 
+// Tabela de uma fase de mata-mata com melhores perdedores (vencedores + repescagem).
+export function useKnockoutTable(faseId: string) {
+  const query = useQuery({
+    queryKey: QUERY_KEYS.knockoutTable(faseId),
+    queryFn: () => gamesService.getKnockoutTable(faseId),
+  });
+  const linhas = query.data ?? [];
+  return {
+    linhas,
+    provisoria: linhas.some((linha) => linha.situacao === 'em_disputa'),
+    isLoading: query.isPending,
+    error: query.error,
+    refetch: () => void query.refetch(),
+  };
+}
+
 export function useAdjustClassification(faseId: string, grupoId: string | null) {
   const queryClient = useQueryClient();
   return useMutation({

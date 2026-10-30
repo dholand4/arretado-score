@@ -625,6 +625,11 @@ isOneToOne: false
               "nome": string,"sigla": string,"titulo_ranking": string
             }[]
                            },
+"classificacao_mata_mata":
+{ Args: { "p_fase_id": string }; Returns: {
+              "campanha": number | null,"classificado": boolean,"derrotas": number,"jogos": number,"nome": string,"pc": number,"perdeu_wo": boolean,"pf": number,"posicao": number,"saldo": number,"serie": string,"situacao": string,"time_id": string,"vitorias": number
+            }[]
+                           },
 "classificacao_ordenada":
 { Args: { "p_fase_id": string,"p_grupo_id"?: string }; Returns: {
               "aproveitamento": number,"d": number,"e": number,"empate_tecnico": boolean,"j": number,"nome": string,"pc": number,"pf": number,"posicao": number,"pts": number,"saldo": number,"time_id": string,"v": number,"wo": number

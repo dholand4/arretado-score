@@ -23,6 +23,23 @@ describe('PhaseFormGlobal', () => {
     expect(onChange).toHaveBeenCalledWith({ turnos: 2 });
   });
 
+  it('asks for best losers only when the knockout is not the last phase', () => {
+    const onChange = vi.fn();
+    const { rerender } = renderWithTheme(
+      <PhaseFormGlobal phase={knockout({ cruzamento: 'por_campanha' })} index={1} isLast={false} onChange={onChange} />,
+    );
+    fireEvent.change(screen.getByLabelText('Melhores perdedores'), { target: { value: '1' } });
+    expect(onChange).toHaveBeenCalledWith({ melhores_extras: 1 });
+
+    rerender(
+      <PhaseFormGlobal phase={knockout({ cruzamento: 'por_campanha', melhores_extras: 1 })} index={1} isLast={false} onChange={onChange} />,
+    );
+    expect(screen.getByText(/Avançam os vencedores e o melhor perdedor/)).toBeInTheDocument();
+
+    rerender(<PhaseFormGlobal phase={knockout({ cruzamento: 'por_campanha' })} index={1} isLast onChange={onChange} />);
+    expect(screen.queryByLabelText('Melhores perdedores')).not.toBeInTheDocument();
+  });
+
   it('shows the generated series of a knockout phase', () => {
     const phases = [league(), knockout()];
     const analysis = analyzeFormat(phases, 5);

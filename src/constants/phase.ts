@@ -16,7 +16,8 @@ export const TIPO_FASE_OPTIONS = (Object.keys(TIPO_FASE_LABEL) as TipoFase[]).ma
 export const CRUZAMENTO_LABEL: Record<Cruzamento, { label: string; description: string }> = {
   por_campanha: {
     label: 'Por campanha',
-    description: '1º x último, 2º x penúltimo… pela campanha na fase anterior.',
+    description:
+      '1º x último, 2º x penúltimo… pela campanha na fase anterior (depois de um mata-mata com melhores perdedores, pela tabela daquela fase).',
   },
   cruzado_grupos: { label: 'Cruzado entre grupos', description: '1ºA x 2ºB, 1ºB x 2ºA, 1ºC x 2ºD…' },
   vencedores: { label: 'Vencedores', description: 'Vencedor da série 1 x vencedor da série 2, 3 x 4…' },

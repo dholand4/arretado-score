@@ -133,6 +133,7 @@ export function originKey(origem: IOrigem): string {
   switch (origem.tipo) {
     case 'posicao':
     case 'melhor_extra':
+    case 'melhor_perdedor':
       return `${origem.tipo}:${origem.fase_ordem}:${origem.posicao}`;
     case 'posicao_grupo':
       return `${origem.tipo}:${origem.fase_ordem}:${origem.grupo}:${origem.posicao}`;
@@ -150,6 +151,8 @@ export function originShort(origem: IOrigem, classificamAnterior?: number | null
       return `${origem.posicao}º${origem.grupo}`;
     case 'melhor_extra':
       return `${origem.posicao}º melhor ${(classificamAnterior ?? 0) + 1}º`;
+    case 'melhor_perdedor':
+      return origem.posicao === 1 ? 'Melhor perd.' : `${origem.posicao}º melhor perd.`;
     case 'vencedor':
       return `Venc. ${origem.serie}`;
     case 'perdedor':
@@ -166,6 +169,8 @@ export function originLabel(origem: IOrigem, nomeFaseAnterior: string, classific
       return `${origem.posicao}º do grupo ${origem.grupo}`;
     case 'melhor_extra':
       return `${origem.posicao}º melhor ${(classificamAnterior ?? 0) + 1}º colocado`;
+    case 'melhor_perdedor':
+      return `${origem.posicao === 1 ? 'Melhor' : `${origem.posicao}º melhor`} perdedor da ${nomeFaseAnterior}`;
     case 'vencedor':
       return `Vencedor da ${origem.serie}`;
     case 'perdedor':
@@ -187,6 +192,7 @@ function availableOrigins(prev: IFaseForm, prevOrdem: number, prevCodes: string[
     for (let k = 1; k <= prev.melhores_extras; k += 1) out.push({ tipo: 'melhor_extra', fase_ordem: prevOrdem, posicao: k });
   } else {
     prevCodes.forEach((serie) => out.push({ tipo: 'vencedor', serie }));
+    for (let k = 1; k <= prev.melhores_extras; k += 1) out.push({ tipo: 'melhor_perdedor', fase_ordem: prevOrdem, posicao: k });
   }
   return out.map((origem) => ({
     key: originKey(origem),
@@ -227,6 +233,8 @@ export function analyzeFormat(phases: IFaseForm[], teamsCount: number): IFormatA
         report('fase_origem', 'A fase escolhida precisa ser de mata-mata.');
       } else if (!p.resultado_origem) {
         report('resultado_origem', 'Escolha se entram os vencedores ou os perdedores.');
+      } else if (p.resultado_origem === 'perdedores' && source.melhores_extras > 0) {
+        report('resultado_origem', 'A fase escolhida leva melhores perdedores adiante; os perdedores dela não podem formar outra fase.');
       } else if (isLast && p.resultado_origem === 'perdedores') {
         report('resultado_origem', 'A última fase define o campeão: use os vencedores (o 3º lugar vem antes da final).');
       } else if (sourceCodes.length < 2) {
@@ -288,7 +296,7 @@ export function analyzeFormat(phases: IFaseForm[], teamsCount: number): IFormatA
       }
       if (!isLast && gruposOk && isPositiveInt(p.classificam)) analysis.classificados = p.classificam * grupos + extras;
     } else {
-      buildKnockout(p, i, entram, prev, fromOther ? sourceCodes : prevCodes, analysis, report, () => {
+      buildKnockout(p, i, isLast, entram, prev, fromOther ? sourceCodes : prevCodes, analysis, report, () => {
         serieSeq += 1;
         return `S${serieSeq}`;
       });
@@ -305,6 +313,7 @@ export function analyzeFormat(phases: IFaseForm[], teamsCount: number): IFormatA
 function buildKnockout(
   p: IFaseForm,
   i: number,
+  isLast: boolean,
   entram: number | null,
   prev: IFaseForm | null,
   prevCodes: string[],
@@ -318,7 +327,8 @@ function buildKnockout(
   }
   if (entram === null || !prev) return;
   if (entram % 2 !== 0) {
-    report('tipo', `O mata-mata precisa de número par de times (chegam ${entram}).`);
+    const dica = prev.tipo === 'mata_mata' ? ' Na fase anterior, use "Melhores perdedores" para completar.' : '';
+    report('tipo', `O mata-mata precisa de número par de times (chegam ${entram}).${dica}`);
     return;
   }
   const ordem = i; // ordem (1, 2…) da fase anterior
@@ -326,8 +336,11 @@ function buildKnockout(
   const n = entram / 2;
 
   if (p.cruzamento === 'por_campanha') {
-    if (prev.tipo === 'mata_mata') {
-      report('cruzamento', 'O cruzamento por campanha vale depois de uma fase de todos contra todos ou de grupos.');
+    if (prev.tipo === 'mata_mata' && prev.melhores_extras <= 0) {
+      report(
+        'cruzamento',
+        'O cruzamento por campanha vale depois de uma fase de todos contra todos, de grupos ou de mata-mata com melhores perdedores.',
+      );
       return;
     }
     for (let k = 1; k <= n; k += 1) {
@@ -369,6 +382,10 @@ function buildKnockout(
       report('cruzamento', 'O cruzamento por vencedores vale depois de outra fase de mata-mata.');
       return;
     }
+    if (prev.melhores_extras > 0) {
+      report('cruzamento', 'A fase anterior leva melhores perdedores; use o cruzamento por campanha ou o manual.');
+      return;
+    }
     for (let k = 0; k < n; k += 1) {
       pares.push([
         { tipo: 'vencedor', serie: prevCodes[2 * k] },
@@ -402,7 +419,26 @@ function buildKnockout(
   }
 
   analysis.series = pares.map(([a, b]) => ({ codigo: nextCode(), origem_a: a, origem_b: b, terceiro: false }));
-  analysis.classificados = n;
+
+  // Melhores perdedores (repescagem): completam a fase seguinte quando só os vencedores não bastam.
+  const extras = p.melhores_extras;
+  if (!Number.isInteger(extras) || extras < 0) {
+    report('melhores_extras', 'Informe quantos melhores perdedores avançam (0 ou mais).');
+    return;
+  }
+  if (extras > 0 && isLast) {
+    report('melhores_extras', 'A última fase define o campeão; ela não leva melhores perdedores.');
+    return;
+  }
+  if (extras > 0 && extras >= n) {
+    report('melhores_extras', `Os melhores perdedores precisam ser menos que os confrontos (${n}).`);
+    return;
+  }
+  if (extras > 0 && p.disputa_terceiro) {
+    report('melhores_extras', 'A disputa de 3º lugar não combina com melhores perdedores.');
+    return;
+  }
+  analysis.classificados = n + extras;
 
   if (p.disputa_terceiro) {
     const final = analysis.series[0];
@@ -450,6 +486,17 @@ export function buildFormatSummary(phases: IFaseForm[], analysis: IFormatAnalysi
         ? ` + disputa de 3º lugar${p.melhor_de_terceiro && p.melhor_de_terceiro !== p.melhor_de ? ` (${melhorDeLabel(p.melhor_de_terceiro)})` : ''}`
         : '';
       steps.push({ kind: 'fase', label: `${nome} ${melhorDeLabel(p.melhor_de)}${confrontos}${terceiro}` });
+      if (!isLast && p.melhores_extras > 0 && a?.classificados) {
+        const vencedores = a.classificados - p.melhores_extras;
+        steps.push({
+          kind: 'transicao',
+          label: `${a.classificados} avançam (${pluralize(vencedores, 'vencedor', 'vencedores')} + ${pluralize(
+            p.melhores_extras,
+            'melhor perdedor',
+            'melhores perdedores',
+          )})`,
+        });
+      }
       return;
     }
 
@@ -488,7 +535,7 @@ export function toPayload(phases: IFaseForm[]): IFasePayload[] {
       qtd_grupos: p.tipo === 'grupos' ? p.qtd_grupos : null,
       sorteio_grupos: p.tipo === 'grupos' ? p.sorteio_grupos : 'aleatorio',
       classificam: p.tipo === 'mata_mata' || isLast ? null : p.classificam,
-      melhores_extras: p.tipo === 'grupos' && !isLast ? p.melhores_extras : 0,
+      melhores_extras: p.tipo !== 'todos_contra_todos' && !isLast ? p.melhores_extras : 0,
       melhor_de: p.tipo === 'mata_mata' ? p.melhor_de : 1,
       cruzamento: p.tipo === 'mata_mata' ? p.cruzamento : null,
       fase_origem: p.tipo === 'mata_mata' && p.cruzamento === 'outra_fase' ? p.fase_origem : null,

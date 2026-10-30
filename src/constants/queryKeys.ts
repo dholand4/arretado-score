@@ -25,6 +25,7 @@ export const QUERY_KEYS = {
   roundRobinPreview: (qtdTimes: number, turnos: number) => ['round-robin-preview', qtdTimes, turnos] as const,
   classification: (faseId: string, grupoId: string | null) => ['classification', faseId, grupoId ?? 'geral'] as const,
   bestExtras: (faseId: string, colocacao: number) => ['classification', faseId, 'extras', colocacao] as const,
+  knockoutTable: (faseId: string) => ['classification', faseId, 'mata-mata'] as const,
   // Área pública
   publicStandings: (slug: string) => ['public', slug, 'standings'] as const,
   bracket: (slug: string) => ['public', slug, 'bracket'] as const,

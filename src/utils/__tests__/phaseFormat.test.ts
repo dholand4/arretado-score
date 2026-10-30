@@ -112,6 +112,79 @@ describe('phase format', () => {
     expect(toPayload(base)[1].confrontos).toHaveLength(2);
   });
 
+  describe('best losers (repescagem)', () => {
+    // 6 times → quartas 1x6, 2x5, 3x4 → 3 vencedores + 1 melhor perdedor → semifinal → final.
+    const six = () => [
+      league({ classificam: 6 }),
+      ko({ nome: 'Quartas', melhor_de: 3, cruzamento: 'por_campanha', melhores_extras: 1 }),
+      ko({ nome: 'Semifinal', melhor_de: 3, cruzamento: 'por_campanha' }),
+      ko({ nome: 'Final', melhor_de: 3, cruzamento: 'vencedores' }),
+    ];
+
+    it('completes the next phase with the best loser', () => {
+      const phases = six();
+      const analysis = analyzeFormat(phases, 6);
+      expect(analysis.errors).toEqual([]);
+      expect(analysis.phases[1].classificados).toBe(4);
+      expect(analysis.phases[2].entram).toBe(4);
+      expect(analysis.phases[2].series.map((s) => `${originShort(s.origem_a)} x ${originShort(s.origem_b)}`)).toEqual([
+        '1º x 4º',
+        '2º x 3º',
+      ]);
+      expect(summaryText(buildFormatSummary(phases, analysis))).toBe(
+        'Fase 1: 6 times, todos contra todos, 15 jogos → 6 avançam → Quartas melhor de 3: 1º x 6º, 2º x 5º, 3º x 4º → ' +
+          '4 avançam (3 vencedores + 1 melhor perdedor) → Semifinal melhor de 3: 1º x 4º, 2º x 3º → Final melhor de 3',
+      );
+      expect(toPayload(phases).map((p) => p.melhores_extras)).toEqual([0, 1, 0, 0]);
+    });
+
+    it('explains the odd count and blocks invalid uses', () => {
+      const semExtra = six();
+      semExtra[1].melhores_extras = 0;
+      expect(analyzeFormat(semExtra, 6).errors[0].message).toBe(
+        'O mata-mata precisa de número par de times (chegam 3). Na fase anterior, use "Melhores perdedores" para completar.',
+      );
+
+      const vencedores = six();
+      vencedores[2].cruzamento = 'vencedores';
+      expect(analyzeFormat(vencedores, 6).errors[0].message).toBe(
+        'A fase anterior leva melhores perdedores; use o cruzamento por campanha ou o manual.',
+      );
+
+      const demais = six();
+      demais[1].melhores_extras = 3;
+      expect(analyzeFormat(demais, 6).errors[0].message).toBe('Os melhores perdedores precisam ser menos que os confrontos (3).');
+
+      const ultima = [league({ classificam: 4 }), ko({ cruzamento: 'por_campanha', melhores_extras: 1 })];
+      expect(analyzeFormat(ultima, 6).errors[0].message).toBe('A última fase define o campeão; ela não leva melhores perdedores.');
+
+      const perdedores = six();
+      perdedores.splice(2, 0, ko({ nome: '5º lugar', cruzamento: 'outra_fase', fase_origem: 2, resultado_origem: 'perdedores' }));
+      expect(analyzeFormat(perdedores, 6).errors[0].message).toBe(
+        'A fase escolhida leva melhores perdedores adiante; os perdedores dela não podem formar outra fase.',
+      );
+    });
+
+    it('offers the best loser as a manual origin', () => {
+      const phases = six();
+      phases[2].cruzamento = 'manual';
+      const analysis = analyzeFormat(phases, 6);
+      expect(analysis.phases[2].origens.map((o) => o.label)).toEqual([
+        'Vencedor da S1',
+        'Vencedor da S2',
+        'Vencedor da S3',
+        'Melhor perdedor da Quartas',
+      ]);
+      const [s1, s2, s3, perdedor] = analysis.phases[2].origens.map((o) => o.origem);
+      phases[2].confrontos = [
+        { origem_a: s1, origem_b: perdedor },
+        { origem_a: s2, origem_b: s3 },
+      ];
+      expect(analyzeFormat(phases, 6).errors).toEqual([]);
+      expect(originShort(perdedor)).toBe('Melhor perd.');
+    });
+  });
+
   it('builds the payload and reads phases from the database', () => {
     const payload = toPayload([league({ classificam: 4, qtd_grupos: 3 }), ko({ cruzamento: 'por_campanha', turnos: 2 })]);
     expect(payload[0]).toMatchObject({ qtd_grupos: null, classificam: 4, melhor_de: 1, cruzamento: null });

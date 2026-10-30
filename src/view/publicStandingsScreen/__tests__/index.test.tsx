@@ -1,6 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react';
 import { Route, Routes } from 'react-router-dom';
-import { useClassification, usePublicStandings } from '@/hooks/useClassification';
+import { useClassification, useKnockoutTable, usePublicStandings } from '@/hooks/useClassification';
 import { renderScreen } from '@/utils/testUtils';
 import { PublicStandingsScreen } from '..';
 
@@ -15,6 +15,7 @@ beforeEach(() => {
       fases: [
         { id: 'f1', nome: 'Classificação', ordem: 1, tipo: 'todos_contra_todos', classificam: 4, melhores_extras: 0 },
         { id: 'f2', nome: 'Grupos', ordem: 2, tipo: 'grupos', classificam: 1, melhores_extras: 0 },
+        { id: 'f3', nome: 'Quartas', ordem: 3, tipo: 'mata_mata', classificam: 3, melhores_extras: 1 },
       ],
       grupos: [
         { id: 'ga', fase_id: 'f2', nome: 'A' },
@@ -32,6 +33,15 @@ beforeEach(() => {
     error: null,
     refetch: vi.fn(),
   } as unknown as ReturnType<typeof useClassification>);
+  vi.mocked(useKnockoutTable).mockReturnValue({
+    linhas: [
+      { posicao: 1, time_id: 't9', nome: 'Leões', serie: 'S1', situacao: 'repescagem', vitorias: 1, derrotas: 2, jogos: 3, pf: 210, pc: 215, saldo: -5, perdeu_wo: false, campanha: 2, classificado: true },
+    ],
+    provisoria: false,
+    isLoading: false,
+    error: null,
+    refetch: vi.fn(),
+  } as unknown as ReturnType<typeof useKnockoutTable>);
 });
 
 describe('PublicStandingsScreen', () => {
@@ -47,5 +57,9 @@ describe('PublicStandingsScreen', () => {
     fireEvent.click(screen.getByRole('radio', { name: 'Grupos' }));
     expect(screen.getByText('Grupo A')).toBeInTheDocument();
     expect(screen.getByText('Grupo B')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('radio', { name: 'Quartas' }));
+    expect(useKnockoutTable).toHaveBeenCalledWith('f3');
+    expect(screen.getByText('Leões')).toBeInTheDocument();
+    expect(screen.getByText('Melhor perdedor')).toBeInTheDocument();
   });
 });

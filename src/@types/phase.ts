@@ -13,6 +13,8 @@ export type IOrigem =
   | { tipo: 'posicao'; fase_ordem: number; posicao: number }
   | { tipo: 'posicao_grupo'; fase_ordem: number; grupo: string; posicao: number }
   | { tipo: 'melhor_extra'; fase_ordem: number; posicao: number }
+  // N-ésimo melhor perdedor de uma fase de mata-mata com repescagem.
+  | { tipo: 'melhor_perdedor'; fase_ordem: number; posicao: number }
   | { tipo: 'vencedor'; serie: string }
   | { tipo: 'perdedor'; serie: string };
 
