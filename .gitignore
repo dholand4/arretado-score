@@ -8,6 +8,7 @@ coverage/
 .env
 .env.local
 .env.*.local
+.env.production
 supabase/functions/.env
 supabase/functions/.env.local
 
