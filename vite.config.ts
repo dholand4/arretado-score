@@ -23,7 +23,7 @@ export default defineConfig({
         background_color: '#F5F6F8',
         icons: [
           { src: '/pwa-192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/logo-512.png', sizes: '512x512', type: 'image/png' },
+          { src: '/pwa-512.png', sizes: '512x512', type: 'image/png' },
           { src: '/pwa-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
