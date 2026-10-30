@@ -1,6 +1,5 @@
 import type {
   CriterioDesempate,
-  ICompeticaoPontuacao,
   Modalidade,
   StatusCompeticao,
 } from '@/@types/competition';
@@ -34,38 +33,19 @@ export const CRITERIOS_DESEMPATE: Record<CriterioDesempate, { label: string; des
   vitorias: { label: 'Vitórias', description: 'Número de vitórias (útil no modelo FIBA).' },
 };
 
-export const TODOS_CRITERIOS = Object.keys(CRITERIOS_DESEMPATE) as CriterioDesempate[];
-
-type ScoringPreset = Pick<
-  ICompeticaoPontuacao,
-  'pontos_vitoria' | 'pontos_derrota' | 'pontos_derrota_wo' | 'permite_empate' | 'pontos_empate'
->;
-
-// Seção 5, etapa 2.
-export const SCORING_PRESETS: Record<'padrao' | 'fiba' | 'futsal', { label: string; values: ScoringPreset }> = {
-  padrao: {
-    label: 'Usar padrão',
-    values: { pontos_vitoria: 1, pontos_derrota: 0, pontos_derrota_wo: 0, permite_empate: false, pontos_empate: 0 },
-  },
-  fiba: {
-    label: 'Usar padrão FIBA',
-    values: { pontos_vitoria: 2, pontos_derrota: 1, pontos_derrota_wo: 0, permite_empate: false, pontos_empate: 0 },
-  },
-  futsal: {
-    label: 'Usar padrão futsal',
-    values: { pontos_vitoria: 3, pontos_derrota: 0, pontos_derrota_wo: 0, permite_empate: true, pontos_empate: 1 },
-  },
-};
+// Desempate fixo depois dos pontos na tabela (vitórias): saldo e confronto direto.
+export const CRITERIOS_FIXOS: CriterioDesempate[] = ['saldo', 'confronto_direto'];
 
 export const INTERVALO_PADRAO_MIN = 90;
 export const MIN_TIMES_PARA_INICIAR = 2;
 
 export const WIZARD_STEPS = [
   { key: 'dados', label: 'Dados básicos', available: true },
-  { key: 'pontuacao', label: 'Pontuação e W.O.', available: true },
+  { key: 'pontuacao', label: 'Pontuação', available: true },
+  { key: 'times', label: 'Times', available: true },
   { key: 'estatisticas', label: 'Estatísticas', available: true },
   { key: 'fases', label: 'Fases', available: true },
-  { key: 'cobranca', label: 'Cobrança', available: false },
+  { key: 'cobranca', label: 'Cobrança', available: true },
   { key: 'revisao', label: 'Revisão', available: true },
 ] as const;
 

@@ -15,22 +15,12 @@ import { UserFormModalGlobal, type IUserFormSubmit } from '@/components/userForm
 import { PAPEL_LABEL, PAPEL_OPTIONS } from '@/constants/roles';
 import { useAuth } from '@/hooks/useAuth';
 import { useUsers } from '@/hooks/useUsers';
+import { useConfirmAction } from '@/hooks/useConfirm';
 import { getErrorMessage } from '@/utils/appError';
 import { formatDateTime } from '@/utils/date';
 import { filterUsers, type IUserFilters } from '@/utils/filterUsers';
 import { generateTemporaryPassword } from '@/utils/password';
-import {
-  Actions,
-  Badges,
-  Count,
-  Feedback,
-  Filters,
-  List,
-  Meta,
-  UserEmail,
-  UserHeader,
-  UserName,
-} from './style';
+import { Actions, Badges, Count, Feedback, Filters, List, Meta, UserEmail, UserHeader, UserName } from './style';
 
 type ModalState =
   | { type: 'create' }
@@ -47,6 +37,7 @@ export function UsersScreen() {
   const [filters, setFilters] = useState<IUserFilters>({ search: '', papel: '' });
   const [modal, setModal] = useState<ModalState>(null);
   const [feedback, setFeedback] = useState<{ variant: AlertVariant; message: string } | null>(null);
+  const confirmAction = useConfirmAction();
 
   const visibleUsers = useMemo(() => filterUsers(users, filters), [users, filters]);
 
@@ -58,44 +49,47 @@ export function UsersScreen() {
   };
   const closeModal = () => setModal(null);
 
-  const handleCreate = (values: IUserFormSubmit) => {
-    createUser.mutate(values, {
-      onSuccess: (user) => {
-        closeModal();
-        setFeedback({
-          variant: 'success',
-          message: `Usuário ${user.nome} criado. Repasse o e-mail ${user.email} e a senha provisória "${values.senha}". A troca será exigida no primeiro acesso.`,
-        });
-      },
-    });
-  };
-
-  const handleEdit = (user: IUsuarioListado, values: IUserFormSubmit) => {
-    updateUser.mutate(
-      { id: user.id, nome: values.nome, papel: values.papel },
-      {
-        onSuccess: () => {
-          closeModal();
-          setFeedback({ variant: 'success', message: `Usuário ${values.nome} atualizado.` });
-        },
-      },
-    );
-  };
-
-  const handleReset = (user: IUsuarioListado, senha: string) => {
-    resetPassword.mutate(
-      { id: user.id, senha },
-      {
-        onSuccess: () => {
+  const handleCreate = (values: IUserFormSubmit) =>
+    confirmAction(`Criar o usuário ${values.nome} (${values.email})?`, () =>
+      createUser.mutate(values, {
+        onSuccess: (user) => {
           closeModal();
           setFeedback({
             variant: 'success',
-            message: `Senha de ${user.nome} redefinida para "${senha}". A troca será exigida no próximo acesso.`,
+            message: `Usuário ${user.nome} criado. Repasse o e-mail ${user.email} e a senha provisória "${values.senha}". A troca será exigida no primeiro acesso.`,
           });
         },
-      },
+      }),
     );
-  };
+
+  const handleEdit = (user: IUsuarioListado, values: IUserFormSubmit) =>
+    confirmAction(`Salvar as alterações de ${values.nome}?`, () =>
+      updateUser.mutate(
+        { id: user.id, nome: values.nome, papel: values.papel },
+        {
+          onSuccess: () => {
+            closeModal();
+            setFeedback({ variant: 'success', message: `Usuário ${values.nome} atualizado.` });
+          },
+        },
+      ),
+    );
+
+  const handleReset = (user: IUsuarioListado, senha: string) =>
+    confirmAction(`Redefinir a senha de ${user.nome}?`, () =>
+      resetPassword.mutate(
+        { id: user.id, senha },
+        {
+          onSuccess: () => {
+            closeModal();
+            setFeedback({
+              variant: 'success',
+              message: `Senha de ${user.nome} redefinida para "${senha}". A troca será exigida no próximo acesso.`,
+            });
+          },
+        },
+      ),
+    );
 
   const handleToggle = (user: IUsuarioListado) => {
     const ativo = !user.ativo;
@@ -191,7 +185,7 @@ export function UsersScreen() {
     <>
       <PageHeaderGlobal
         title="Usuários"
-        subtitle="Admins e donos de time só entram com login criado aqui."
+        subtitle="Coordenadores e equipes só entram com login criado aqui."
         actions={<ButtonGlobal label="Novo usuário" onClick={() => openModal({ type: 'create' })} />}
       />
 

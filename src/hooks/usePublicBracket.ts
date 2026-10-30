@@ -28,3 +28,5 @@ export function usePublicBracket(slug: string) {
   const champion = data?.competition.status === 'encerrada' ? name(final?.vencedor_id ?? null) : undefined;
   return { ...query, phases, champion };
 }
+
+export type IBracketPhase = ReturnType<typeof usePublicBracket>['phases'][number];

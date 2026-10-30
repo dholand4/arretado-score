@@ -92,7 +92,7 @@ export function BasicInfoFormGlobal({ initialValues, logoUrl, isNew, saving = fa
         label="Local padrão"
         value={values.local_padrao}
         onChange={(e) => set('local_padrao', e.target.value)}
-        hint="Preenche automaticamente o local dos dias de jogos."
+        hint="Preenche automaticamente o local dos jogos lançados."
       />
       <TextareaGlobal
         label="Descrição"

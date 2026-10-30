@@ -197,6 +197,19 @@ export function PhaseFormGlobal({
         />
       )}
 
+      {isKnockout && phase.disputa_terceiro && (
+        <SelectGlobal
+          label="Série do 3º lugar"
+          value={phase.melhor_de_terceiro === null ? '' : String(phase.melhor_de_terceiro)}
+          options={[
+            { value: '', label: 'Igual à desta fase' },
+            ...MELHOR_DE_OPTIONS.map((o) => ({ value: String(o.value), label: o.label })),
+          ]}
+          disabled={structureDisabled}
+          onChange={(e) => onChange({ melhor_de_terceiro: e.target.value ? (Number(e.target.value) as MelhorDe) : null })}
+        />
+      )}
+
       {isKnockout && phase.cruzamento === 'manual' && analysis && analysis.confrontosNecessarios > 0 && (
         <Messages>
           {Array.from({ length: analysis.confrontosNecessarios }, (_, k) => {

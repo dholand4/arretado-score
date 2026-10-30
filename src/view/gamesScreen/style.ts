@@ -2,12 +2,12 @@ import styled from 'styled-components';
 
 export const Filters = styled.div`
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: ${({ theme }) => theme.spacing.sm + theme.spacing.xs}px;
   margin-bottom: ${({ theme }) => theme.spacing.md}px;
 
   @media (min-width: ${({ theme }) => theme.breakpoints.md}px) {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 `;
 
@@ -19,7 +19,7 @@ export const Count = styled.p`
 
 export const List = styled.ul`
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: ${({ theme }) => theme.spacing.sm}px;
   margin: 0 0 ${({ theme }) => theme.spacing.lg}px;
   padding: 0;
@@ -34,4 +34,8 @@ export const Adjustments = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.md}px;
+`;
+
+export const Notice = styled.div`
+  margin-bottom: ${({ theme }) => theme.spacing.md}px;
 `;

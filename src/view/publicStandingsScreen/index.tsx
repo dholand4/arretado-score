@@ -57,20 +57,20 @@ function Standings({ tabela }: { tabela: ITabelaPublica }) {
   );
 }
 
+// Tabela de todas as fases de pontos corridos/grupos; usada também no painel do admin.
+export function StandingsContent({ slug }: { slug: string }) {
+  const { tabela, isLoading, error, refetch } = usePublicStandings(slug);
+  if (isLoading) return <LoaderGlobal label="Carregando tabela" />;
+  if (error || !tabela) return <ErrorStateGlobal error={error} onRetry={() => void refetch()} />;
+  return <Standings tabela={tabela} />;
+}
+
 export function PublicStandingsScreen() {
   const { slug } = useRouteParams('slug');
-  const { tabela, isLoading, error, refetch } = usePublicStandings(slug);
-
-  const renderContent = () => {
-    if (isLoading) return <LoaderGlobal label="Carregando tabela" />;
-    if (error || !tabela) return <ErrorStateGlobal error={error} onRetry={() => void refetch()} />;
-    return <Standings tabela={tabela} />;
-  };
-
   return (
     <>
-      <PageHeaderGlobal title="Tabela" subtitle={tabela?.competicao.nome} />
-      {renderContent()}
+      <PageHeaderGlobal title="Tabela" />
+      <StandingsContent slug={slug} />
     </>
   );
 }

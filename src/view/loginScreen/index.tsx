@@ -8,7 +8,6 @@ import { useAppNavigate } from '@/hooks/useAppNavigate';
 import { useAuth } from '@/hooks/useAuth';
 import { isRoutePath, ROUTES, type ILoginRouteState } from '@/routes/types';
 import { getErrorMessage } from '@/utils/appError';
-import { isValidEmail } from '@/utils/validators';
 import { BackLink, Form } from './style';
 
 export function LoginScreen() {
@@ -23,7 +22,8 @@ export function LoginScreen() {
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     clearNotice();
-    if (!isValidEmail(email) || !password) {
+    // No login basta ter cara de e-mail; quem decide se a conta existe é o Supabase.
+    if (!email.trim().includes('@') || !password) {
       setError('Informe e-mail e senha.');
       return;
     }
@@ -44,7 +44,7 @@ export function LoginScreen() {
   return (
     <AuthShellGlobal
       title="Entrar"
-      subtitle="Acesso para organizadores e donos de time."
+      subtitle="Acesso para admin, coordenadores e equipes."
       footer={<BackLink to={ROUTES.home}>Ver campeonatos sem entrar</BackLink>}
     >
       <Form onSubmit={handleSubmit} noValidate aria-label="Entrar">

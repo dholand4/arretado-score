@@ -1,8 +1,7 @@
-import type { ICompeticaoPontuacao, Modalidade } from '@/@types/competition';
+import type { ICompeticaoPontuacao } from '@/@types/competition';
 
 export interface IScoringFormProps {
   initialValues: ICompeticaoPontuacao;
-  modalidade: Modalidade;
   locked?: boolean;
   warnRecalculation?: boolean;
   saving?: boolean;

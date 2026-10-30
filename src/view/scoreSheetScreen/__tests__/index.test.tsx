@@ -52,6 +52,7 @@ function renderAt() {
   return renderScreen(
     <Routes>
       <Route path="/painel/competicoes/:competitionId/jogos/:gameId/sumula" element={<ScoreSheetScreen />} />
+      <Route path="/painel/competicoes/:competitionId/jogos" element={<p>Lista de jogos</p>} />
     </Routes>,
     '/painel/competicoes/c1/jogos/g1/sumula',
   );
@@ -79,7 +80,7 @@ describe('ScoreSheetScreen', () => {
         expect.objectContaining({ modo: 'completa', jogadores: expect.arrayContaining([{ jogador_id: 'a1', valores: { pts: 12 } }]) }),
       ),
     );
-    expect(await screen.findByText(/Resultado salvo/)).toBeInTheDocument();
+    expect(await screen.findByText('Lista de jogos')).toBeInTheDocument();
   });
 
   it('blocks a draw in basketball before calling the server', () => {

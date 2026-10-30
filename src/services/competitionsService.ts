@@ -6,6 +6,7 @@ import type {
   ImageChange,
   IPessoaOpcao,
 } from '@/@types/competition';
+import type { ICompeticaoCobranca } from '@/@types/finance';
 import { BUCKETS, storagePaths } from '@/constants/storage';
 import { storageService } from './storageService';
 import { supabase } from './supabaseService';
@@ -61,11 +62,17 @@ export const competitionsService = {
 
   async update(
     id: string,
-    patch: Partial<ICompeticaoBasicos & ICompeticaoPontuacao & { logo_url: string | null }>,
+    patch: Partial<ICompeticaoBasicos & ICompeticaoPontuacao & ICompeticaoCobranca & { logo_url: string | null }>,
   ): Promise<ICompeticao> {
     const { data, error } = await supabase.from('competicoes').update(patch).eq('id', id).select().single();
     if (error) throw error;
     return data as unknown as ICompeticao;
+  },
+
+  // Desativa (some do público e do dono, fica só consulta no painel) ou reativa a liga.
+  async setActive(id: string, ativa: boolean): Promise<void> {
+    const { error } = await supabase.rpc('definir_liga_ativa', { p_competicao_id: id, p_ativa: ativa });
+    if (error) throw error;
   },
 
   async updateBasics(id: string, input: ICompeticaoBasicos, logo: ImageChange): Promise<ICompeticao> {

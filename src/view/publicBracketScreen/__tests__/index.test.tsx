@@ -26,11 +26,37 @@ describe('PublicBracketScreen', () => {
     renderPage();
     expect(screen.getByText('Ainda não há playoffs')).toBeInTheDocument();
   });
-  it('mostra origens, placar, jogos e campeão', () => {
-    state({ isPending: false, data: { competition: { nome: 'Liga' } }, champion: 'Tubarões', phases: [{ id: 'f', nome: 'Final', series: [{ id: 's', codigo: 'S1', melhor_de: 3, nameA: 'Tubarões', nameB: 'Vencedor S2', vitorias_a: 2, vitorias_b: 1, games: [{ id: 'j', numero_na_serie: 1, home: 'Tubarões', away: 'Falcões', placar_casa: 20, placar_fora: 10 }] }] }] });
+  it('monta a chave com a final no centro e o campeão', () => {
+    state({
+      isPending: false,
+      champion: 'Tubarões',
+      phases: [
+        {
+          id: 'f',
+          nome: 'Final',
+          series: [
+            {
+              id: 's',
+              codigo: 'S1',
+              melhor_de: 3,
+              origem_a: { tipo: 'posicao', fase_ordem: 1, posicao: 1 },
+              origem_b: { tipo: 'posicao', fase_ordem: 1, posicao: 2 },
+              time_a_id: 't1',
+              time_b_id: null,
+              nameA: 'Tubarões',
+              nameB: '2º colocado da Fase 1',
+              vitorias_a: 2,
+              vitorias_b: 1,
+              vencedor_id: 't1',
+              games: [{ id: 'j', numero_na_serie: 1, status: 'encerrado', time_casa_id: 't1', home: 'Tubarões', away: 'Falcões', placar_casa: 20, placar_fora: 10 }],
+            },
+          ],
+        },
+      ],
+    });
     renderPage();
-    expect(screen.getByText('Campeão: Tubarões')).toBeInTheDocument();
-    expect(screen.getByText('Vencedor S2')).toBeInTheDocument();
-    expect(screen.getByText(/Jogo 1: Tubarões 20 × 10 Falcões/)).toBeInTheDocument();
+    expect(screen.getByText('Tubarões', { selector: 'strong' })).toBeInTheDocument();
+    expect(screen.getByText('2º colocado da Fase 1')).toBeInTheDocument();
+    expect(screen.getByText('Melhor de 3')).toBeInTheDocument();
   });
 });

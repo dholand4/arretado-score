@@ -41,7 +41,9 @@ import {
 
 type Dialog = null | 'start' | 'distribute-start' | 'redraw' | 'distribute-redraw';
 
-export function CompetitionOverviewScreen() {
+// Andamento e início da competição. `embedded`: sem cabeçalho, dentro da Revisão da
+// configuração ou da aba Jogos (antes de iniciar).
+export function CompetitionOverviewScreen({ embedded = false }: { embedded?: boolean }) {
   const { competitionId } = useRouteParams('competitionId');
   const { competition, isLoading, error, refetch } = useCompetition(competitionId);
   const { categories } = useCategories(competitionId);
@@ -78,7 +80,7 @@ export function CompetitionOverviewScreen() {
   const redrawBlocked = phaseGames.some((g) => g.status === 'encerrado' || g.status === 'wo')
     ? 'Já há súmula lançada nesta fase: os grupos não podem ser sorteados de novo.'
     : phaseGames.some((g) => g.evento_id)
-      ? 'Há jogos desta fase em dias de jogos. Exclua esses dias para sortear de novo.'
+      ? 'Há jogos desta fase já lançados. Exclua esses dias em Lançar jogos para sortear de novo.'
       : null;
 
   const closeDialog = () => {
@@ -113,24 +115,26 @@ export function CompetitionOverviewScreen() {
 
   return (
     <>
-      <EntityHeaderGlobal
-        title={competition.nome}
-        subtitle={MODALIDADE_LABEL[competition.modalidade]}
-        imageUrl={competition.logo_url}
-        badges={
-          <>
-            <BadgeGlobal label={status.label} tone={status.tone} />
-            {competition.estrutura_travada && <BadgeGlobal label="Estrutura travada" tone="info" />}
-          </>
-        }
-        actions={
-          running ? (
-            <LinkButtonGlobal to={paths.competitionEvents(competitionId)} label="Dias de jogos" />
-          ) : (
-            <LinkButtonGlobal to={paths.competitionSettings(competitionId, 'revisao')} label="Revisar configuração" />
-          )
-        }
-      />
+      {!embedded && (
+        <EntityHeaderGlobal
+          title={competition.nome}
+          subtitle={MODALIDADE_LABEL[competition.modalidade]}
+          imageUrl={competition.logo_url}
+          badges={
+            <>
+              <BadgeGlobal label={status.label} tone={status.tone} />
+              {competition.estrutura_travada && <BadgeGlobal label="Estrutura travada" tone="info" />}
+            </>
+          }
+          actions={
+            running ? (
+              <LinkButtonGlobal to={paths.competitionEvents(competitionId)} label="Lançar jogos" />
+            ) : (
+              <LinkButtonGlobal to={paths.competitionSettings(competitionId, 'revisao')} label="Revisar configuração" />
+            )
+          }
+        />
+      )}
       {feedback && (
         <Feedback>
           <AlertGlobal variant="success" message={feedback} onClose={() => setFeedback(null)} />
@@ -153,7 +157,7 @@ export function CompetitionOverviewScreen() {
                     <LinkButtonGlobal to={paths.competitionTeams(competitionId)} label="Times" size="sm" variant="ghost" />
                   )}
                   {item.goToEvents && !item.done && (
-                    <LinkButtonGlobal to={paths.competitionEvents(competitionId)} label="Montar dias" size="sm" variant="ghost" />
+                    <LinkButtonGlobal to={paths.competitionEvents(competitionId)} label="Lançar jogos" size="sm" variant="ghost" />
                   )}
                 </CheckItem>
               ))}

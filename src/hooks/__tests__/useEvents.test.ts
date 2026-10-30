@@ -5,7 +5,7 @@ import { createQueryWrapper } from '@/utils/testUtils';
 
 vi.mock('@/services/eventsService');
 
-const input = { data: '2026-11-07', local: 'Ginásio', hora_inicio: '19:00', qtd_jogos: 3, intervalo_min: 90, observacoes: '' };
+const input = { data: '2026-11-07', local: 'Ginásio', hora_inicio: '19:00', qtd_jogos: 3, intervalo_min: 90, observacoes: '', times: null };
 
 describe('useEvents', () => {
   it('lists events and creates a day (asking about double games)', async () => {

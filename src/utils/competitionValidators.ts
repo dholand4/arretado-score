@@ -1,10 +1,12 @@
 import type {
+  INovoDonoInput,
   ICategoriaInput,
   ICompeticaoBasicos,
   ICompeticaoPontuacao,
   IJogadorInput,
   ITimeInput,
 } from '@/@types/competition';
+import type { ICompeticaoCobranca } from '@/@types/finance';
 import { isValidSlug } from './slugify';
 
 export type FormErrors<T> = Partial<Record<keyof T, string>>;
@@ -56,6 +58,14 @@ export function validateTeam(values: ITimeInput): FormErrors<ITimeInput> {
   return errors;
 }
 
+export function validateNewOwner(values: INovoDonoInput): FormErrors<INovoDonoInput> {
+  const errors: FormErrors<INovoDonoInput> = {};
+  if (!values.nome.trim()) errors.nome = 'Informe o nome do responsável pela equipe.';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) errors.email = 'Informe um e-mail válido (ex.: nome@gmail.com).';
+  if (values.senha.length < 8) errors.senha = 'Use pelo menos 8 caracteres.';
+  return errors;
+}
+
 export function validatePlayer(values: IJogadorInput): FormErrors<IJogadorInput> {
   const errors: FormErrors<IJogadorInput> = {};
   if (!values.nome.trim()) errors.nome = 'Informe o nome.';
@@ -76,4 +86,18 @@ export function parseIntField(value: string): number {
 
 export function parseOptionalInt(value: string): number | null {
   return value.trim() === '' ? null : Number(value);
+}
+
+export function validateBilling(values: ICompeticaoCobranca): FormErrors<ICompeticaoCobranca> {
+  const errors: FormErrors<ICompeticaoCobranca> = {};
+  if (values.cobranca_modelo === 'nenhuma') return errors;
+  if (values.cobranca_valor === null || Number.isNaN(values.cobranca_valor) || values.cobranca_valor <= 0) {
+    errors.cobranca_valor = 'Informe um valor maior que zero.';
+  }
+  const dia = values.cobranca_dia_vencimento;
+  if (dia === null || !Number.isInteger(dia) || dia < 1 || dia > 28) errors.cobranca_dia_vencimento = 'Escolha um dia de 1 a 28.';
+  if (!values.cobranca_mes_inicio) errors.cobranca_mes_inicio = 'Informe o mês de início.';
+  const meses = values.cobranca_qtd_meses;
+  if (meses === null || !Number.isInteger(meses) || meses < 1) errors.cobranca_qtd_meses = 'Informe ao menos 1 mês.';
+  return errors;
 }

@@ -2,6 +2,8 @@ import { ButtonGlobal } from '@/components/buttonGlobal';
 import { CardGlobal } from '@/components/cardGlobal';
 import { CRITERIOS_DESEMPATE, MIN_TIMES_PARA_INICIAR, MODALIDADE_LABEL } from '@/constants/competition';
 import type { WizardStepKey } from '@/constants/competition';
+import { COBRANCA_MODELO_LABEL } from '@/constants/finance';
+import { formatCurrency, formatMonth } from '@/utils/finance';
 import { pluralize } from '@/utils/text';
 import { List, Muted, Sections, Term, Value } from './style';
 import type { ICompetitionReviewProps } from './types';
@@ -63,6 +65,26 @@ export function CompetitionReviewGlobal({ competition: c, categories, teamsCount
         {ativas.length < categories.length && (
           <Muted>{pluralize(categories.length - ativas.length, 'categoria inativa', 'categorias inativas')}.</Muted>
         )}
+      </CardGlobal>
+
+      <CardGlobal title="Cobrança" actions={edit('cobranca')}>
+        <List>
+          <Term>Modelo</Term>
+          <Value>{COBRANCA_MODELO_LABEL[c.cobranca_modelo]}</Value>
+          {c.cobranca_modelo !== 'nenhuma' && (
+            <>
+              <Term>Valor</Term>
+              <Value>{c.cobranca_valor !== null ? formatCurrency(Number(c.cobranca_valor)) : '—'}</Value>
+              <Term>Vencimento</Term>
+              <Value>Dia {c.cobranca_dia_vencimento ?? '—'}</Value>
+              <Term>Período</Term>
+              <Value>
+                {c.cobranca_mes_inicio ? formatMonth(c.cobranca_mes_inicio) : '—'}
+                {c.cobranca_qtd_meses ? ` · ${pluralize(c.cobranca_qtd_meses, 'mês', 'meses')}` : ''}
+              </Value>
+            </>
+          )}
+        </List>
       </CardGlobal>
 
       <CardGlobal title="Times">

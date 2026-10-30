@@ -1,19 +1,30 @@
 import { useId, useState, type FormEvent } from 'react';
 import type { IEventoInput } from '@/@types/event';
 import { AlertGlobal } from '@/components/alertGlobal';
+import { CheckboxGlobal } from '@/components/checkboxGlobal';
 import { ButtonGlobal } from '@/components/buttonGlobal';
 import { InputGlobal } from '@/components/inputGlobal';
 import { ModalGlobal } from '@/components/modalGlobal';
 import { TextareaGlobal } from '@/components/textareaGlobal';
 import { hasErrors, parseIntField, type FormErrors } from '@/utils/competitionValidators';
 import { validateEvent } from '@/utils/eventSchedule';
-import { Form, Row } from './style';
+import { pluralize } from '@/utils/text';
+import { ErrorText, Fieldset, Form, Legend, Missing, MissingList, QuickActions, Row, TeamsGrid } from './style';
 import type { IEventFormModalProps } from './types';
 
 type NumberField = 'qtd_jogos' | 'intervalo_min';
 
 // Novo dia de jogos (seção 6.2): local e intervalo vêm preenchidos com os padrões da competição.
-export function EventFormModalGlobal({ open, initialValues, saving = false, error, onSubmit, onClose }: IEventFormModalProps) {
+export function EventFormModalGlobal({
+  open,
+  initialValues,
+  teams = [],
+  missingGames = [],
+  saving = false,
+  error,
+  onSubmit,
+  onClose,
+}: IEventFormModalProps) {
   const formId = useId();
   const [values, setValues] = useState(initialValues);
   const [numbers, setNumbers] = useState<Record<NumberField, string>>({
@@ -21,6 +32,21 @@ export function EventFormModalGlobal({ open, initialValues, saving = false, erro
     intervalo_min: String(initialValues.intervalo_min),
   });
   const [errors, setErrors] = useState<FormErrors<IEventoInput>>({});
+  // Times que vão estar no dia (todos marcados de início).
+  const [selected, setSelected] = useState<string[]>(initialValues.times ?? teams.map((t) => t.id));
+
+  // Quantidade de jogos: segue os jogos que faltam entre os times marcados até o admin digitar outra.
+  const [qtdEditada, setQtdEditada] = useState(false);
+
+  const toggleTeam = (id: string, checked: boolean) => {
+    setQtdEditada(false);
+    setSelected((current) => (checked ? [...current, id] : current.filter((t) => t !== id)));
+  };
+
+  // Jogos que faltam e só envolvem times escolhidos: é deles que o sorteio vai tirar o dia.
+  const possiveis = missingGames.filter((g) => selected.includes(g.timeCasaId) && selected.includes(g.timeForaId));
+  const autoQtd = !qtdEditada && selected.length < teams.length && possiveis.length > 0;
+  const qtdJogos = autoQtd ? String(possiveis.length) : numbers.qtd_jogos;
 
   const set = (field: keyof IEventoInput, value: string) => setValues((v) => ({ ...v, [field]: value }));
 
@@ -30,8 +56,9 @@ export function EventFormModalGlobal({ open, initialValues, saving = false, erro
       ...values,
       local: values.local.trim(),
       observacoes: values.observacoes.trim(),
-      qtd_jogos: parseIntField(numbers.qtd_jogos),
+      qtd_jogos: parseIntField(qtdJogos),
       intervalo_min: parseIntField(numbers.intervalo_min),
+      times: teams.length > 0 && selected.length < teams.length ? selected : null,
     };
     const found = validateEvent(payload);
     setErrors(found);
@@ -42,12 +69,12 @@ export function EventFormModalGlobal({ open, initialValues, saving = false, erro
   return (
     <ModalGlobal
       open={open}
-      title="Novo dia de jogos"
+      title="Lançar jogos"
       onClose={onClose}
       footer={
         <>
           <ButtonGlobal label="Cancelar" variant="ghost" onClick={onClose} disabled={saving} />
-          <ButtonGlobal label="Montar dia" type="submit" form={formId} loading={saving} />
+          <ButtonGlobal label="Lançar" type="submit" form={formId} loading={saving} />
         </>
       }
     >
@@ -69,9 +96,13 @@ export function EventFormModalGlobal({ open, initialValues, saving = false, erro
             type="number"
             inputMode="numeric"
             min={1}
-            value={numbers.qtd_jogos}
+            value={qtdJogos}
             error={errors.qtd_jogos}
-            onChange={(e) => setNumbers((n) => ({ ...n, qtd_jogos: e.target.value }))}
+            hint={autoQtd ? 'Preenchida com os jogos que faltam entre os times marcados.' : undefined}
+            onChange={(e) => {
+              setQtdEditada(true);
+              setNumbers((n) => ({ ...n, qtd_jogos: e.target.value }));
+            }}
           />
           <InputGlobal
             label="Intervalo (min)"
@@ -84,6 +115,56 @@ export function EventFormModalGlobal({ open, initialValues, saving = false, erro
             onChange={(e) => setNumbers((n) => ({ ...n, intervalo_min: e.target.value }))}
           />
         </Row>
+        {teams.length > 0 && (
+          <Fieldset>
+            <Legend>Times que vão jogar no dia</Legend>
+            <QuickActions>
+              <ButtonGlobal
+                label="Todos"
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setQtdEditada(false);
+                  setSelected(teams.map((t) => t.id));
+                }}
+              />
+              <ButtonGlobal
+                label="Nenhum"
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setQtdEditada(false);
+                  setSelected([]);
+                }}
+              />
+            </QuickActions>
+            <TeamsGrid>
+              {teams.map((team) => (
+                <CheckboxGlobal
+                  key={team.id}
+                  label={team.nome}
+                  checked={selected.includes(team.id)}
+                  onChange={(e) => toggleTeam(team.id, e.target.checked)}
+                />
+              ))}
+            </TeamsGrid>
+            {errors.times && <ErrorText>{errors.times}</ErrorText>}
+            <Missing aria-live="polite">
+              <strong>
+                {possiveis.length === 0
+                  ? 'Não falta nenhum jogo entre esses times.'
+                  : `Faltam ${pluralize(possiveis.length, 'jogo', 'jogos')} entre esses times:`}
+              </strong>
+              {possiveis.length > 0 && (
+                <MissingList>
+                  {possiveis.map((g) => (
+                    <li key={g.id}>{g.confronto}</li>
+                  ))}
+                </MissingList>
+              )}
+            </Missing>
+          </Fieldset>
+        )}
         <TextareaGlobal
           label="Observações"
           value={values.observacoes}

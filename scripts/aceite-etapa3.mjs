@@ -17,7 +17,7 @@ if (!/127\.0\.0\.1|localhost/.test(URL_)) throw new Error('Este script só roda 
 
 // Usuários do supabase/seed.sql
 const MASTER = { email: 'master@torneiomais.local', password: 'Master@123' };
-const ADMIN = { email: 'admin@torneiomais.local', password: 'Admin@1234' };
+const ADMIN = { email: 'admin@torneiomais.local', password: 'Admin@1234', id: '22222222-2222-2222-2222-222222222222' };
 const OUTRO_ADMIN = { email: 'outro.admin@torneiomais.local', password: 'Admin@1234' };
 const DONO = { email: 'dono2@torneiomais.local', password: 'Dono@12345', id: '55555555-5555-5555-5555-555555555555' };
 
@@ -47,13 +47,16 @@ const dono = await login(DONO);
 const criadas = [];
 
 async function novaCompeticao(sufixo, qtdTimes, { donoNoPrimeiro = false } = {}) {
-  const { data: id, error } = await admin.rpc('criar_competicao', {
+  // Só o master cria liga; ele entrega para o admin.
+  const { data: id, error } = await master.rpc('criar_competicao', {
     p_nome: `Etapa3 ${sufixo} ${stamp}`,
     p_slug: `etapa3-${sufixo}-${stamp}`,
     p_modalidade: 'basquete',
     p_local_padrao: 'Quadra Central',
   });
   if (error) throw new Error(`criar competição: ${error.message}`);
+  const vinculo = await master.from('competicao_admins').insert({ competicao_id: id, user_id: ADMIN.id });
+  if (vinculo.error) throw new Error(`vincular admin: ${vinculo.error.message}`);
   criadas.push(id);
   const rows = Array.from({ length: qtdTimes }, (_, i) => ({
     competicao_id: id,

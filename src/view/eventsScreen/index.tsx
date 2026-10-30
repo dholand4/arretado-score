@@ -11,13 +11,23 @@ import { EventFormModalGlobal } from '@/components/eventFormModalGlobal';
 import { LinkButtonGlobal } from '@/components/linkButtonGlobal';
 import { LoaderGlobal } from '@/components/loaderGlobal';
 import { PageHeaderGlobal } from '@/components/pageHeaderGlobal';
+import { RemainingGamesGlobal } from '@/components/remainingGamesGlobal';
 import { SwapGameModalGlobal } from '@/components/swapGameModalGlobal';
 import { useCompetition } from '@/hooks/useCompetitions';
 import { useEventCandidates, useEvents } from '@/hooks/useEvents';
+import { useGames } from '@/hooks/useGames';
+import { useTeams } from '@/hooks/useTeams';
 import { useRouteParams } from '@/hooks/useRouteParams';
+import { useConfirmAction } from '@/hooks/useConfirm';
 import { paths } from '@/routes/types';
 import { getErrorMessage } from '@/utils/appError';
-import { assemblyNotice, defaultEventInput, doubleGameMessage, formatEventDate } from '@/utils/eventSchedule';
+import {
+  assemblyNotice,
+  defaultEventInput,
+  doubleGameMessage,
+  formatEventDate,
+  remainingGames,
+} from '@/utils/eventSchedule';
 import { Feedback, List } from './style';
 
 // Montagem aguardando a confirmação de jogo duplo (seção 6.2).
@@ -29,12 +39,12 @@ type Confirmation = { kind: 'publish' | 'delete' | 'redraw'; event: IEvento };
 
 const CONFIRM_TEXT: Record<Confirmation['kind'], { title: string; message: string; label: string }> = {
   publish: {
-    title: 'Publicar dia de jogos',
+    title: 'Publicar o dia',
     message: 'Depois de publicado, o dia e os jogos aparecem na área pública e não podem mais ser remontados.',
     label: 'Publicar',
   },
   delete: {
-    title: 'Excluir dia de jogos',
+    title: 'Excluir o dia',
     message: 'Os jogos sem súmula voltam a ficar pendentes, sem dia. Deseja excluir?',
     label: 'Excluir',
   },
@@ -47,8 +57,12 @@ const CONFIRM_TEXT: Record<Confirmation['kind'], { title: string; message: strin
 
 export function EventsScreen() {
   const { competitionId } = useRouteParams('competitionId');
-  const { competition, isLoading: loadingCompetition, error: competitionError, refetch: refetchCompetition } =
-    useCompetition(competitionId);
+  const {
+    competition,
+    isLoading: loadingCompetition,
+    error: competitionError,
+    refetch: refetchCompetition,
+  } = useCompetition(competitionId);
   const {
     events,
     isLoading,
@@ -67,11 +81,22 @@ export function EventsScreen() {
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [swapEvent, setSwapEvent] = useState<IEvento | null>(null);
   const [feedback, setFeedback] = useState<{ variant: AlertVariant; message: string } | null>(null);
-  const { candidates, isLoading: loadingCandidates } = useEventCandidates(competitionId, Boolean(swapEvent));
+  const askConfirm = useConfirmAction();
+  const { candidates, isLoading: loadingCandidates } = useEventCandidates(
+    competitionId,
+    Boolean(swapEvent) || formOpen,
+  );
+  const { teams } = useTeams(competitionId);
+  const { jogos, fases } = useGames(competitionId);
+  const faltas = remainingGames(jogos, fases);
 
   const busy =
-    redrawEvent.isPending || reorderEvent.isPending || swapGame.isPending || removeGame.isPending ||
-    publishEvent.isPending || deleteEvent.isPending;
+    redrawEvent.isPending ||
+    reorderEvent.isPending ||
+    swapGame.isPending ||
+    removeGame.isPending ||
+    publishEvent.isPending ||
+    deleteEvent.isPending;
 
   const showError = (err: unknown) => setFeedback({ variant: 'error', message: getErrorMessage(err) });
   const assembled = (montagem: IMontagemEvento, success: string) => {
@@ -82,14 +107,19 @@ export function EventsScreen() {
   };
 
   const create = (input: IEventoInput, permitirDuplo: boolean) =>
-    createEvent.mutate(
-      { input, permitirDuplo },
-      {
-        onSuccess: (montagem) =>
-          montagem.precisa_confirmar
-            ? setPending({ kind: 'create', input, montagem })
-            : assembled(montagem, 'Dia de jogos montado em rascunho. Confira a ordem e publique.'),
-      },
+    askConfirm(`Lançar os jogos de ${formatEventDate(input.data)}?`, () =>
+      createEvent.mutate(
+        { input, permitirDuplo },
+        {
+          onSuccess: (montagem) =>
+            montagem.precisa_confirmar
+              ? setPending({ kind: 'create', input, montagem })
+              : assembled(
+                  montagem,
+                  'Jogos lançados em rascunho. Confira a ordem e publique para aparecerem ao público.',
+                ),
+        },
+      ),
     );
 
   const redraw = (eventoId: string, permitirDuplo: boolean, qtdJogos?: number) =>
@@ -99,7 +129,7 @@ export function EventsScreen() {
         onSuccess: (montagem) => {
           setConfirmation(null);
           if (montagem.precisa_confirmar) setPending({ kind: 'redraw', eventoId, montagem });
-          else assembled(montagem, 'Dia de jogos sorteado de novo.');
+          else assembled(montagem, 'Jogos do dia sorteados de novo.');
         },
         onError: (err) => {
           setConfirmation(null);
@@ -131,7 +161,10 @@ export function EventsScreen() {
         setConfirmation(null);
         setFeedback({
           variant: 'success',
-          message: kind === 'publish' ? 'Dia de jogos publicado.' : 'Dia de jogos excluído; os jogos voltaram a ficar pendentes.',
+          message:
+            kind === 'publish'
+              ? 'Jogos publicados: já aparecem para quem acompanha a liga.'
+              : 'Dia excluído; os jogos voltaram para a lista de jogos que faltam.',
         });
       },
     });
@@ -144,7 +177,7 @@ export function EventsScreen() {
   };
 
   const renderContent = () => {
-    if (loadingCompetition || isLoading) return <LoaderGlobal label="Carregando dias de jogos" />;
+    if (loadingCompetition || isLoading) return <LoaderGlobal label="Carregando jogos lançados" />;
     if (competitionError || !competition) {
       return <ErrorStateGlobal error={competitionError} onRetry={() => void refetchCompetition()} />;
     }
@@ -160,22 +193,34 @@ export function EventsScreen() {
     }
     if (events.length === 0) {
       return (
-        <EmptyStateGlobal
-          title="Nenhum dia de jogos"
-          description="Crie um dia informando data, hora e quantidade de jogos; o sistema sorteia os confrontos."
-          action={<ButtonGlobal label="Novo dia de jogos" onClick={openCreate} />}
-        />
+        <List>
+          <RemainingGamesGlobal phases={faltas} />
+          <EmptyStateGlobal
+            title="Nenhum jogo lançado"
+            description="Escolha a data e os times que vão jogar; o sistema monta o dia com os jogos que faltam entre eles."
+            action={<ButtonGlobal label="Lançar jogos" onClick={openCreate} />}
+          />
+        </List>
       );
     }
     return (
       <List>
+        <RemainingGamesGlobal phases={faltas} />
         {events.map((event) => (
           <EventCardGlobal
             key={event.id}
             event={event}
             busy={busy}
-            onReorder={(jogoIds) => reorderEvent.mutate({ eventoId: event.id, jogoIds }, { onError: showError })}
-            onRemoveGame={(jogoId) => removeGame.mutate(jogoId, { onError: showError })}
+            onReorder={(jogoIds) =>
+              askConfirm('Mudar a ordem dos jogos deste dia?', () =>
+                reorderEvent.mutate({ eventoId: event.id, jogoIds }, { onError: showError }),
+              )
+            }
+            onRemoveGame={(jogoId) =>
+              askConfirm('Tirar este jogo do dia? Ele volta para os jogos que faltam.', () =>
+                removeGame.mutate(jogoId, { onError: showError }),
+              )
+            }
             onSwap={() => {
               swapGame.reset();
               setSwapEvent(event);
@@ -196,17 +241,18 @@ export function EventsScreen() {
   };
 
   const confirmText = confirmation ? CONFIRM_TEXT[confirmation.kind] : null;
-  const confirmMutation = confirmation?.kind === 'publish' ? publishEvent : confirmation?.kind === 'delete' ? deleteEvent : redrawEvent;
+  const confirmMutation =
+    confirmation?.kind === 'publish' ? publishEvent : confirmation?.kind === 'delete' ? deleteEvent : redrawEvent;
   const pendingMutation = pending?.kind === 'redraw' ? redrawEvent : createEvent;
 
   return (
     <>
       <PageHeaderGlobal
-        title="Dias de jogos"
+        title="Lançar jogos"
         subtitle={competition?.nome}
         actions={
           competition?.status === 'em_andamento' && events.length > 0 ? (
-            <ButtonGlobal label="Novo dia de jogos" onClick={openCreate} />
+            <ButtonGlobal label="Lançar jogos" onClick={openCreate} />
           ) : undefined
         }
       />
@@ -221,6 +267,13 @@ export function EventsScreen() {
         <EventFormModalGlobal
           open={!pending}
           initialValues={defaultEventInput(competition.local_padrao, competition.intervalo_jogos_min)}
+          teams={teams.map((t) => ({ id: t.id, nome: t.nome }))}
+          missingGames={candidates.map((jogo) => ({
+            id: jogo.id,
+            timeCasaId: jogo.time_casa_id,
+            timeForaId: jogo.time_fora_id,
+            confronto: `${jogo.casa?.nome ?? 'A definir'} x ${jogo.fora?.nome ?? 'A definir'}`,
+          }))}
           saving={createEvent.isPending}
           error={createEvent.error ? getErrorMessage(createEvent.error) : null}
           onSubmit={(input) => create(input, false)}

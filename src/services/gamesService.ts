@@ -10,7 +10,7 @@ import type {
 import { AppError } from '@/utils/appError';
 import { supabase } from './supabaseService';
 
-const GAME_LIST_SELECT =
+export const GAME_LIST_SELECT =
   '*, casa:times!jogos_time_casa_id_fkey(nome, sigla), fora:times!jogos_time_fora_id_fkey(nome, sigla), ' +
   'fase:fases(nome), grupo:grupos(nome), serie:series(codigo), evento:eventos(data, local, status)';
 
@@ -148,6 +148,13 @@ export const gamesService = {
 
   async getBestExtras(faseId: string, colocacao: number): Promise<IMelhorExtra[]> {
     const { data, error } = await supabase.rpc('melhores_extras', { p_fase_id: faseId, p_posicao: colocacao });
+    if (error) throw error;
+    return data;
+  },
+
+  // Prévia dos confrontos (método do círculo, a mesma função que gera os jogos ao iniciar).
+  async previewRoundRobin(qtdTimes: number, turnos: number) {
+    const { data, error } = await supabase.rpc('rodizio', { p_n: qtdTimes, p_turnos: turnos });
     if (error) throw error;
     return data;
   },

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { ISumula, ModoResultado, WoAusente } from '@/@types/game';
 import { AlertGlobal } from '@/components/alertGlobal';
 import { ButtonGlobal } from '@/components/buttonGlobal';
+import { CheckboxGlobal } from '@/components/checkboxGlobal';
 import { ErrorStateGlobal } from '@/components/errorStateGlobal';
 import { FormActionsGlobal } from '@/components/formActionsGlobal';
 import { InputGlobal } from '@/components/inputGlobal';
@@ -12,10 +13,12 @@ import { ScoreboardGlobal } from '@/components/scoreboardGlobal';
 import { ScoreSheetTeamGlobal } from '@/components/scoreSheetTeamGlobal';
 import { SegmentedGlobal } from '@/components/segmentedGlobal';
 import { SelectGlobal } from '@/components/selectGlobal';
+import { useAppNavigate } from '@/hooks/useAppNavigate';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouteParams } from '@/hooks/useRouteParams';
 import { useScoreSheet } from '@/hooks/useScoreSheet';
-import { paths } from '@/routes/types';
+import { useConfirm } from '@/hooks/useConfirm';
+import { paths, type IGamesRouteState } from '@/routes/types';
 import { getErrorMessage } from '@/utils/appError';
 import {
   buildResultInput,
@@ -84,9 +87,12 @@ function SheetForm({ sumula, isMaster, saving, saveError, onSave }: ISheetFormPr
     }
   };
 
-  const teamProps = (timeId: string, nome: string) => ({
+  const totalDigitado = (valor: string) => (valor.trim() === '' ? 0 : Number(valor) || 0);
+
+  const teamProps = (timeId: string, nome: string, totalTexto: string) => ({
     teamName: nome,
     score: teamScore(sumula, state, timeId),
+    total: state.placarManual ? totalDigitado(totalTexto) : null,
     players: sortByNumber(sumula.jogadores.filter((jogador) => jogador.time_id === timeId)),
     categories: sumula.categorias,
     present: state.presentes,
@@ -113,7 +119,7 @@ function SheetForm({ sumula, isMaster, saving, saveError, onSave }: ISheetFormPr
             message={
               isMaster
                 ? 'A fase seguinte já tem resultado. Ao editar, confira séries e classificação depois.'
-                : 'A fase seguinte já tem resultado: só o admin master pode editar esta súmula.'
+                : 'A fase seguinte já tem resultado: só o Admin pode editar esta súmula.'
             }
           />
         )}
@@ -126,15 +132,51 @@ function SheetForm({ sumula, isMaster, saving, saveError, onSave }: ISheetFormPr
         />
 
         {state.modo === 'completa' && (
+          <>
+            <CheckboxGlobal
+              label="Informar o placar total"
+              description="Digite o total de cada time e divida entre os jogadores só o que quiser. Os pontos divididos entram nos rankings."
+              checked={state.placarManual}
+              disabled={bloqueado}
+              onChange={(event) => update({ placarManual: event.target.checked })}
+            />
+            {state.placarManual && (
+              <Grid>
+                <InputGlobal
+                  label={`Total ${sumula.casa}`}
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  value={state.placarCasa}
+                  disabled={bloqueado}
+                  onChange={(event) => update({ placarCasa: event.target.value })}
+                />
+                <InputGlobal
+                  label={`Total ${sumula.fora}`}
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  value={state.placarFora}
+                  disabled={bloqueado}
+                  onChange={(event) => update({ placarFora: event.target.value })}
+                />
+              </Grid>
+            )}
+          </>
+        )}
+
+        {state.modo === 'completa' && (
           <Teams>
-            <ScoreSheetTeamGlobal {...teamProps(jogo.time_casa_id, sumula.casa)} />
-            <ScoreSheetTeamGlobal {...teamProps(jogo.time_fora_id, sumula.fora)} />
+            <ScoreSheetTeamGlobal {...teamProps(jogo.time_casa_id, sumula.casa, state.placarCasa)} />
+            <ScoreSheetTeamGlobal {...teamProps(jogo.time_fora_id, sumula.fora, state.placarFora)} />
           </Teams>
         )}
 
         {state.modo === 'placar' && (
           <>
-            <Help>O placar conta na tabela e nas séries, mas não nos rankings. Estatísticas já lançadas são apagadas.</Help>
+            <Help>
+              O placar conta na tabela e nas séries, mas não nos rankings. Estatísticas já lançadas são apagadas.
+            </Help>
             <Grid>
               <InputGlobal
                 label={sumula.casa}
@@ -161,8 +203,8 @@ function SheetForm({ sumula, isMaster, saving, saveError, onSave }: ISheetFormPr
         {state.modo === 'wo' && (
           <>
             <Help>
-              Placar automático de {sumula.competicao.wo_placar_vencedor} x {sumula.competicao.wo_placar_perdedor} para o
-              time presente; W.O. duplo fica 0 x 0, sem vencedor. Sem estatísticas de jogadores.
+              Placar automático de {sumula.competicao.wo_placar_vencedor} x {sumula.competicao.wo_placar_perdedor} para
+              o time presente; W.O. duplo fica 0 x 0, sem vencedor. Sem estatísticas de jogadores.
             </Help>
             <SelectGlobal
               label="Quem faltou?"
@@ -186,7 +228,12 @@ function SheetForm({ sumula, isMaster, saving, saveError, onSave }: ISheetFormPr
         {saved && <AlertGlobal variant="success" message="Resultado salvo. Tabela e séries já foram atualizadas." />}
 
         <FormActionsGlobal>
-          <ButtonGlobal label="Salvar resultado" loading={saving} disabled={bloqueado || saving} onClick={() => void submit()} />
+          <ButtonGlobal
+            label="Salvar resultado"
+            loading={saving}
+            disabled={bloqueado || saving}
+            onClick={() => void submit()}
+          />
         </FormActionsGlobal>
       </Stack>
     </>
@@ -197,6 +244,22 @@ export function ScoreSheetScreen() {
   const { competitionId, gameId } = useRouteParams('competitionId', 'gameId');
   const { profile } = useAuth();
   const { sumula, isLoading, error, refetch, saveResult } = useScoreSheet(competitionId, gameId);
+  const navigate = useAppNavigate();
+  const confirm = useConfirm();
+
+  // Confirma, salva e volta para a lista de jogos com o aviso de sucesso.
+  const save = async (state: ISheetState) => {
+    const ok = await confirm({
+      message: `Salvar o resultado de ${sumula?.casa} x ${sumula?.fora}? A tabela e as séries serão atualizadas.`,
+    });
+    // Cancelar não é erro: interrompe sem marcar como salvo.
+    if (!ok) throw new Error('cancelado');
+    await saveResult.mutateAsync(buildResultInput(state));
+    const routeState: IGamesRouteState = {
+      notice: `Resultado salvo: ${sumula?.casa} x ${sumula?.fora}. Tabela e séries já foram atualizadas.`,
+    };
+    navigate(paths.competitionGames(competitionId), { state: routeState });
+  };
 
   const renderContent = () => {
     if (isLoading) return <LoaderGlobal label="Carregando súmula" />;
@@ -208,7 +271,7 @@ export function ScoreSheetScreen() {
         isMaster={profile?.papel === 'master'}
         saving={saveResult.isPending}
         saveError={saveResult.error}
-        onSave={(state) => saveResult.mutateAsync(buildResultInput(state))}
+        onSave={save}
       />
     );
   };
@@ -217,7 +280,9 @@ export function ScoreSheetScreen() {
     <>
       <PageHeaderGlobal
         title="Súmula"
-        actions={<LinkButtonGlobal to={paths.competitionGames(competitionId)} label="← Jogos" size="sm" variant="ghost" />}
+        actions={
+          <LinkButtonGlobal to={paths.competitionGames(competitionId)} label="← Jogos" size="sm" variant="ghost" />
+        }
       />
       {renderContent()}
     </>

@@ -15,40 +15,35 @@ const padrao: ICompeticaoPontuacao = {
 };
 
 describe('ScoringFormGlobal', () => {
-  it('applies the FIBA preset and saves', () => {
+  it('saves W.O. as present x 0, W.O. loss as a loss and the fixed criteria', () => {
     const onSave = vi.fn();
-    renderWithTheme(<ScoringFormGlobal initialValues={padrao} modalidade="basquete" onSave={onSave} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Usar padrão FIBA' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Salvar rascunho' }));
+    renderWithTheme(<ScoringFormGlobal initialValues={padrao} onSave={onSave} />);
+    fireEvent.change(screen.getByLabelText('Vitória'), { target: { value: '2' } });
+    fireEvent.change(screen.getByLabelText('Derrota'), { target: { value: '1' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar e continuar' }));
     expect(onSave).toHaveBeenCalledWith(
-      expect.objectContaining({ pontos_vitoria: 2, pontos_derrota: 1, pontos_derrota_wo: 0, wo_placar_vencedor: 20 }),
-      false,
+      expect.objectContaining({
+        pontos_vitoria: 2,
+        pontos_derrota: 1,
+        pontos_derrota_wo: 1,
+        wo_placar_vencedor: 20,
+        wo_placar_perdedor: 0,
+        criterios_desempate: ['saldo', 'confronto_direto'],
+      }),
+      true,
     );
   });
 
-  it('offers the futsal preset only for futsal and shows the draw field', () => {
-    const { unmount } = renderWithTheme(<ScoringFormGlobal initialValues={padrao} modalidade="basquete" onSave={() => {}} />);
-    expect(screen.queryByRole('button', { name: 'Usar padrão futsal' })).not.toBeInTheDocument();
-    unmount();
-    renderWithTheme(<ScoringFormGlobal initialValues={padrao} modalidade="futsal" onSave={() => {}} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Usar padrão futsal' }));
-    expect(screen.getByLabelText('Empate')).toHaveValue(1);
-    expect(screen.getByLabelText('Vitória')).toHaveValue(3);
-  });
-
-  it('adds a criterion and keeps the order', () => {
-    const onSave = vi.fn();
-    renderWithTheme(<ScoringFormGlobal initialValues={padrao} modalidade="basquete" onSave={onSave} />);
-    fireEvent.change(screen.getByLabelText('Adicionar critério'), { target: { value: 'vitorias' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Adicionar' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Subir Vitórias' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Salvar e continuar' }));
-    expect(onSave.mock.calls[0][0].criterios_desempate).toEqual(['confronto_direto', 'saldo', 'vitorias', 'pontos_pro']);
+  it('shows the draw field only when draws are allowed', () => {
+    renderWithTheme(<ScoringFormGlobal initialValues={padrao} onSave={() => {}} />);
+    expect(screen.queryByLabelText('Empate')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText(/Permite empate/));
+    expect(screen.getByLabelText('Empate')).toBeInTheDocument();
   });
 
   it('validates W.O. score', () => {
     const onSave = vi.fn();
-    renderWithTheme(<ScoringFormGlobal initialValues={padrao} modalidade="basquete" onSave={onSave} />);
+    renderWithTheme(<ScoringFormGlobal initialValues={padrao} onSave={onSave} />);
     fireEvent.change(screen.getByLabelText('Placar do time presente'), { target: { value: '0' } });
     fireEvent.click(screen.getByRole('button', { name: 'Salvar rascunho' }));
     expect(onSave).not.toHaveBeenCalled();
@@ -56,12 +51,12 @@ describe('ScoringFormGlobal', () => {
   });
 
   it('avisa que a tabela será recalculada', () => {
-    renderWithTheme(<ScoringFormGlobal initialValues={padrao} modalidade="basquete" warnRecalculation onSave={() => {}} />);
+    renderWithTheme(<ScoringFormGlobal initialValues={padrao} warnRecalculation onSave={() => {}} />);
     expect(screen.getByText(/tabela será recalculada/)).toBeInTheDocument();
   });
 
   it('disables everything when locked', () => {
-    renderWithTheme(<ScoringFormGlobal initialValues={padrao} modalidade="basquete" locked onSave={() => {}} />);
+    renderWithTheme(<ScoringFormGlobal initialValues={padrao} locked onSave={() => {}} />);
     expect(screen.getByLabelText('Vitória')).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Salvar rascunho' })).toBeDisabled();
   });

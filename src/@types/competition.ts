@@ -22,11 +22,13 @@ export type IJogador = Tables<'jogadores'>;
 export interface ITimeResumo extends ITime {
   dono: { nome: string } | null;
   jogadores: { count: number }[];
+  // Nomes do elenco, para a busca na lista de times.
+  elenco?: { nome: string; apelido: string | null }[];
 }
 
 export interface ITimeDetalhe extends ITime {
   dono: { nome: string } | null;
-  competicao: Pick<ICompeticao, 'id' | 'nome' | 'status' | 'modalidade'>;
+  competicao: Pick<ICompeticao, 'id' | 'nome' | 'slug' | 'status' | 'modalidade' | 'cobranca_modelo'>;
 }
 
 export interface ICompeticaoAdmin {
@@ -71,6 +73,13 @@ export interface ITimeInput {
   nome: string;
   sigla: string;
   dono_id: string | null;
+}
+
+// Login do dono criado junto com o time (senha provisória, trocada no primeiro acesso).
+export interface INovoDonoInput {
+  nome: string;
+  email: string;
+  senha: string;
 }
 
 export interface IJogadorInput {

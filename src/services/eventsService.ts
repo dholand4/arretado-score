@@ -37,6 +37,7 @@ export const eventsService = {
       p_intervalo_min: input.intervalo_min,
       p_observacoes: input.observacoes,
       p_permitir_duplo: permitirDuplo,
+      ...(input.times && { p_times: input.times }),
     });
     if (error) throw error;
     return data as unknown as IMontagemEvento;

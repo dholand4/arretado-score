@@ -10,6 +10,14 @@ export interface IGameFilters {
   status: StatusJogo | '';
 }
 
+// Fase que a tela de jogos abre: a que está em andamento; com tudo encerrado, a última concluída.
+export function currentPhaseId(fases: { id: string; ordem: number; status: string }[]): string {
+  const ordenadas = [...fases].sort((a, b) => a.ordem - b.ordem);
+  const emAndamento = ordenadas.find((fase) => fase.status === 'em_andamento');
+  const ultimaConcluida = ordenadas.filter((fase) => fase.status === 'concluida').at(-1);
+  return emAndamento?.id ?? ultimaConcluida?.id ?? '';
+}
+
 export function filterGames(jogos: IJogoLista[], { faseId, timeId, status }: IGameFilters): IJogoLista[] {
   return jogos.filter(
     (jogo) =>
@@ -19,12 +27,13 @@ export function filterGames(jogos: IJogoLista[], { faseId, timeId, status }: IGa
   );
 }
 
+// Pendente amarelo, agendado verde, encerrado vermelho; W.O. e cancelado sem destaque.
 const STATUS_TONE: Record<StatusJogo, BadgeTone> = {
-  pendente: 'neutral',
-  agendado: 'info',
-  encerrado: 'success',
-  wo: 'warning',
-  cancelado: 'danger',
+  pendente: 'warning',
+  agendado: 'success',
+  encerrado: 'danger',
+  wo: 'neutral',
+  cancelado: 'neutral',
 };
 
 export function gameStatus(status: StatusJogo) {

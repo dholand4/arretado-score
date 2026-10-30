@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import styled, { css } from 'styled-components';
 
-const card = css`
+const card = css<{ $inactive?: boolean }>`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm + theme.spacing.xs}px;
@@ -12,9 +12,10 @@ const card = css`
   box-shadow: ${({ theme }) => theme.shadows.sm};
   color: ${({ theme }) => theme.colors.text};
   text-decoration: none;
+  opacity: ${({ $inactive }) => ($inactive ? 0.65 : 1)};
 `;
 
-export const CardLink = styled(Link)`
+export const CardLink = styled(Link)<{ $inactive?: boolean }>`
   ${card}
   transition: border-color ${({ theme }) => theme.transition.fast};
 
@@ -23,7 +24,7 @@ export const CardLink = styled(Link)`
   }
 `;
 
-export const CardBox = styled.div`
+export const CardBox = styled.div<{ $inactive?: boolean }>`
   ${card}
 `;
 

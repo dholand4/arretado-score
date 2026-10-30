@@ -10,3 +10,12 @@ export function initials(name: string): string {
 export function pluralize(count: number, singular: string, plural: string): string {
   return `${count} ${count === 1 ? singular : plural}`;
 }
+
+// Busca sem diferenciar maiúsculas nem acentos ("joao" encontra "João").
+const normalize = (text: string) => text.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
+
+export function matchesSearch(query: string, ...texts: (string | null | undefined)[]): boolean {
+  const termo = normalize(query);
+  if (!termo) return true;
+  return texts.some((text) => text && normalize(text).includes(termo));
+}

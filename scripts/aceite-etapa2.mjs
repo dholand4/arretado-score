@@ -15,7 +15,7 @@ if (!/127\.0\.0\.1|localhost/.test(URL_)) throw new Error('Este script só roda 
 
 // Usuários do supabase/seed.sql
 const MASTER = { email: 'master@torneiomais.local', password: 'Master@123' };
-const ADMIN = { email: 'admin@torneiomais.local', password: 'Admin@1234' };
+const ADMIN = { email: 'admin@torneiomais.local', password: 'Admin@1234', id: '22222222-2222-2222-2222-222222222222' };
 const OUTRO_ADMIN = { email: 'outro.admin@torneiomais.local', password: 'Admin@1234', id: '33333333-3333-3333-3333-333333333333' };
 const DONO = { email: 'dono2@torneiomais.local', password: 'Dono@12345', id: '55555555-5555-5555-5555-555555555555' };
 const DONO_SEED = { email: 'dono@torneiomais.local', password: 'Dono@12345' };
@@ -49,21 +49,26 @@ const outro = await login(OUTRO_ADMIN);
 const dono = await login(DONO);
 const donoSeed = await login(DONO_SEED);
 
-// ------------------------------------------------------------- admin cria competição
-console.log('\n— admin cria a competição');
-const { data: cid, error: criarErr } = await admin.rpc('criar_competicao', {
+// ------------------------------------------------------------- master cria a liga e entrega ao admin
+console.log('\n— master cria a competição para o admin');
+ok(
+  (await admin.rpc('criar_competicao', { p_nome: 'x', p_slug: `admin-x-${stamp}`, p_modalidade: 'basquete' })).error,
+  'admin comum não cria liga',
+);
+const { data: cid, error: criarErr } = await master.rpc('criar_competicao', {
   p_nome: `Copa Aceite ${stamp}`,
   p_slug: `copa-aceite-${stamp}`,
   p_modalidade: 'basquete',
   p_local_padrao: 'Quadra Central',
 });
-ok(!criarErr && cid, 'admin cria competição pela RPC');
+ok(!criarErr && cid, 'master cria competição pela RPC');
+ok(!(await master.from('competicao_admins').insert({ competicao_id: cid, user_id: ADMIN.id })).error, 'master define o admin da liga');
 {
   const { data: cats } = await admin.from('categorias_estatistica').select('*').eq('competicao_id', cid);
   const placar = cats.find((c) => c.soma_no_placar);
   ok(cats.length === 1 && placar?.sigla === 'PTS' && placar.titulo_ranking === 'Cestinha', 'categoria de placar "Pontos/Cestinha" criada automaticamente');
   const { data: admins } = await admin.from('competicao_admins').select('user_id').eq('competicao_id', cid);
-  ok(admins.length === 1, 'criador entra automaticamente como admin');
+  ok(admins.length === 2, 'master (criador) e o admin escolhido administram a liga');
 
   const up = await upload(admin, 'logos', `${cid}/competicao/${cid}.png`);
   ok(!up.error, 'admin envia o logo da competição');

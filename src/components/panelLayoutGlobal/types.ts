@@ -7,11 +7,20 @@ export interface IPanelNavItem {
   end?: boolean;
 }
 
+// Grupo do menu lateral; `title` aparece acima dos itens (ex.: nome da competição).
+export interface IPanelNavSection {
+  key: string;
+  title?: string;
+  // Link discreto acima do título (ex.: voltar para a lista de competições).
+  back?: IPanelNavItem;
+  items: IPanelNavItem[];
+}
+
 export interface IPanelLayoutProps {
   children: ReactNode;
   userName: string;
   roleLabel: string;
-  navItems: IPanelNavItem[];
+  sections: IPanelNavSection[];
   onSignOut: () => void;
   signingOut?: boolean;
 }

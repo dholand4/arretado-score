@@ -36,19 +36,20 @@ describe('TeamsScreen', () => {
   it('lists teams with dono and player count', () => {
     renderScreenAt();
     expect(screen.getByRole('link', { name: /Tubarões/ })).toHaveAttribute('href', '/painel/competicoes/c1/times/t1');
-    expect(screen.getByText('8 jogadores · Dono: Davi')).toBeInTheDocument();
-    expect(screen.getByText('0 jogadores · Sem dono vinculado')).toBeInTheDocument();
+    expect(screen.getByText('8 jogadores · Equipe: Davi')).toBeInTheDocument();
+    expect(screen.getByText('0 jogadores · Sem acesso de equipe')).toBeInTheDocument();
   });
 
-  it('creates a team linked to a dono', () => {
+  it('creates a team linked to an existing equipe', () => {
     renderScreenAt();
     fireEvent.click(screen.getByRole('button', { name: 'Novo time' }));
     const dialog = screen.getByRole('dialog', { name: 'Novo time' });
     fireEvent.change(within(dialog).getByLabelText('Nome do time'), { target: { value: 'Leões' } });
-    fireEvent.change(within(dialog).getByLabelText('Dono do time'), { target: { value: 'd1' } });
+    fireEvent.click(within(dialog).getByRole('radio', { name: 'Equipe já cadastrada' }));
+    fireEvent.change(within(dialog).getByLabelText('Equipe'), { target: { value: 'd1' } });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Salvar' }));
     expect(createTeam.mutate).toHaveBeenCalledWith(
-      { input: { nome: 'Leões', sigla: '', dono_id: 'd1' }, logo: { kind: 'keep' } },
+      { input: { nome: 'Leões', sigla: '', dono_id: 'd1' }, logo: { kind: 'keep' }, novoDono: undefined },
       expect.any(Object),
     );
   });

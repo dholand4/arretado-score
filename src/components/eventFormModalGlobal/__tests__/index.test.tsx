@@ -9,6 +9,7 @@ const initial = {
   qtd_jogos: 2,
   intervalo_min: 90,
   observacoes: '',
+  times: null,
 };
 
 describe('EventFormModalGlobal', () => {

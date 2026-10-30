@@ -3,33 +3,34 @@ import { renderWithRouter } from '@/utils/testUtils';
 import { PanelLayoutGlobal } from '..';
 
 const props = {
-  userName: 'Ana',
-  roleLabel: 'Admin master',
-  navItems: [
-    { to: '/painel' as const, label: 'Início', end: true },
-    { to: '/painel/usuarios' as const, label: 'Usuários' },
+  userName: 'Ana Souza',
+  roleLabel: 'Admin',
+  sections: [
+    { key: 'geral', items: [{ to: '/painel/competicoes' as const, label: 'Competições' }] },
+    {
+      key: 'liga',
+      title: 'Liga',
+      items: [{ to: '/painel/competicoes/c1/times' as const, label: 'Times' }],
+    },
   ],
 };
 
 describe('PanelLayoutGlobal', () => {
-  it('renders user info, nav items and content', () => {
+  it('welcomes the user and renders sections and content', () => {
     renderWithRouter(
       <PanelLayoutGlobal {...props} onSignOut={() => {}}>
         <p>Conteúdo</p>
       </PanelLayoutGlobal>,
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Abrir menu' }));
-    expect(screen.getByText('Ana')).toBeInTheDocument();
-    expect(screen.getByText('Admin master')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Usuários' })).toHaveAttribute('href', '/painel/usuarios');
+    expect(screen.getAllByText('Bem-vindo, Ana!').length).toBeGreaterThan(0);
+    expect(screen.getByText('Liga')).toBeInTheDocument();
     expect(screen.getByText('Conteúdo')).toBeInTheDocument();
   });
 
   it('calls onSignOut', () => {
     const fn = vi.fn();
     renderWithRouter(<PanelLayoutGlobal {...props} onSignOut={fn}>x</PanelLayoutGlobal>);
-    fireEvent.click(screen.getByRole('button', { name: 'Abrir menu' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Sair' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Sair', hidden: true }));
     expect(fn).toHaveBeenCalledTimes(1);
   });
 

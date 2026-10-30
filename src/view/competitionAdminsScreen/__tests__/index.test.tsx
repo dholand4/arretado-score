@@ -35,7 +35,7 @@ describe('CompetitionAdminsScreen', () => {
     );
     expect(screen.getByText('Ana')).toBeInTheDocument();
     expect(screen.queryByRole('option', { name: 'Ana' })).not.toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText('Adicionar admin'), { target: { value: 'a2' } });
+    fireEvent.change(screen.getByLabelText('Adicionar coordenador'), { target: { value: 'a2' } });
     fireEvent.click(screen.getByRole('button', { name: 'Adicionar' }));
     expect(addAdmin.mutate).toHaveBeenCalledWith('a2', expect.any(Object));
     fireEvent.click(screen.getByRole('button', { name: 'Remover' }));

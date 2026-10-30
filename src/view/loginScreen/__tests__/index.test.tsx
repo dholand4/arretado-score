@@ -31,6 +31,13 @@ describe('LoginScreen', () => {
     expect(signIn).not.toHaveBeenCalled();
   });
 
+  it('accepts an e-mail without a dot in the domain', async () => {
+    signIn.mockResolvedValue(undefined);
+    renderScreen(<LoginScreen />);
+    fill('admin@admin', 'adminadmin');
+    await waitFor(() => expect(signIn).toHaveBeenCalledWith({ email: 'admin@admin', password: 'adminadmin' }));
+  });
+
   it('calls signIn with credentials', async () => {
     signIn.mockResolvedValue(undefined);
     renderScreen(<LoginScreen />);

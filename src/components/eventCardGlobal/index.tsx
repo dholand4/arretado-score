@@ -31,6 +31,11 @@ export function EventCardGlobal({ event, busy = false, onReorder, onRemoveGame, 
         {event.jogos.length !== event.qtd_jogos && ` (pedido: ${event.qtd_jogos})`}
       </Meta>
       {event.observacoes && <Meta>{event.observacoes}</Meta>}
+      {duplos.size > 0 && (
+        <Meta>
+          A ordem se ajusta aos resultados: a cada jogo encerrado, quem perdeu joga em seguida e quem venceu descansa.
+        </Meta>
+      )}
 
       {event.jogos.length === 0 && <Meta>Nenhum jogo neste dia. Use “Sortear de novo” para montar.</Meta>}
       {draft && event.jogos.length > 0 && (

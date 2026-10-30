@@ -25,14 +25,14 @@ export type Database = {
           Tables: {
             "ajustes_classificacao": {
                   Row: {
-                    "atualizado_em": string,"fase_id": string,"grupo_id": string | null,"prioridade": number,"registrado_por": string,"time_id": string
+                    "atualizado_em": string,"created_at": string,"fase_id": string,"grupo_id": string | null,"id": string,"prioridade": number,"registrado_por": string,"time_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "atualizado_em"?: string,"fase_id": string,"grupo_id"?: string | null,"prioridade": number,"registrado_por": string,"time_id": string
+                    "atualizado_em"?: string,"created_at"?: string,"fase_id": string,"grupo_id"?: string | null,"id"?: string,"prioridade": number,"registrado_por": string,"time_id": string
                   }
                   Update: {
-                    "atualizado_em"?: string,"fase_id"?: string,"grupo_id"?: string | null,"prioridade"?: number,"registrado_por"?: string,"time_id"?: string
+                    "atualizado_em"?: string,"created_at"?: string,"fase_id"?: string,"grupo_id"?: string | null,"id"?: string,"prioridade"?: number,"registrado_por"?: string,"time_id"?: string
                   }
                   Relationships: [
                     {
@@ -185,14 +185,14 @@ isOneToOne: false
                   ]
                 },"competicoes": {
                   Row: {
-                    "cobranca_dia_vencimento": number | null,"cobranca_mes_inicio": string | null,"cobranca_modelo": string,"cobranca_qtd_meses": number | null,"cobranca_valor": number | null,"created_at": string,"criado_por": string | null,"criterios_desempate": NonNullable<Json>,"descricao": string | null,"estrutura_travada": boolean,"id": string,"intervalo_jogos_min": number,"local_padrao": string | null,"logo_url": string | null,"modalidade": string,"nome": string,"permite_empate": boolean,"pontos_derrota": number,"pontos_derrota_wo": number,"pontos_empate": number,"pontos_vitoria": number,"slug": string,"status": string,"wo_placar_perdedor": number,"wo_placar_vencedor": number
+                    "ativa": boolean,"cobranca_dia_vencimento": number | null,"cobranca_mes_inicio": string | null,"cobranca_modelo": string,"cobranca_qtd_meses": number | null,"cobranca_valor": number | null,"created_at": string,"criado_por": string | null,"criterios_desempate": NonNullable<Json>,"descricao": string | null,"estrutura_travada": boolean,"id": string,"intervalo_jogos_min": number,"local_padrao": string | null,"logo_url": string | null,"modalidade": string,"nome": string,"permite_empate": boolean,"pontos_derrota": number,"pontos_derrota_wo": number,"pontos_empate": number,"pontos_vitoria": number,"slug": string,"status": string,"wo_placar_perdedor": number,"wo_placar_vencedor": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "cobranca_dia_vencimento"?: number | null,"cobranca_mes_inicio"?: string | null,"cobranca_modelo"?: string,"cobranca_qtd_meses"?: number | null,"cobranca_valor"?: number | null,"created_at"?: string,"criado_por"?: string | null,"criterios_desempate"?: NonNullable<Json>,"descricao"?: string | null,"estrutura_travada"?: boolean,"id"?: string,"intervalo_jogos_min"?: number,"local_padrao"?: string | null,"logo_url"?: string | null,"modalidade": string,"nome": string,"permite_empate"?: boolean,"pontos_derrota"?: number,"pontos_derrota_wo"?: number,"pontos_empate"?: number,"pontos_vitoria"?: number,"slug": string,"status"?: string,"wo_placar_perdedor"?: number,"wo_placar_vencedor"?: number
+                    "ativa"?: boolean,"cobranca_dia_vencimento"?: number | null,"cobranca_mes_inicio"?: string | null,"cobranca_modelo"?: string,"cobranca_qtd_meses"?: number | null,"cobranca_valor"?: number | null,"created_at"?: string,"criado_por"?: string | null,"criterios_desempate"?: NonNullable<Json>,"descricao"?: string | null,"estrutura_travada"?: boolean,"id"?: string,"intervalo_jogos_min"?: number,"local_padrao"?: string | null,"logo_url"?: string | null,"modalidade": string,"nome": string,"permite_empate"?: boolean,"pontos_derrota"?: number,"pontos_derrota_wo"?: number,"pontos_empate"?: number,"pontos_vitoria"?: number,"slug": string,"status"?: string,"wo_placar_perdedor"?: number,"wo_placar_vencedor"?: number
                   }
                   Update: {
-                    "cobranca_dia_vencimento"?: number | null,"cobranca_mes_inicio"?: string | null,"cobranca_modelo"?: string,"cobranca_qtd_meses"?: number | null,"cobranca_valor"?: number | null,"created_at"?: string,"criado_por"?: string | null,"criterios_desempate"?: NonNullable<Json>,"descricao"?: string | null,"estrutura_travada"?: boolean,"id"?: string,"intervalo_jogos_min"?: number,"local_padrao"?: string | null,"logo_url"?: string | null,"modalidade"?: string,"nome"?: string,"permite_empate"?: boolean,"pontos_derrota"?: number,"pontos_derrota_wo"?: number,"pontos_empate"?: number,"pontos_vitoria"?: number,"slug"?: string,"status"?: string,"wo_placar_perdedor"?: number,"wo_placar_vencedor"?: number
+                    "ativa"?: boolean,"cobranca_dia_vencimento"?: number | null,"cobranca_mes_inicio"?: string | null,"cobranca_modelo"?: string,"cobranca_qtd_meses"?: number | null,"cobranca_valor"?: number | null,"created_at"?: string,"criado_por"?: string | null,"criterios_desempate"?: NonNullable<Json>,"descricao"?: string | null,"estrutura_travada"?: boolean,"id"?: string,"intervalo_jogos_min"?: number,"local_padrao"?: string | null,"logo_url"?: string | null,"modalidade"?: string,"nome"?: string,"permite_empate"?: boolean,"pontos_derrota"?: number,"pontos_derrota_wo"?: number,"pontos_empate"?: number,"pontos_vitoria"?: number,"slug"?: string,"status"?: string,"wo_placar_perdedor"?: number,"wo_placar_vencedor"?: number
                   }
                   Relationships: [
                     {
@@ -205,14 +205,14 @@ isOneToOne: false
                   ]
                 },"eventos": {
                   Row: {
-                    "competicao_id": string,"created_at": string,"data": string,"hora_inicio": string,"id": string,"intervalo_min": number,"local": string,"observacoes": string | null,"qtd_jogos": number,"status": string
+                    "competicao_id": string,"created_at": string,"data": string,"hora_inicio": string,"id": string,"intervalo_min": number,"local": string,"observacoes": string | null,"qtd_jogos": number,"status": string,"times_disponiveis": (string)[] | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "competicao_id": string,"created_at"?: string,"data": string,"hora_inicio": string,"id"?: string,"intervalo_min": number,"local": string,"observacoes"?: string | null,"qtd_jogos": number,"status"?: string
+                    "competicao_id": string,"created_at"?: string,"data": string,"hora_inicio": string,"id"?: string,"intervalo_min": number,"local": string,"observacoes"?: string | null,"qtd_jogos": number,"status"?: string,"times_disponiveis"?: (string)[] | null
                   }
                   Update: {
-                    "competicao_id"?: string,"created_at"?: string,"data"?: string,"hora_inicio"?: string,"id"?: string,"intervalo_min"?: number,"local"?: string,"observacoes"?: string | null,"qtd_jogos"?: number,"status"?: string
+                    "competicao_id"?: string,"created_at"?: string,"data"?: string,"hora_inicio"?: string,"id"?: string,"intervalo_min"?: number,"local"?: string,"observacoes"?: string | null,"qtd_jogos"?: number,"status"?: string,"times_disponiveis"?: (string)[] | null
                   }
                   Relationships: [
                     {
@@ -225,14 +225,14 @@ isOneToOne: false
                   ]
                 },"fases": {
                   Row: {
-                    "classificam": number | null,"competicao_id": string,"created_at": string,"cruzamento": string | null,"disputa_terceiro": boolean,"entrada": Json | null,"id": string,"melhor_de": number,"melhores_extras": number,"nome": string,"ordem": number,"qtd_grupos": number | null,"sorteio_grupos": string,"status": string,"tipo": string,"turnos": number
+                    "classificam": number | null,"competicao_id": string,"created_at": string,"cruzamento": string | null,"disputa_terceiro": boolean,"entrada": Json | null,"id": string,"melhor_de": number,"melhor_de_terceiro": number | null,"melhores_extras": number,"nome": string,"ordem": number,"qtd_grupos": number | null,"sorteio_grupos": string,"status": string,"tipo": string,"turnos": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "classificam"?: number | null,"competicao_id": string,"created_at"?: string,"cruzamento"?: string | null,"disputa_terceiro"?: boolean,"entrada"?: Json | null,"id"?: string,"melhor_de"?: number,"melhores_extras"?: number,"nome": string,"ordem": number,"qtd_grupos"?: number | null,"sorteio_grupos"?: string,"status"?: string,"tipo": string,"turnos"?: number
+                    "classificam"?: number | null,"competicao_id": string,"created_at"?: string,"cruzamento"?: string | null,"disputa_terceiro"?: boolean,"entrada"?: Json | null,"id"?: string,"melhor_de"?: number,"melhor_de_terceiro"?: number | null,"melhores_extras"?: number,"nome": string,"ordem": number,"qtd_grupos"?: number | null,"sorteio_grupos"?: string,"status"?: string,"tipo": string,"turnos"?: number
                   }
                   Update: {
-                    "classificam"?: number | null,"competicao_id"?: string,"created_at"?: string,"cruzamento"?: string | null,"disputa_terceiro"?: boolean,"entrada"?: Json | null,"id"?: string,"melhor_de"?: number,"melhores_extras"?: number,"nome"?: string,"ordem"?: number,"qtd_grupos"?: number | null,"sorteio_grupos"?: string,"status"?: string,"tipo"?: string,"turnos"?: number
+                    "classificam"?: number | null,"competicao_id"?: string,"created_at"?: string,"cruzamento"?: string | null,"disputa_terceiro"?: boolean,"entrada"?: Json | null,"id"?: string,"melhor_de"?: number,"melhor_de_terceiro"?: number | null,"melhores_extras"?: number,"nome"?: string,"ordem"?: number,"qtd_grupos"?: number | null,"sorteio_grupos"?: string,"status"?: string,"tipo"?: string,"turnos"?: number
                   }
                   Relationships: [
                     {
@@ -437,17 +437,23 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "ativo": boolean,"created_at": string,"id": string,"nome": string,"papel": string,"precisa_trocar_senha": boolean
+                    "ativo": boolean,"created_at": string,"criado_por": string | null,"id": string,"nome": string,"papel": string,"precisa_trocar_senha": boolean
                   }
                   ComputedFields: never
                   Insert: {
-                    "ativo"?: boolean,"created_at"?: string,"id": string,"nome": string,"papel": string,"precisa_trocar_senha"?: boolean
+                    "ativo"?: boolean,"created_at"?: string,"criado_por"?: string | null,"id": string,"nome": string,"papel": string,"precisa_trocar_senha"?: boolean
                   }
                   Update: {
-                    "ativo"?: boolean,"created_at"?: string,"id"?: string,"nome"?: string,"papel"?: string,"precisa_trocar_senha"?: boolean
+                    "ativo"?: boolean,"created_at"?: string,"criado_por"?: string | null,"id"?: string,"nome"?: string,"papel"?: string,"precisa_trocar_senha"?: boolean
                   }
                   Relationships: [
-                    
+                    {
+      foreignKeyName: "profiles_criado_por_fkey"
+      columns: ["criado_por"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
                   ]
                 },"series": {
                   Row: {
@@ -609,6 +615,11 @@ isOneToOne: false
 "ajustar_classificacao":
 { Args: { "p_fase_id": string,"p_grupo_id"?: string,"p_prioridade"?: number,"p_time_id"?: string }; Returns: undefined
                            },
+"campanha_do_time":
+{ Args: { "p_antes": number,"p_competicao": string,"p_time": string }; Returns: {
+              "aproveitamento": number,"nome": string,"ordem_fase": number,"pf": number,"posicao": number,"pts": number,"saldo": number,"time_id": string
+            }[]
+                           },
 "categoria_placar_padrao":
 { Args: { "modalidade": string }; Returns: {
               "nome": string,"sigla": string,"titulo_ranking": string
@@ -628,6 +639,9 @@ isOneToOne: false
 "competicao_do_jogo":
 { Args: { "p_jogo_id": string }; Returns: string
                            },
+"competicao_do_registro":
+{ Args: { "p_registro": Json }; Returns: string
+                           },
 "competicao_publica":
 { Args: { "p_competicao_id": string }; Returns: boolean
                            },
@@ -635,13 +649,16 @@ isOneToOne: false
 { Args: { "p_descricao"?: string,"p_intervalo_jogos_min"?: number,"p_local_padrao"?: string,"p_modalidade": string,"p_nome": string,"p_slug": string }; Returns: string
                            },
 "criar_evento":
-{ Args: { "p_competicao_id": string,"p_data": string,"p_hora_inicio": string,"p_intervalo_min": number,"p_local": string,"p_observacoes"?: string,"p_permitir_duplo"?: boolean,"p_qtd_jogos": number }; Returns: Json
+{ Args: { "p_competicao_id": string,"p_data": string,"p_hora_inicio": string,"p_intervalo_min": number,"p_local": string,"p_observacoes"?: string,"p_permitir_duplo"?: boolean,"p_qtd_jogos": number,"p_times"?: (string)[] }; Returns: Json
                            },
 "criar_jogos_rodizio":
 { Args: { "p_fase_id": string,"p_grupo_id": string,"p_times": (string)[],"p_turnos": number }; Returns: number
                            },
 "criterios_desempate_validos":
 { Args: { "criterios": Json }; Returns: boolean
+                           },
+"definir_liga_ativa":
+{ Args: { "p_ativa": boolean,"p_competicao_id": string }; Returns: undefined
                            },
 "desempatar_grupo":
 { Args: { "p_fase": string,"p_grupo": string,"p_indice": number,"p_times": (string)[] }; Returns: {
@@ -651,16 +668,8 @@ isOneToOne: false
 "distribuir_grupos":
 { Args: { "p_distribuicao": Json,"p_fase_id": string,"p_times": (string)[] }; Returns: undefined
                            },
-"etapa5_campanha":
-{ Args: { "p_antes": number,"p_competicao": string,"p_time": string }; Returns: {
-              "aproveitamento": number,"nome": string,"ordem_fase": number,"pf": number,"posicao": number,"pts": number,"saldo": number,"time_id": string
-            }[]
-                           },
-"etapa5_gerar_jogos_proxima_fase":
-{ Args: { "p_fase_id": string,"p_times": (string)[] }; Returns: undefined
-                           },
-"etapa5_origem":
-{ Args: { "p_competicao": string,"p_origem": Json }; Returns: string
+"equipe_visivel_ao_coordenador":
+{ Args: { "p_equipe_id": string }; Returns: boolean
                            },
 "evento_para_editar":
 { Args: { "p_evento_id": string,"p_exige_rascunho": boolean }; Returns: {
@@ -673,7 +682,8 @@ isOneToOne: false
 "local": string,
 "observacoes": string | null,
 "qtd_jogos": number,
-"status": string
+"status": string,
+"times_disponiveis": (string)[] | null
             }
                           SetofOptions: {
         from: "*"
@@ -687,11 +697,20 @@ isOneToOne: false
 "excluir_evento":
 { Args: { "p_evento_id": string }; Returns: number
                            },
+"gerar_cobrancas":
+{ Args: { "p_competicao_id": string }; Returns: number
+                           },
 "gerar_jogos_da_fase":
 { Args: { "p_fase_id": string,"p_times": (string)[] }; Returns: number
                            },
 "gerar_jogos_fase":
 { Args: { "p_fase_id": string,"p_times"?: (string)[] }; Returns: number
+                           },
+"gerar_jogos_proxima_fase":
+{ Args: { "p_fase_id": string,"p_times": (string)[] }; Returns: undefined
+                           },
+"gerar_pagamentos_elenco":
+{ Args: { "p_referencia": string,"p_time_id": string,"p_valor": number }; Returns: number
                            },
 "ids_da_selecao":
 { Args: { "p_selecao": Json }; Returns: (string)[]
@@ -825,6 +844,9 @@ isOneToOne: false
 "reordenar_evento":
 { Args: { "p_evento_id": string,"p_jogos": (string)[] }; Returns: undefined
                            },
+"resolver_origem_serie":
+{ Args: { "p_competicao": string,"p_origem": Json }; Returns: string
+                           },
 "rodizio":
 { Args: { "p_n": number,"p_turnos"?: number }; Returns: {
               "casa": number,"fora": number,"rodada": number
@@ -834,10 +856,10 @@ isOneToOne: false
 { Args: { "p_competicao_id": string,"p_fases": Json }; Returns: undefined
                            },
 "selecionar_jogos_evento":
-{ Args: { "p_competicao_id": string,"p_evento_id"?: string,"p_permitir_duplo": boolean,"p_qtd": number }; Returns: Json
+{ Args: { "p_competicao_id": string,"p_evento_id"?: string,"p_permitir_duplo": boolean,"p_qtd": number,"p_times"?: (string)[] }; Returns: Json
                            },
 "sortear_evento":
-{ Args: { "p_evento_id": string,"p_permitir_duplo"?: boolean,"p_qtd_jogos"?: number }; Returns: Json
+{ Args: { "p_evento_id": string,"p_permitir_duplo"?: boolean,"p_qtd_jogos"?: number,"p_times"?: (string)[] }; Returns: Json
                            },
 "sortear_grupos":
 { Args: { "p_distribuicao"?: Json,"p_fase_id": string }; Returns: number
@@ -850,6 +872,9 @@ isOneToOne: false
                            },
 "validar_config_grupos":
 { Args: { "p_classificam": number,"p_melhores_extras": number,"p_qtd_grupos": number,"p_times": number }; Returns: string
+                           },
+"validar_times_do_dia":
+{ Args: { "p_competicao_id": string,"p_times": (string)[] }; Returns: undefined
                            }
           }
           Enums: {

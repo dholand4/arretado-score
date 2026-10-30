@@ -12,6 +12,7 @@ export function useEvents(competicaoId: string) {
     void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.events(competicaoId) });
     void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.eventCandidates(competicaoId) });
     void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.gamesProgress(competicaoId) });
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.games(competicaoId) });
   };
 
   const createEvent = useMutation({

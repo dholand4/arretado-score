@@ -21,7 +21,7 @@ export function MyTeamsScreen() {
       return (
         <EmptyStateGlobal
           title="Nenhum time vinculado"
-          description="Quando o admin da competição vincular você a um time, ele aparece aqui."
+          description="Quando o coordenador da liga vincular você a um time, ele aparece aqui."
         />
       );
     }
@@ -29,7 +29,7 @@ export function MyTeamsScreen() {
       <List aria-label="Meus times">
         {teams.map((team) => (
           <li key={team.id}>
-            <TeamLink to={paths.myTeam(team.id)}>
+            <TeamLink to={paths.myTeamHome(team.id)}>
               <AvatarGlobal name={team.nome} src={team.logo_url} shape="square" />
               <Texts>
                 <Name>
@@ -50,7 +50,7 @@ export function MyTeamsScreen() {
 
   return (
     <>
-      <PageHeaderGlobal title="Meus times" subtitle="Mantenha o elenco atualizado: nome, número e foto." />
+      <PageHeaderGlobal title="Meus times" subtitle="Acompanhe os jogos da liga e mantenha o elenco atualizado." />
       {renderContent()}
     </>
   );

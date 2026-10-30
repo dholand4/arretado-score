@@ -1,4 +1,5 @@
 // Edge Function admin-users — gestão de usuários pelo admin master (seção 7 da spec).
+// O admin de liga também pode criar usuários, mas só com o papel dono_time (para o time dele).
 // Usa a chave service_role, que só existe aqui dentro.
 //
 // POST { action: 'create', nome, email, senha, papel }
@@ -78,7 +79,13 @@ function getServiceRoleKey(): string {
   throw new Error('Chave service_role não configurada.');
 }
 
-async function exigirMaster(admin: SupabaseClient, req: Request): Promise<string> {
+interface IChamador {
+  id: string;
+  papel: 'master' | 'admin';
+}
+
+// Master gerencia todos os usuários; o admin de liga só cadastra donos de time.
+async function exigirGestor(admin: SupabaseClient, req: Request): Promise<IChamador> {
   const token = req.headers.get('Authorization')?.replace(/^Bearer\s+/i, '');
   if (!token) throw new HttpError(401, 'Sessão não informada.');
 
@@ -91,17 +98,24 @@ async function exigirMaster(admin: SupabaseClient, req: Request): Promise<string
     .eq('id', userData.user.id)
     .maybeSingle();
   if (error) throw error;
-  if (!perfil || perfil.papel !== 'master' || !perfil.ativo) {
-    throw new HttpError(403, 'Apenas o admin master pode gerenciar usuários.');
+  if (!perfil || !perfil.ativo || (perfil.papel !== 'master' && perfil.papel !== 'admin')) {
+    throw new HttpError(403, 'Apenas o Admin pode gerenciar usuários.');
   }
-  return userData.user.id;
+  return { id: userData.user.id, papel: perfil.papel };
 }
 
-async function criarUsuario(admin: SupabaseClient, body: Record<string, unknown>) {
+function exigirMaster(chamador: IChamador) {
+  if (chamador.papel !== 'master') throw new HttpError(403, 'Apenas o Admin pode gerenciar usuários.');
+}
+
+async function criarUsuario(admin: SupabaseClient, body: Record<string, unknown>, chamador: IChamador) {
   const nome = texto(body, 'nome', true);
   const email = texto(body, 'email', true).toLowerCase();
   const senha = texto(body, 'senha', true);
   const papel = validarPapel(texto(body, 'papel', true));
+  if (chamador.papel !== 'master' && papel !== 'dono_time') {
+    throw new HttpError(403, 'O coordenador só pode cadastrar acessos de equipe.');
+  }
   validarEmail(email);
   validarSenha(senha);
 
@@ -122,7 +136,8 @@ async function criarUsuario(admin: SupabaseClient, body: Record<string, unknown>
   // O trigger on_auth_user_created criou o profile; aqui definimos nome e papel reais.
   const { data: perfil, error: perfilError } = await admin
     .from('profiles')
-    .update({ nome, papel, ativo: true, precisa_trocar_senha: true })
+    // criado_por separa as equipes por coordenador (cada um só vê as que cadastrou).
+    .update({ nome, papel, ativo: true, precisa_trocar_senha: true, criado_por: chamador.id })
     .eq('id', data.user.id)
     .select()
     .single();
@@ -202,17 +217,19 @@ Deno.serve(async (req) => {
     const admin = createClient(Deno.env.get('SUPABASE_URL') ?? '', getServiceRoleKey(), {
       auth: { autoRefreshToken: false, persistSession: false },
     });
-    const masterId = await exigirMaster(admin, req);
+    const chamador = await exigirGestor(admin, req);
 
     const body: unknown = await req.json().catch(() => null);
     if (!isRecord(body)) throw new HttpError(400, 'Corpo da requisição inválido.');
 
     switch (body.action) {
       case 'create':
-        return json(201, { data: await criarUsuario(admin, body) });
+        return json(201, { data: await criarUsuario(admin, body, chamador) });
       case 'update':
-        return json(200, { data: await atualizarUsuario(admin, body, masterId) });
+        exigirMaster(chamador);
+        return json(200, { data: await atualizarUsuario(admin, body, chamador.id) });
       case 'reset_password':
+        exigirMaster(chamador);
         return json(200, { data: await redefinirSenha(admin, body) });
       default:
         throw new HttpError(400, 'Ação inválida.');

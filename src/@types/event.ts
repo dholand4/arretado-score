@@ -30,6 +30,8 @@ export interface IEventoInput {
   qtd_jogos: number;
   intervalo_min: number;
   observacoes: string;
+  // Times que vão estar no dia; nulo = todos (o sorteio usa só jogos entre eles).
+  times: string[] | null;
 }
 
 // Resposta de criar_evento / sortear_evento (seção 6.2).

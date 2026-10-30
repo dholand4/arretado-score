@@ -1,8 +1,10 @@
+import { Suspense } from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { NotFoundScreen } from '@/view/notFoundScreen';
+import { LoaderGlobal } from '@/components/loaderGlobal';
 import { appStack } from './AppStack';
 import { authStack } from './AuthStack';
 import { publicStack } from './PublicStack';
+import { NotFoundScreen } from './screens';
 
 const router = createBrowserRouter([
   publicStack,
@@ -12,5 +14,10 @@ const router = createBrowserRouter([
 ]);
 
 export function AppRoutes() {
-  return <RouterProvider router={router} />;
+  // Login, troca de senha e 404 não têm layout: o limite de carregamento fica aqui.
+  return (
+    <Suspense fallback={<LoaderGlobal fullScreen />}>
+      <RouterProvider router={router} />
+    </Suspense>
+  );
 }

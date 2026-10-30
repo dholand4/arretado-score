@@ -5,6 +5,7 @@ import type { IPlayerFormModalProps } from '@/components/playerFormModalGlobal';
 import type { IRosterProps } from '@/components/rosterGlobal';
 import { getErrorMessage } from '@/utils/appError';
 import { usePlayers } from './usePlayers';
+import { useConfirmAction } from './useConfirm';
 
 type ModalState = { type: 'form'; player?: IJogador } | { type: 'delete'; player: IJogador } | null;
 
@@ -13,6 +14,7 @@ export function useTeamRoster(time: Pick<ITime, 'id' | 'competicao_id'>, canDele
   const { players, isLoading, error, refetch, savePlayer, setPlayerActive, removePlayer } = usePlayers(time);
   const [modal, setModal] = useState<ModalState>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const confirmAction = useConfirmAction();
 
   const open = (next: ModalState) => {
     savePlayer.reset();
@@ -27,13 +29,14 @@ export function useTeamRoster(time: Pick<ITime, 'id' | 'competicao_id'>, canDele
     busy: setPlayerActive.isPending,
     onAdd: () => open({ type: 'form' }),
     onEdit: (player) => open({ type: 'form', player }),
-    onToggleActive: (player) => {
-      setActionError(null);
-      setPlayerActive.mutate(
-        { id: player.id, ativo: !player.ativo },
-        { onError: (err) => setActionError(getErrorMessage(err)) },
-      );
-    },
+    onToggleActive: (player) =>
+      confirmAction(player.ativo ? `Desativar ${player.nome}?` : `Reativar ${player.nome}?`, () => {
+        setActionError(null);
+        setPlayerActive.mutate(
+          { id: player.id, ativo: !player.ativo },
+          { onError: (err) => setActionError(getErrorMessage(err)) },
+        );
+      }),
     onDelete: canDelete ? (player) => open({ type: 'delete', player }) : undefined,
   };
 
@@ -44,7 +47,11 @@ export function useTeamRoster(time: Pick<ITime, 'id' | 'competicao_id'>, canDele
           player: modal.player,
           saving: savePlayer.isPending,
           error: savePlayer.error ? getErrorMessage(savePlayer.error) : null,
-          onSubmit: (input, photo) => savePlayer.mutate({ jogador: modal.player, input, photo }, { onSuccess: close }),
+          onSubmit: (input, photo) =>
+            confirmAction(
+              modal.player ? `Salvar as alterações de ${input.nome}?` : `Cadastrar ${input.nome} no elenco?`,
+              () => savePlayer.mutate({ jogador: modal.player, input, photo }, { onSuccess: close }),
+            ),
           onClose: close,
         }
       : null;
@@ -64,5 +71,14 @@ export function useTeamRoster(time: Pick<ITime, 'id' | 'competicao_id'>, canDele
         }
       : null;
 
-  return { isLoading, error, refetch, actionError, rosterProps, formProps, deleteProps, formKey: modal?.type === 'form' ? (modal.player?.id ?? 'novo') : '' };
+  return {
+    isLoading,
+    error,
+    refetch,
+    actionError,
+    rosterProps,
+    formProps,
+    deleteProps,
+    formKey: modal?.type === 'form' ? (modal.player?.id ?? 'novo') : '',
+  };
 }

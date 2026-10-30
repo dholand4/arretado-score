@@ -20,6 +20,11 @@ export const ROUTE_PATTERNS = {
   competitionTeam: '/painel/competicoes/:competitionId/times/:teamId',
   competitionAdmins: '/painel/competicoes/:competitionId/admins',
   myTeam: '/painel/meus-times/:teamId',
+  myTeamHome: '/painel/meus-times/:teamId/inicio',
+  myTeamGames: '/painel/meus-times/:teamId/jogos',
+  myTeamHighlights: '/painel/meus-times/:teamId/destaques',
+  myTeamStandings: '/painel/meus-times/:teamId/tabela',
+  myTeamBracket: '/painel/meus-times/:teamId/playoffs',
   // Etapa 3
   competitionEvents: '/painel/competicoes/:competitionId/eventos',
   // Etapa 4
@@ -27,6 +32,18 @@ export const ROUTE_PATTERNS = {
   gameScoreSheet: '/painel/competicoes/:competitionId/jogos/:gameId/sumula',
   publicStandings: '/c/:slug/tabela',
   publicPlayoffs: '/c/:slug/playoffs',
+  // Etapa 6
+  publicCompetition: '/c/:slug',
+  publicGames: '/c/:slug/jogos',
+  publicGame: '/c/:slug/jogos/:gameId',
+  publicRankings: '/c/:slug/rankings',
+  publicTeams: '/c/:slug/times',
+  publicTeam: '/c/:slug/times/:teamId',
+  // Etapa 7
+  competitionFinance: '/painel/competicoes/:competitionId/financeiro',
+  competitionHighlights: '/painel/competicoes/:competitionId/destaques',
+  competitionStandings: '/painel/competicoes/:competitionId/tabela',
+  competitionBracket: '/painel/competicoes/:competitionId/playoffs',
 } as const;
 
 // Construtores tipados dos caminhos com parâmetros.
@@ -39,12 +56,27 @@ export const paths = {
     `/painel/competicoes/${competitionId}/times/${teamId}` as const,
   competitionAdmins: (competitionId: string) => `/painel/competicoes/${competitionId}/admins` as const,
   myTeam: (teamId: string) => `/painel/meus-times/${teamId}` as const,
+  myTeamHome: (teamId: string) => `/painel/meus-times/${teamId}/inicio` as const,
+  myTeamGames: (teamId: string) => `/painel/meus-times/${teamId}/jogos` as const,
+  myTeamHighlights: (teamId: string) => `/painel/meus-times/${teamId}/destaques` as const,
+  myTeamStandings: (teamId: string) => `/painel/meus-times/${teamId}/tabela` as const,
+  myTeamBracket: (teamId: string) => `/painel/meus-times/${teamId}/playoffs` as const,
   competitionEvents: (competitionId: string) => `/painel/competicoes/${competitionId}/eventos` as const,
   competitionGames: (competitionId: string) => `/painel/competicoes/${competitionId}/jogos` as const,
   gameScoreSheet: (competitionId: string, gameId: string) =>
     `/painel/competicoes/${competitionId}/jogos/${gameId}/sumula` as const,
   publicStandings: (slug: string) => `/c/${slug}/tabela` as const,
   publicPlayoffs: (slug: string) => `/c/${slug}/playoffs` as const,
+  publicCompetition: (slug: string) => `/c/${slug}` as const,
+  publicGames: (slug: string) => `/c/${slug}/jogos` as const,
+  publicGame: (slug: string, gameId: string) => `/c/${slug}/jogos/${gameId}` as const,
+  publicRankings: (slug: string) => `/c/${slug}/rankings` as const,
+  publicTeams: (slug: string) => `/c/${slug}/times` as const,
+  publicTeam: (slug: string, teamId: string) => `/c/${slug}/times/${teamId}` as const,
+  competitionFinance: (competitionId: string) => `/painel/competicoes/${competitionId}/financeiro` as const,
+  competitionHighlights: (competitionId: string) => `/painel/competicoes/${competitionId}/destaques` as const,
+  competitionStandings: (competitionId: string) => `/painel/competicoes/${competitionId}/tabela` as const,
+  competitionBracket: (competitionId: string) => `/painel/competicoes/${competitionId}/playoffs` as const,
 };
 
 type StaticPath = (typeof ROUTES)[keyof typeof ROUTES];
@@ -69,4 +101,9 @@ export function isRoutePath(value: unknown): value is RoutePath {
   if (typeof value !== 'string') return false;
   const pathname = value.split('?')[0];
   return KNOWN_PATTERNS.some((pattern) => matchPath(pattern, pathname) !== null);
+}
+
+// Estado enviado pela súmula ao voltar para a lista de jogos depois de salvar.
+export interface IGamesRouteState {
+  notice?: string;
 }

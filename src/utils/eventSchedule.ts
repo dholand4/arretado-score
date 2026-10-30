@@ -63,6 +63,7 @@ export function defaultEventInput(localPadrao: string | null, intervalo: number,
     qtd_jogos: QTD_JOGOS_PADRAO,
     intervalo_min: intervalo,
     observacoes: '',
+    times: null,
   };
 }
 
@@ -70,6 +71,7 @@ export function validateEvent(values: IEventoInput): FormErrors<IEventoInput> {
   const errors: FormErrors<IEventoInput> = {};
   if (!/^\d{4}-\d{2}-\d{2}$/.test(values.data)) errors.data = 'Informe a data.';
   if (!values.local.trim()) errors.local = 'Informe o local.';
+  if (values.times && values.times.length < 2) errors.times = 'Escolha pelo menos 2 times.';
   if (!/^\d{2}:\d{2}/.test(values.hora_inicio)) errors.hora_inicio = 'Informe a hora de início.';
   if (!Number.isInteger(values.qtd_jogos) || values.qtd_jogos < 1) errors.qtd_jogos = 'Informe ao menos 1 jogo.';
   if (!Number.isInteger(values.intervalo_min) || values.intervalo_min < 1) {
@@ -94,4 +96,55 @@ export function assemblyNotice(montagem: IMontagemEvento): string | null {
   }
   if (montagem.jogo_duplo) return 'O dia foi montado com jogo duplo: confira a ordem dos jogos.';
   return null;
+}
+
+export interface IJogoQueFalta {
+  id: string;
+  confronto: string;
+  detalhe: string;
+}
+
+export interface IFaltasDaFase {
+  fase: string;
+  semDia: IJogoQueFalta[];
+  agendados: IJogoQueFalta[];
+}
+
+interface IJogoParaFalta {
+  id: string;
+  fase_id: string;
+  status: string;
+  rodada: number | null;
+  numero_na_serie: number | null;
+  casa: { nome: string } | null;
+  fora: { nome: string } | null;
+  grupo: { nome: string } | null;
+  serie: { codigo: string } | null;
+}
+
+// Jogos sem resultado das fases em andamento: o que falta para terminar cada fase.
+export function remainingGames(
+  jogos: IJogoParaFalta[],
+  fases: { id: string; nome: string; status: string }[],
+): IFaltasDaFase[] {
+  return fases
+    .filter((fase) => fase.status === 'em_andamento')
+    .map((fase) => {
+      const abertos = jogos.filter((j) => j.fase_id === fase.id && (j.status === 'pendente' || j.status === 'agendado'));
+      const descrever = (j: IJogoParaFalta): IJogoQueFalta => ({
+        id: j.id,
+        confronto: `${j.casa?.nome ?? 'A definir'} x ${j.fora?.nome ?? 'A definir'}`,
+        detalhe: [
+          j.grupo && `Grupo ${j.grupo.nome}`,
+          j.serie ? `${j.serie.codigo} · Jogo ${j.numero_na_serie}` : j.rodada && `Rodada ${j.rodada}`,
+        ]
+          .filter(Boolean)
+          .join(' · '),
+      });
+      return {
+        fase: fase.nome,
+        semDia: abertos.filter((j) => j.status === 'pendente').map(descrever),
+        agendados: abertos.filter((j) => j.status === 'agendado').map(descrever),
+      };
+    });
 }

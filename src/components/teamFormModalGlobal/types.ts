@@ -1,4 +1,4 @@
-import type { ImageChange, IPessoaOpcao, ITimeInput } from '@/@types/competition';
+import type { ImageChange, INovoDonoInput, IPessoaOpcao, ITimeInput } from '@/@types/competition';
 
 export interface ITeamFormModalProps {
   open: boolean;
@@ -8,6 +8,7 @@ export interface ITeamFormModalProps {
   donos?: IPessoaOpcao[];
   saving?: boolean;
   error?: string | null;
-  onSubmit: (values: ITimeInput, logo: ImageChange) => void;
+  // novoDono: login do dono criado junto com o time (só no cadastro de time novo).
+  onSubmit: (values: ITimeInput, logo: ImageChange, novoDono?: INovoDonoInput) => void;
   onClose: () => void;
 }

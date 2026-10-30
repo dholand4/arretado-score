@@ -8,4 +8,6 @@ export interface ICompetitionCardProps {
   logoUrl?: string | null;
   meta?: string;
   to?: RoutePath;
+  // Liga desativada: etiqueta e card esmaecido.
+  inactive?: boolean;
 }

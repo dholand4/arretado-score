@@ -12,7 +12,7 @@ export function PublicLayoutGlobal({ children, accountLink }: IPublicLayoutProps
         </HeaderInner>
       </Header>
       <Main>{children}</Main>
-      <Footer>TorneioMais · campeonatos amadores</Footer>
+      <Footer>Arretado Score · campeonatos amadores</Footer>
     </Shell>
   );
 }

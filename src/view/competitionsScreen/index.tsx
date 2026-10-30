@@ -22,14 +22,18 @@ export function CompetitionsScreen() {
       return (
         <EmptyStateGlobal
           title="Nenhuma competição ainda"
-          description="Crie a primeira: ela nasce como rascunho e só aparece para o público depois de iniciada."
-          action={<LinkButtonGlobal to={ROUTES.newCompetition} label="Nova competição" variant="primary" />}
+          description={
+            isMaster
+              ? 'Crie a primeira e escolha o coordenador dela: nasce como rascunho e só aparece para o público depois de iniciada.'
+              : 'Quando o Admin criar uma liga e te colocar como coordenador dela, ela aparece aqui.'
+          }
+          action={isMaster ? <LinkButtonGlobal to={ROUTES.newCompetition} label="Nova competição" variant="primary" /> : undefined}
         />
       );
     }
     return (
       <List aria-label="Competições">
-        {competitions.map((c) => (
+        {[...competitions].sort((a, b) => Number(!a.ativa) - Number(!b.ativa)).map((c) => (
           <li key={c.id}>
             <CompetitionCardGlobal
               nome={c.nome}
@@ -38,6 +42,7 @@ export function CompetitionsScreen() {
               logoUrl={c.logo_url}
               meta={pluralize(c.times[0]?.count ?? 0, 'time', 'times')}
               to={paths.competition(c.id)}
+              inactive={!c.ativa}
             />
           </li>
         ))}
@@ -50,7 +55,7 @@ export function CompetitionsScreen() {
       <PageHeaderGlobal
         title="Competições"
         subtitle={isMaster ? 'Todas as competições do sistema.' : 'Competições que você administra.'}
-        actions={<LinkButtonGlobal to={ROUTES.newCompetition} label="Nova competição" variant="primary" />}
+        actions={isMaster ? <LinkButtonGlobal to={ROUTES.newCompetition} label="Nova competição" variant="primary" /> : undefined}
       />
       {renderContent()}
     </>

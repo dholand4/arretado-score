@@ -3,9 +3,9 @@ import { EmptyStateGlobal } from '@/components/emptyStateGlobal';
 import { ErrorStateGlobal } from '@/components/errorStateGlobal';
 import { LoaderGlobal } from '@/components/loaderGlobal';
 import { usePublicCompetitions } from '@/hooks/useCompetitions';
+import { paths } from '@/routes/types';
 import { Hero, Lead, List, SectionTitle, Title } from './style';
 
-// As páginas públicas de cada competição (/c/:slug) entram na Etapa 6.
 export function HomeScreen() {
   const { competitions, isLoading, error, refetch } = usePublicCompetitions();
 
@@ -24,7 +24,13 @@ export function HomeScreen() {
       <List aria-label="Competições">
         {competitions.map((c) => (
           <li key={c.id}>
-            <CompetitionCardGlobal nome={c.nome} modalidade={c.modalidade} status={c.status} logoUrl={c.logo_url} />
+            <CompetitionCardGlobal
+              nome={c.nome}
+              modalidade={c.modalidade}
+              status={c.status}
+              logoUrl={c.logo_url}
+              to={paths.publicCompetition(c.slug)}
+            />
           </li>
         ))}
       </List>

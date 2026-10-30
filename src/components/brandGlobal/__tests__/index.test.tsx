@@ -5,6 +5,6 @@ import { BrandGlobal } from '..';
 describe('BrandGlobal', () => {
   it('links to the given route', () => {
     renderWithRouter(<BrandGlobal to="/painel" />);
-    expect(screen.getByRole('link', { name: 'TorneioMais — início' })).toHaveAttribute('href', '/painel');
+    expect(screen.getByRole('link', { name: 'Arretado Score — início' })).toHaveAttribute('href', '/painel');
   });
 });

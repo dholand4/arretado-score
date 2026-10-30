@@ -59,6 +59,7 @@ export function newPhase(index: number, previousTipo?: TipoFase): IFaseForm {
     melhor_de: 1,
     cruzamento: index === 0 ? null : previousTipo === 'mata_mata' ? 'vencedores' : 'por_campanha',
     disputa_terceiro: false,
+    melhor_de_terceiro: null,
     confrontos: [],
     iniciada: false,
   };
@@ -78,6 +79,7 @@ export function phaseFromDb(fase: IFase): IFaseForm {
     melhor_de: ([1, 3, 5, 7] as const).find((n) => n === fase.melhor_de) ?? 1,
     cruzamento: fase.cruzamento,
     disputa_terceiro: fase.disputa_terceiro,
+    melhor_de_terceiro: ([1, 3, 5, 7] as const).find((n) => n === fase.melhor_de_terceiro) ?? null,
     confrontos: series
       .filter((s) => s.origem_a?.tipo !== 'perdedor')
       .map((s) => ({ origem_a: s.origem_a, origem_b: s.origem_b })),
@@ -412,7 +414,9 @@ export function buildFormatSummary(phases: IFaseForm[], analysis: IFormatAnalysi
               .map((s) => `${originShort(s.origem_a, phases[i - 1]?.classificam)} x ${originShort(s.origem_b, phases[i - 1]?.classificam)}`)
               .join(', ')}`
           : '';
-      const terceiro = p.disputa_terceiro ? ' + disputa de 3º lugar' : '';
+      const terceiro = p.disputa_terceiro
+        ? ` + disputa de 3º lugar${p.melhor_de_terceiro && p.melhor_de_terceiro !== p.melhor_de ? ` (${melhorDeLabel(p.melhor_de_terceiro)})` : ''}`
+        : '';
       steps.push({ kind: 'fase', label: `${nome} ${melhorDeLabel(p.melhor_de)}${confrontos}${terceiro}` });
       return;
     }
@@ -456,6 +460,7 @@ export function toPayload(phases: IFaseForm[]): IFasePayload[] {
       melhor_de: p.tipo === 'mata_mata' ? p.melhor_de : 1,
       cruzamento: p.tipo === 'mata_mata' ? p.cruzamento : null,
       disputa_terceiro: p.tipo === 'mata_mata' ? p.disputa_terceiro : false,
+      melhor_de_terceiro: p.tipo === 'mata_mata' && p.disputa_terceiro ? p.melhor_de_terceiro : null,
     };
     if (p.tipo === 'mata_mata' && p.cruzamento === 'manual') {
       base.confrontos = p.confrontos

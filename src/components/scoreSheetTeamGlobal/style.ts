@@ -72,10 +72,28 @@ export const Check = styled.input`
 `;
 
 export const StatInput = styled.input`
-  width: ${({ theme }) => theme.spacing.xxl - theme.spacing.xs}px;
-  min-height: ${({ theme }) => theme.sizes.controlHeightSm}px;
+  width: ${({ theme }) => theme.spacing.xxl + theme.spacing.xs}px;
+  height: ${({ theme }) => theme.sizes.controlHeightSm}px;
+  padding: 0 ${({ theme }) => theme.spacing.xs}px;
   border: ${({ theme }) => theme.sizes.borderWidth}px solid ${({ theme }) => theme.colors.borderStrong};
   border-radius: ${({ theme }) => theme.radius.sm}px;
+  background-color: ${({ theme }) => theme.colors.surface};
+  color: ${({ theme }) => theme.colors.text};
   font-size: ${({ theme }) => theme.fontSize.md}px;
+  font-variant-numeric: tabular-nums;
   text-align: center;
+  transition:
+    border-color ${({ theme }) => theme.transition.fast},
+    box-shadow ${({ theme }) => theme.transition.fast};
+
+  &:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.colors.primary};
+    box-shadow: 0 0 0 ${({ theme }) => theme.sizes.focusRing}px ${({ theme }) => theme.colors.primarySoft};
+  }
+
+  &:disabled {
+    background-color: ${({ theme }) => theme.colors.surfaceMuted};
+    color: ${({ theme }) => theme.colors.textMuted};
+  }
 `;

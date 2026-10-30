@@ -21,9 +21,20 @@ export const QUERY_KEYS = {
   games: (competicaoId: string) => ['competitions', competicaoId, 'games'] as const,
   scoreSheet: (jogoId: string) => ['games', jogoId, 'score-sheet'] as const,
   classificationAll: ['classification'] as const,
+  roundRobinPreview: (qtdTimes: number, turnos: number) => ['round-robin-preview', qtdTimes, turnos] as const,
   classification: (faseId: string, grupoId: string | null) => ['classification', faseId, grupoId ?? 'geral'] as const,
   bestExtras: (faseId: string, colocacao: number) => ['classification', faseId, 'extras', colocacao] as const,
   // Área pública
   publicStandings: (slug: string) => ['public', slug, 'standings'] as const,
   bracket: (slug: string) => ['public', slug, 'bracket'] as const,
+  publicCompetition: (slug: string) => ['public', slug, 'competition'] as const,
+  publicGames: (competicaoId: string) => ['public-games', competicaoId] as const,
+  publicGame: (jogoId: string) => ['public-game', jogoId] as const,
+  ranking: (competicaoId: string, faseId: string | null) => ['ranking', competicaoId, faseId ?? 'competicao'] as const,
+  rankingAll: ['ranking'] as const,
+  publicTeams: (competicaoId: string) => ['public-teams', competicaoId] as const,
+  publicTeam: (timeId: string) => ['public-team', timeId] as const,
+  // Financeiro
+  charges: (competicaoId: string) => ['competitions', competicaoId, 'charges'] as const,
+  teamPayments: (timeId: string) => ['teams', timeId, 'payments'] as const,
 };

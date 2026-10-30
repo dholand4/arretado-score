@@ -4,6 +4,7 @@ import { AvatarGlobal } from '@/components/avatarGlobal';
 import { BadgeGlobal } from '@/components/badgeGlobal';
 import { ButtonGlobal } from '@/components/buttonGlobal';
 import { EmptyStateGlobal } from '@/components/emptyStateGlobal';
+import { InputGlobal } from '@/components/inputGlobal';
 import { ErrorStateGlobal } from '@/components/errorStateGlobal';
 import { LoaderGlobal } from '@/components/loaderGlobal';
 import { PageHeaderGlobal } from '@/components/pageHeaderGlobal';
@@ -11,10 +12,11 @@ import { TeamFormModalGlobal } from '@/components/teamFormModalGlobal';
 import { useDonos } from '@/hooks/useCompetitionAdmins';
 import { useRouteParams } from '@/hooks/useRouteParams';
 import { useTeams } from '@/hooks/useTeams';
+import { useConfirmAction } from '@/hooks/useConfirm';
 import { paths } from '@/routes/types';
 import { getErrorMessage } from '@/utils/appError';
-import { pluralize } from '@/utils/text';
-import { Feedback, List, Meta, Name, TeamLink, Texts } from './style';
+import { matchesSearch, pluralize } from '@/utils/text';
+import { Feedback, Found, List, Meta, Name, Search, TeamLink, Texts } from './style';
 
 export function TeamsScreen() {
   const { competitionId } = useRouteParams('competitionId');
@@ -22,6 +24,8 @@ export function TeamsScreen() {
   const [creating, setCreating] = useState(false);
   const [created, setCreated] = useState<string | null>(null);
   const { donos } = useDonos(creating);
+  const [busca, setBusca] = useState('');
+  const confirmAction = useConfirmAction();
 
   const openCreate = () => {
     createTeam.reset();
@@ -40,26 +44,57 @@ export function TeamsScreen() {
         />
       );
     }
+    // Busca por time, sigla, dono ou jogador do elenco.
+    const resultados = teams
+      .map((team) => ({
+        team,
+        jogadores: busca.trim() ? (team.elenco ?? []).filter((j) => matchesSearch(busca, j.nome, j.apelido)) : [],
+      }))
+      .filter(
+        ({ team, jogadores }) => jogadores.length > 0 || matchesSearch(busca, team.nome, team.sigla, team.dono?.nome),
+      );
+
     return (
-      <List aria-label="Times">
-        {teams.map((team) => (
-          <li key={team.id}>
-            <TeamLink to={paths.competitionTeam(competitionId, team.id)}>
-              <AvatarGlobal name={team.nome} src={team.logo_url} shape="square" />
-              <Texts>
-                <Name>
-                  {team.nome}
-                  {team.sigla && <BadgeGlobal label={team.sigla} />}
-                </Name>
-                <Meta>
-                  {pluralize(team.jogadores[0]?.count ?? 0, 'jogador', 'jogadores')} ·{' '}
-                  {team.dono ? `Dono: ${team.dono.nome}` : 'Sem dono vinculado'}
-                </Meta>
-              </Texts>
-            </TeamLink>
-          </li>
-        ))}
-      </List>
+      <>
+        <Search>
+          <InputGlobal
+            label="Buscar"
+            type="search"
+            placeholder="Time, sigla, equipe ou jogador"
+            value={busca}
+            onChange={(event) => setBusca(event.target.value)}
+          />
+        </Search>
+        {resultados.length === 0 ? (
+          <EmptyStateGlobal
+            title="Nada encontrado"
+            description={`Nenhum time, equipe ou jogador com “${busca.trim()}”.`}
+          />
+        ) : (
+          <List aria-label="Times">
+            {resultados.map(({ team, jogadores }) => (
+              <li key={team.id}>
+                <TeamLink to={paths.competitionTeam(competitionId, team.id)}>
+                  <AvatarGlobal name={team.nome} src={team.logo_url} shape="square" />
+                  <Texts>
+                    <Name>
+                      {team.nome}
+                      {team.sigla && <BadgeGlobal label={team.sigla} />}
+                    </Name>
+                    <Meta>
+                      {pluralize(team.jogadores[0]?.count ?? 0, 'jogador', 'jogadores')} ·{' '}
+                      {team.dono ? `Equipe: ${team.dono.nome}` : 'Sem acesso de equipe'}
+                    </Meta>
+                    {jogadores.length > 0 && (
+                      <Found>Jogador: {jogadores.map((j) => j.apelido || j.nome).join(', ')}</Found>
+                    )}
+                  </Texts>
+                </TeamLink>
+              </li>
+            ))}
+          </List>
+        )}
+      </>
     );
   };
 
@@ -67,12 +102,12 @@ export function TeamsScreen() {
     <>
       <PageHeaderGlobal
         title="Times"
-        subtitle="Cadastre times, vincule o dono e monte os elencos."
+        subtitle="Cadastre os times com o acesso da equipe e monte os elencos."
         actions={teams.length > 0 && <ButtonGlobal label="Novo time" onClick={openCreate} />}
       />
       {created && (
         <Feedback>
-          <AlertGlobal variant="success" message={`Time ${created} cadastrado.`} onClose={() => setCreated(null)} />
+          <AlertGlobal variant="success" message={created} onClose={() => setCreated(null)} />
         </Feedback>
       )}
       {renderContent()}
@@ -82,15 +117,21 @@ export function TeamsScreen() {
           donos={donos}
           saving={createTeam.isPending}
           error={createTeam.error ? getErrorMessage(createTeam.error) : null}
-          onSubmit={(input, logo) =>
-            createTeam.mutate(
-              { input, logo },
-              {
-                onSuccess: (team) => {
-                  setCreating(false);
-                  setCreated(team.nome);
+          onSubmit={(input, logo, novoDono) =>
+            confirmAction(`Cadastrar o time "${input.nome}"${novoDono ? ` com o acesso ${novoDono.email}` : ''}?`, () =>
+              createTeam.mutate(
+                { input, logo, novoDono },
+                {
+                  onSuccess: (team) => {
+                    setCreating(false);
+                    setCreated(
+                      novoDono
+                        ? `Time ${team.nome} cadastrado. A equipe entra com ${novoDono.email} e a senha provisória.`
+                        : `Time ${team.nome} cadastrado.`,
+                    );
+                  },
                 },
-              },
+              ),
             )
           }
           onClose={() => setCreating(false)}

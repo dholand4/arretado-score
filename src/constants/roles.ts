@@ -1,9 +1,9 @@
 import type { Papel } from '@/@types/user';
 
 export const PAPEL_LABEL: Record<Papel, string> = {
-  master: 'Admin master',
-  admin: 'Admin',
-  dono_time: 'Dono do time',
+  master: 'Admin',
+  admin: 'Coordenador',
+  dono_time: 'Equipe',
 };
 
 export const PAPEL_OPTIONS: { value: Papel; label: string }[] = [

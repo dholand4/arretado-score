@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { ImageChange, ITimeInput } from '@/@types/competition';
+import type { ImageChange, INovoDonoInput, ITimeInput } from '@/@types/competition';
 import { QUERY_KEYS } from '@/constants/queryKeys';
 import { teamsService } from '@/services/teamsService';
+import { usersService } from '@/services/usersService';
 
 export function useTeams(competicaoId: string) {
   const queryClient = useQueryClient();
@@ -9,10 +10,16 @@ export function useTeams(competicaoId: string) {
   const query = useQuery({ queryKey: key, queryFn: () => teamsService.list(competicaoId) });
   const invalidate = () => queryClient.invalidateQueries({ queryKey: key });
 
+  // Com novoDono, primeiro cria o login do dono (papel dono_time) e o time já nasce vinculado a ele.
   const createTeam = useMutation({
-    mutationFn: ({ input, logo }: { input: ITimeInput; logo: ImageChange }) =>
-      teamsService.create(competicaoId, input, logo),
-    onSuccess: invalidate,
+    mutationFn: async ({ input, logo, novoDono }: { input: ITimeInput; logo: ImageChange; novoDono?: INovoDonoInput }) => {
+      const donoId = novoDono ? (await usersService.create({ ...novoDono, papel: 'dono_time' })).id : input.dono_id;
+      return teamsService.create(competicaoId, { ...input, dono_id: donoId }, logo);
+    },
+    onSuccess: () => {
+      void invalidate();
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.donos });
+    },
   });
   const removeTeam = useMutation({ mutationFn: teamsService.remove, onSuccess: invalidate });
 
@@ -30,19 +37,32 @@ export function useTeam(timeId: string) {
   const queryClient = useQueryClient();
   const query = useQuery({ queryKey: QUERY_KEYS.team(timeId), queryFn: () => teamsService.get(timeId) });
 
+  // Com novoDono, cria o login da equipe e vincula ao time na mesma ação.
   const updateTeam = useMutation({
-    mutationFn: ({ patch, logo }: { patch: Partial<ITimeInput>; logo: ImageChange }) => {
+    mutationFn: async ({ patch, logo, novoDono }: { patch: Partial<ITimeInput>; logo: ImageChange; novoDono?: INovoDonoInput }) => {
       if (!query.data) throw new Error('Time não carregado.');
-      return teamsService.update(timeId, query.data.competicao_id, patch, logo);
+      const donoId = novoDono ? (await usersService.create({ ...novoDono, papel: 'dono_time' })).id : patch.dono_id;
+      return teamsService.update(timeId, query.data.competicao_id, { ...patch, dono_id: donoId }, logo);
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.team(timeId) });
       if (query.data) void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.teams(query.data.competicao_id) });
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.donos });
       void queryClient.invalidateQueries({ queryKey: ['my-teams'] });
     },
   });
 
   return { team: query.data, isLoading: query.isPending, error: query.error, refetch: query.refetch, updateTeam };
+}
+
+// Nome e competição do time para o menu lateral; não busca nada fora da página de um time.
+export function useTeamSummary(timeId: string | undefined) {
+  const query = useQuery({
+    queryKey: QUERY_KEYS.team(timeId ?? ''),
+    queryFn: () => teamsService.get(timeId ?? ''),
+    enabled: Boolean(timeId),
+  });
+  return { team: timeId ? query.data : undefined };
 }
 
 export function useMyTeams(userId: string) {

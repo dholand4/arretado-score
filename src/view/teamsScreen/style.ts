@@ -55,3 +55,13 @@ export const Meta = styled.span`
   font-size: ${({ theme }) => theme.fontSize.sm}px;
   color: ${({ theme }) => theme.colors.textMuted};
 `;
+
+export const Search = styled.div`
+  margin-bottom: ${({ theme }) => theme.spacing.md}px;
+`;
+
+export const Found = styled.span`
+  font-size: ${({ theme }) => theme.fontSize.xs}px;
+  font-weight: ${({ theme }) => theme.fontWeight.semibold};
+  color: ${({ theme }) => theme.colors.primary};
+`;

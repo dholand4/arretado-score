@@ -5,6 +5,7 @@ import type { IScoreSheetTeamProps } from './types';
 export function ScoreSheetTeamGlobal({
   teamName,
   score,
+  total = null,
   players,
   categories,
   present,
@@ -17,7 +18,7 @@ export function ScoreSheetTeamGlobal({
     <Section aria-label={`Súmula de ${teamName}`}>
       <Heading>
         {teamName}
-        <Points>{score} pts</Points>
+        <Points>{total === null ? `${score} pts` : `${score} de ${total} pts divididos`}</Points>
       </Heading>
       <Scroll>
         <Table>

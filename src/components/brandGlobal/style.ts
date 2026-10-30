@@ -11,14 +11,6 @@ export const BrandLink = styled(Link)<{ $inverse: boolean }>`
   text-decoration: none;
 `;
 
-export const Ball = styled.span`
-  display: inline-block;
-  width: ${({ theme }) => theme.spacing.lg}px;
-  height: ${({ theme }) => theme.spacing.lg}px;
-  border-radius: ${({ theme }) => theme.radius.pill}px;
-  background-color: ${({ theme }) => theme.colors.primary};
-`;
-
 export const Plus = styled.span`
   color: ${({ theme }) => theme.colors.primary};
 `;

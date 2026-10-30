@@ -1,8 +1,7 @@
 import type { RouteObject } from 'react-router-dom';
-import { ChangePasswordScreen } from '@/view/changePasswordScreen';
-import { LoginScreen } from '@/view/loginScreen';
 import { RedirectIfAuthenticated, RequireAuth } from './guards';
 import { ROUTES } from './types';
+import { ChangePasswordScreen, LoginScreen } from './screens';
 
 export const authStack: RouteObject[] = [
   {

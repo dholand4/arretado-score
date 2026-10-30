@@ -2,7 +2,8 @@ import type { Tables } from './database';
 
 export type Papel = 'master' | 'admin' | 'dono_time';
 
-export type IProfile = Omit<Tables<'profiles'>, 'papel'> & { papel: Papel };
+// criado_por é interno (separa as equipes por coordenador); a interface não usa.
+export type IProfile = Omit<Tables<'profiles'>, 'papel' | 'criado_por'> & { papel: Papel };
 
 export interface IUsuarioListado extends Omit<IProfile, 'created_at'> {
   email: string;

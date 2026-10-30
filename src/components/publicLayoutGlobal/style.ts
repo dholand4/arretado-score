@@ -19,10 +19,13 @@ export const HeaderInner = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: ${({ theme }) => theme.spacing.md}px;
-  max-width: ${({ theme }) => theme.sizes.contentMaxWidth}px;
   min-height: ${({ theme }) => theme.sizes.headerHeight}px;
-  margin: 0 auto;
   padding: 0 ${({ theme }) => theme.spacing.md}px;
+
+  /* Nome no canto esquerdo e Entrar no canto direito, na largura toda. */
+  @media (min-width: ${({ theme }) => theme.breakpoints.md}px) {
+    padding: 0 ${({ theme }) => theme.spacing.xl}px;
+  }
 `;
 
 export const AccountLink = styled(Link)`

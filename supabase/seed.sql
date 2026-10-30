@@ -6,9 +6,10 @@
 --   outro.admin@torneiomais.local / Admin@1234   admin sem competição (não deve ver a liga)
 --   dono@torneiomais.local        / Dono@12345   dono do time Tubarões
 --   dono2@torneiomais.local       / Dono@12345   dono sem time (disponível para vincular)
+--   admin@admin                   / adminadmin   admin da "Liga Amadora de Basquete 2026" (acesso rápido)
 --
 -- Competição "Liga Amadora de Basquete 2026" (em andamento): 5 times x 8 jogadores, categorias
--- Pontos/Rebotes/Assistências, 3 fases, 10 jogos da fase 1 (2 agendados num dia publicado).
+-- só Pontos (placar), 3 fases, 10 jogos da fase 1 (2 agendados num dia publicado).
 
 -- ---------------------------------------------------------------------------
 -- Usuários
@@ -23,7 +24,8 @@ begin
       ('22222222-2222-2222-2222-222222222222'::uuid, 'admin@torneiomais.local',       'Admin@1234', 'Ana Organizadora', 'admin'),
       ('33333333-3333-3333-3333-333333333333'::uuid, 'outro.admin@torneiomais.local', 'Admin@1234', 'Bruno Outro Admin', 'admin'),
       ('44444444-4444-4444-4444-444444444444'::uuid, 'dono@torneiomais.local',        'Dono@12345', 'Davi Dono',       'dono_time'),
-      ('55555555-5555-5555-5555-555555555555'::uuid, 'dono2@torneiomais.local',       'Dono@12345', 'Elisa Dona',      'dono_time')
+      ('55555555-5555-5555-5555-555555555555'::uuid, 'dono2@torneiomais.local',       'Dono@12345', 'Elisa Dona',      'dono_time'),
+      ('66666666-6666-6666-6666-666666666666'::uuid, 'admin@admin',                   'adminadmin', 'Admin de Teste',  'admin')
     ) as t (id, email, senha, nome, papel)
   loop
     insert into auth.users (
@@ -71,10 +73,10 @@ values (
   '22222222-2222-2222-2222-222222222222'
 );
 
-insert into public.categorias_estatistica (competicao_id, nome, sigla, titulo_ranking)
-values
-  ('c0000000-0000-0000-0000-000000000001', 'Rebotes', 'REB', 'Reboteiro'),
-  ('c0000000-0000-0000-0000-000000000001', 'Assistências', 'AST', 'Garçom');
+-- Segundo admin da Liga (acesso rápido para testes manuais).
+insert into public.competicao_admins (competicao_id, user_id)
+values ('c0000000-0000-0000-0000-000000000001', '66666666-6666-6666-6666-666666666666');
+
 
 insert into public.times (id, competicao_id, nome, sigla, dono_id)
 values

@@ -18,19 +18,16 @@ export const Legend = styled.legend`
   font-weight: ${({ theme }) => theme.fontWeight.semibold};
 `;
 
-export const Presets = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.sm}px;
-`;
-
 export const Help = styled.p`
   font-size: ${({ theme }) => theme.fontSize.sm}px;
   color: ${({ theme }) => theme.colors.textMuted};
 `;
 
-export const AddRow = styled.div`
+export const Criteria = styled.ol`
   display: flex;
-  align-items: flex-end;
-  gap: ${({ theme }) => theme.spacing.sm}px;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xs}px;
+  margin: 0;
+  padding-left: ${({ theme }) => theme.spacing.lg}px;
+  font-size: ${({ theme }) => theme.fontSize.sm}px;
 `;

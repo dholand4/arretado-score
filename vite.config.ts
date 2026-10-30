@@ -8,6 +8,8 @@ export default defineConfig({
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
   server: { port: 5173 },
+  // Publica o código minificado e sem mapas do código-fonte.
+  build: { sourcemap: false },
   test: {
     globals: true,
     environment: 'jsdom',

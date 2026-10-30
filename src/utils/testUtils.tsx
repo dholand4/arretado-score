@@ -4,6 +4,7 @@ import type { ReactElement, ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { ThemeProvider } from 'styled-components';
 import { theme } from '@/constants/theme';
+import { ConfirmProvider } from '@/providers/ConfirmProvider';
 import { createQueryClient } from '@/providers/QueryProvider';
 
 function ThemeWrapper({ children }: { children: ReactNode }) {
@@ -18,7 +19,9 @@ export function renderWithTheme(ui: ReactElement) {
 export function renderWithRouter(ui: ReactElement, initialPath = '/') {
   return render(
     <MemoryRouter initialEntries={[initialPath]}>
-      <ThemeProvider theme={theme}>{ui}</ThemeProvider>
+      <ThemeProvider theme={theme}>
+        <ConfirmProvider autoConfirm>{ui}</ConfirmProvider>
+      </ThemeProvider>
     </MemoryRouter>,
   );
 }
@@ -36,7 +39,9 @@ export function renderScreen(ui: ReactElement, initialPath = '/') {
   return render(
     <QueryWrapper>
       <MemoryRouter initialEntries={[initialPath]}>
-        <ThemeProvider theme={theme}>{ui}</ThemeProvider>
+        <ThemeProvider theme={theme}>
+          <ConfirmProvider autoConfirm>{ui}</ConfirmProvider>
+        </ThemeProvider>
       </MemoryRouter>
     </QueryWrapper>,
   );

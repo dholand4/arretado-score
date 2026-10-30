@@ -27,6 +27,11 @@ const admin = client();
   const { error } = await admin.auth.signInWithPassword({ email: 'admin@torneiomais.local', password: 'Admin@1234' });
   if (error) throw error;
 }
+const master = client();
+{
+  const { error } = await master.auth.signInWithPassword({ email: 'master@torneiomais.local', password: 'Master@123' });
+  if (error) throw error;
+}
 const anon = client();
 const get = async (query) => {
   const { data, error } = await query;
@@ -45,9 +50,11 @@ const fase = (nome, tipo, extra = {}) => ({
 });
 
 async function criarCompeticao(nome, qtdTimes, fases) {
+  // Só o master cria liga; ele entrega para o admin.
   const id = await get(
-    admin.rpc('criar_competicao', { p_nome: nome, p_slug: `${nome.toLowerCase().replace(/\W+/g, '-')}-${stamp}`, p_modalidade: 'basquete' }),
+    master.rpc('criar_competicao', { p_nome: nome, p_slug: `${nome.toLowerCase().replace(/\W+/g, '-')}-${stamp}`, p_modalidade: 'basquete' }),
   );
+  await get(master.from('competicao_admins').insert({ competicao_id: id, user_id: '22222222-2222-2222-2222-222222222222' }));
   const times = await get(
     admin
       .from('times')

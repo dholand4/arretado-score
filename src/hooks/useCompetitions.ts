@@ -4,6 +4,7 @@ import type {
   ICompeticaoPontuacao,
   ImageChange,
 } from '@/@types/competition';
+import type { ICompeticaoCobranca } from '@/@types/finance';
 import { QUERY_KEYS } from '@/constants/queryKeys';
 import { competitionsService } from '@/services/competitionsService';
 
@@ -20,10 +21,24 @@ export function usePublicCompetitions() {
 export function useCreateCompetition() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ input, logo }: { input: ICompeticaoBasicos; logo: ImageChange }) =>
-      competitionsService.create(input, logo),
+    // O master cria a liga e já entrega para o admin escolhido (opcional; dá para definir depois em Admins).
+    mutationFn: async ({ input, logo, adminId }: { input: ICompeticaoBasicos; logo: ImageChange; adminId?: string }) => {
+      const id = await competitionsService.create(input, logo);
+      if (adminId) await competitionsService.addAdmin(id, adminId);
+      return id;
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.competitions }),
   });
+}
+
+// Só o nome/status para o menu lateral; não busca nada fora de uma competição.
+export function useCompetitionSummary(competicaoId: string | undefined) {
+  const query = useQuery({
+    queryKey: QUERY_KEYS.competition(competicaoId ?? ''),
+    queryFn: () => competitionsService.get(competicaoId ?? ''),
+    enabled: Boolean(competicaoId),
+  });
+  return { competition: competicaoId ? query.data : undefined };
 }
 
 export function useCompetition(competicaoId: string) {
@@ -53,6 +68,19 @@ export function useCompetition(competicaoId: string) {
     onSuccess: onSaved,
   });
 
+  const saveBilling = useMutation({
+    mutationFn: (input: ICompeticaoCobranca) => competitionsService.update(competicaoId, input),
+    onSuccess: onSaved,
+  });
+
+  const setActive = useMutation({
+    mutationFn: (ativa: boolean) => competitionsService.setActive(competicaoId, ativa),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.competition(competicaoId) });
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.competitions, exact: true });
+    },
+  });
+
   return {
     competition: query.data,
     isLoading: query.isPending,
@@ -60,5 +88,7 @@ export function useCompetition(competicaoId: string) {
     refetch: query.refetch,
     saveBasics,
     saveScoring,
+    saveBilling,
+    setActive,
   };
 }

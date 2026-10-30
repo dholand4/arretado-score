@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { ITimeDetalhe } from '@/@types/competition';
 import { AlertGlobal } from '@/components/alertGlobal';
 import { BadgeGlobal } from '@/components/badgeGlobal';
+import { CardGlobal } from '@/components/cardGlobal';
 import { ButtonGlobal } from '@/components/buttonGlobal';
 import { EntityHeaderGlobal } from '@/components/entityHeaderGlobal';
 import { ErrorStateGlobal } from '@/components/errorStateGlobal';
@@ -10,11 +11,16 @@ import { LoaderGlobal } from '@/components/loaderGlobal';
 import { PlayerFormModalGlobal } from '@/components/playerFormModalGlobal';
 import { RosterGlobal } from '@/components/rosterGlobal';
 import { TeamFormModalGlobal } from '@/components/teamFormModalGlobal';
+import { TeamPaymentsGlobal } from '@/components/teamPaymentsGlobal';
+import { useTeamPayments } from '@/hooks/useFinance';
 import { useRouteParams } from '@/hooks/useRouteParams';
 import { useTeamRoster } from '@/hooks/useTeamRoster';
 import { useTeam } from '@/hooks/useTeams';
+import { useConfirmAction } from '@/hooks/useConfirm';
 import { ROUTES } from '@/routes/types';
 import { getErrorMessage } from '@/utils/appError';
+import { todayInFortaleza } from '@/utils/finance';
+import { pluralize } from '@/utils/text';
 import { Feedback } from './style';
 
 function OwnerRoster({ team }: { team: ITimeDetalhe }) {
@@ -34,10 +40,44 @@ function OwnerRoster({ team }: { team: ITimeDetalhe }) {
   );
 }
 
+// Pagamentos do elenco (seção 8.2): só no modelo por time; não mostra a cobrança da competição.
+function TeamPayments({ team }: { team: ITimeDetalhe }) {
+  const { pagamentos, isLoading, error, refetch, generate, setStatus } = useTeamPayments(team.id, true);
+  const [notice, setNotice] = useState<string | null>(null);
+  const confirmAction = useConfirmAction();
+  if (isLoading) return <LoaderGlobal label="Carregando pagamentos" />;
+  if (error) return <ErrorStateGlobal error={error} onRetry={() => void refetch()} />;
+  return (
+    <TeamPaymentsGlobal
+      payments={pagamentos}
+      defaultMonth={todayInFortaleza()}
+      busy={generate.isPending || setStatus.isPending}
+      error={generate.error || setStatus.error ? getErrorMessage(generate.error ?? setStatus.error) : null}
+      notice={notice}
+      onGenerate={(referencia, valor) =>
+        confirmAction('Gerar os pagamentos deste mês para o elenco?', () => {
+          setNotice(null);
+          generate.mutate(
+            { referencia, valor },
+            {
+              onSuccess: (qtd) =>
+                setNotice(qtd ? `${pluralize(qtd, 'linha criada', 'linhas criadas')}.` : 'Esse mês já estava gerado.'),
+            },
+          );
+        })
+      }
+      onSetStatus={(id, status) =>
+        confirmAction('Alterar a situação deste pagamento?', () => setStatus.mutate({ id, status }))
+      }
+    />
+  );
+}
+
 export function MyTeamDetailScreen() {
   const { teamId } = useRouteParams('teamId');
   const { team, isLoading, error, refetch, updateTeam } = useTeam(teamId);
   const [editing, setEditing] = useState(false);
+  const confirmAction = useConfirmAction();
 
   if (isLoading) return <LoaderGlobal label="Carregando time" />;
   if (error || !team) return <ErrorStateGlobal error={error} onRetry={() => void refetch()} />;
@@ -65,6 +105,11 @@ export function MyTeamDetailScreen() {
         }
       />
       <OwnerRoster team={team} />
+      {team.competicao.cobranca_modelo === 'por_time' && (
+        <CardGlobal title="Pagamentos do elenco">
+          <TeamPayments team={team} />
+        </CardGlobal>
+      )}
       {editing && (
         <TeamFormModalGlobal
           open
@@ -73,7 +118,9 @@ export function MyTeamDetailScreen() {
           saving={updateTeam.isPending}
           error={updateTeam.error ? getErrorMessage(updateTeam.error) : null}
           onSubmit={(values, logo) =>
-            updateTeam.mutate({ patch: { nome: values.nome }, logo }, { onSuccess: () => setEditing(false) })
+            confirmAction('Salvar as alterações do time?', () =>
+              updateTeam.mutate({ patch: { nome: values.nome }, logo }, { onSuccess: () => setEditing(false) }),
+            )
           }
           onClose={() => setEditing(false)}
         />

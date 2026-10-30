@@ -15,6 +15,7 @@ import { useDonos } from '@/hooks/useCompetitionAdmins';
 import { useRouteParams } from '@/hooks/useRouteParams';
 import { useTeamRoster } from '@/hooks/useTeamRoster';
 import { useTeam, useTeams } from '@/hooks/useTeams';
+import { useConfirmAction } from '@/hooks/useConfirm';
 import { paths } from '@/routes/types';
 import type { ITimeDetalhe } from '@/@types/competition';
 import { getErrorMessage } from '@/utils/appError';
@@ -45,6 +46,7 @@ export function TeamDetailScreen() {
   const { removeTeam } = useTeams(competitionId);
   const [modal, setModal] = useState<'edit' | 'delete' | null>(null);
   const { donos } = useDonos(modal === 'edit');
+  const confirmAction = useConfirmAction();
 
   if (isLoading) return <LoaderGlobal label="Carregando time" />;
   if (error || !team) return <ErrorStateGlobal error={error} onRetry={() => void refetch()} />;
@@ -59,7 +61,7 @@ export function TeamDetailScreen() {
     <>
       <EntityHeaderGlobal
         title={team.nome}
-        subtitle={team.dono ? `Dono: ${team.dono.nome}` : 'Sem dono vinculado'}
+        subtitle={team.dono ? `Equipe: ${team.dono.nome}` : 'Sem acesso de equipe'}
         imageUrl={team.logo_url}
         badges={team.sigla ? <BadgeGlobal label={team.sigla} /> : undefined}
         actions={
@@ -76,10 +78,19 @@ export function TeamDetailScreen() {
         <TeamFormModalGlobal
           open
           initialValues={{ nome: team.nome, sigla: team.sigla ?? '', dono_id: team.dono_id, logo_url: team.logo_url }}
-          donos={team.dono && !donos.some((d) => d.id === team.dono_id) ? [...donos, { id: team.dono_id as string, nome: team.dono.nome }] : donos}
+          donos={
+            team.dono && !donos.some((d) => d.id === team.dono_id)
+              ? [...donos, { id: team.dono_id as string, nome: team.dono.nome }]
+              : donos
+          }
           saving={updateTeam.isPending}
           error={updateTeam.error ? getErrorMessage(updateTeam.error) : null}
-          onSubmit={(patch, logo) => updateTeam.mutate({ patch, logo }, { onSuccess: () => setModal(null) })}
+          onSubmit={(patch, logo, novoDono) =>
+            confirmAction(
+              novoDono ? `Salvar o time e criar o acesso ${novoDono.email}?` : 'Salvar as alterações do time?',
+              () => updateTeam.mutate({ patch, logo, novoDono }, { onSuccess: () => setModal(null) }),
+            )
+          }
           onClose={() => setModal(null)}
         />
       )}

@@ -5,27 +5,33 @@ import { AlertGlobal } from '@/components/alertGlobal';
 import { BasicInfoFormGlobal } from '@/components/basicInfoFormGlobal';
 import { ButtonGlobal } from '@/components/buttonGlobal';
 import { CardGlobal } from '@/components/cardGlobal';
+import { BillingFormGlobal } from '@/components/billingFormGlobal';
 import { CategoriesEditorGlobal } from '@/components/categoriesEditorGlobal';
 import { CompetitionReviewGlobal } from '@/components/competitionReviewGlobal';
+import { ConfirmDialogGlobal } from '@/components/confirmDialogGlobal';
 import { ErrorStateGlobal } from '@/components/errorStateGlobal';
 import { FormActionsGlobal } from '@/components/formActionsGlobal';
 import { FormatSummaryGlobal } from '@/components/formatSummaryGlobal';
-import { LinkButtonGlobal } from '@/components/linkButtonGlobal';
 import { LoaderGlobal } from '@/components/loaderGlobal';
 import { PageHeaderGlobal } from '@/components/pageHeaderGlobal';
 import { PhasesEditorGlobal } from '@/components/phasesEditorGlobal';
 import { ScoringFormGlobal } from '@/components/scoringFormGlobal';
+import { SelectGlobal } from '@/components/selectGlobal';
 import { StepperGlobal } from '@/components/stepperGlobal';
 import { INTERVALO_PADRAO_MIN, WIZARD_STEPS, type WizardStepKey } from '@/constants/competition';
 import { useAppNavigate } from '@/hooks/useAppNavigate';
 import { useAuth } from '@/hooks/useAuth';
 import { useCategories } from '@/hooks/useCategories';
+import { useConfirmAction } from '@/hooks/useConfirm';
+import { useAdminUsers } from '@/hooks/useCompetitionAdmins';
 import { useCompetition, useCreateCompetition } from '@/hooks/useCompetitions';
 import { usePhases } from '@/hooks/usePhases';
 import { useTeams } from '@/hooks/useTeams';
 import type { IRouteParams } from '@/routes/types';
 import { paths } from '@/routes/types';
 import { getErrorMessage } from '@/utils/appError';
+import { CompetitionOverviewScreen } from '@/view/competitionOverviewScreen';
+import { TeamsScreen } from '@/view/teamsScreen';
 import { analyzeFormat, buildFormatSummary, phaseFromDb } from '@/utils/phaseFormat';
 import { isWizardStep, nextWizardStep } from '@/utils/wizard';
 import { Feedback, Section } from './style';
@@ -58,24 +64,46 @@ const toBasics = (c: ICompeticao): ICompeticaoBasicos => ({
 function NewCompetitionWizard() {
   const navigate = useAppNavigate();
   const create = useCreateCompetition();
+  const confirmAction = useConfirmAction();
+  const { adminUsers } = useAdminUsers();
+  const [adminId, setAdminId] = useState('');
 
   return (
     <>
-      <PageHeaderGlobal title="Nova competição" subtitle="Comece pelos dados básicos; o resto pode ser ajustado depois." />
+      <PageHeaderGlobal
+        title="Nova competição"
+        subtitle="Comece pelos dados básicos; o resto pode ser ajustado depois."
+      />
       <StepperGlobal
         steps={STEPS.map((s) => ({ ...s, disabled: s.key !== 'dados' }))}
         current="dados"
         onSelect={() => {}}
       />
+      <Section>
+        <SelectGlobal
+          label="Coordenador da liga"
+          value={adminId}
+          options={[
+            { value: '', label: 'Escolher depois (em Coordenadores)' },
+            ...adminUsers.map((admin) => ({ value: admin.id, label: admin.nome })),
+          ]}
+          onChange={(event) => setAdminId(event.target.value)}
+        />
+      </Section>
       <BasicInfoFormGlobal
         initialValues={EMPTY_BASICS}
         isNew
         saving={create.isPending}
         error={create.error ? getErrorMessage(create.error) : null}
         onSave={(input, logo, advance) =>
-          create.mutate(
-            { input, logo },
-            { onSuccess: (id) => navigate(paths.competitionSettings(id, advance ? 'pontuacao' : 'dados'), { replace: true }) },
+          confirmAction(`Criar a liga "${input.nome}"?`, () =>
+            create.mutate(
+              { input, logo, adminId: adminId || undefined },
+              {
+                onSuccess: (id) =>
+                  navigate(paths.competitionSettings(id, advance ? 'pontuacao' : 'dados'), { replace: true }),
+              },
+            ),
           )
         }
       />
@@ -91,7 +119,10 @@ function EditCompetitionWizard({ competitionId }: { competitionId: string }) {
   const [saved, setSaved] = useState(false);
   const [categoryError, setCategoryError] = useState<string | null>(null);
 
-  const { competition, isLoading, error, refetch, saveBasics, saveScoring } = useCompetition(competitionId);
+  const { competition, isLoading, error, refetch, saveBasics, saveScoring, saveBilling, setActive } =
+    useCompetition(competitionId);
+  const [confirmDeactivate, setConfirmDeactivate] = useState(false);
+  const confirmAction = useConfirmAction();
   const categories = useCategories(competitionId);
   const { teams } = useTeams(competitionId);
   const phases = usePhases(competitionId);
@@ -114,14 +145,41 @@ function EditCompetitionWizard({ competitionId }: { competitionId: string }) {
   const phasesNotice = competition.estrutura_travada
     ? locked
       ? null
-      : 'A estrutura está travada porque já há súmula lançada. Como admin master, você pode alterar as fases; a tabela será recalculada.'
+      : 'A estrutura está travada porque já há súmula lançada. Como Admin, você pode alterar as fases; a tabela será recalculada.'
     : competition.status !== 'rascunho'
       ? 'A competição já começou: nas fases em andamento só é possível alterar o nome e os classificados.'
       : null;
 
   return (
     <>
-      <PageHeaderGlobal title="Configuração" subtitle={competition.nome} />
+      <PageHeaderGlobal
+        title="Configuração"
+        subtitle={competition.nome}
+        actions={
+          competition.ativa && (
+            <ButtonGlobal
+              label="Desativar liga"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setActive.reset();
+                setConfirmDeactivate(true);
+              }}
+            />
+          )
+        }
+      />
+      <ConfirmDialogGlobal
+        open={confirmDeactivate}
+        title="Desativar liga"
+        message={`"${competition.nome}" sai da área pública e some para as equipes. No painel fica só para consulta, sem edição, até alguém reativar. Nada é apagado.`}
+        confirmLabel="Desativar"
+        danger
+        loading={setActive.isPending}
+        error={setActive.error ? getErrorMessage(setActive.error) : null}
+        onConfirm={() => setActive.mutate(false, { onSuccess: () => setConfirmDeactivate(false) })}
+        onClose={() => setConfirmDeactivate(false)}
+      />
       <StepperGlobal steps={STEPS} current={step} onSelect={(key) => goTo(key as WizardStepKey)} />
       {saved && (
         <Feedback>
@@ -137,7 +195,11 @@ function EditCompetitionWizard({ competitionId }: { competitionId: string }) {
           isNew={false}
           saving={saveBasics.isPending}
           error={saveBasics.error ? getErrorMessage(saveBasics.error) : null}
-          onSave={(input, logo, advance) => saveBasics.mutate({ input, logo }, { onSuccess: () => afterSave(advance) })}
+          onSave={(input, logo, advance) =>
+            confirmAction('Salvar os dados básicos da liga?', () =>
+              saveBasics.mutate({ input, logo }, { onSuccess: () => afterSave(advance) }),
+            )
+          }
         />
       )}
 
@@ -145,12 +207,15 @@ function EditCompetitionWizard({ competitionId }: { competitionId: string }) {
         <ScoringFormGlobal
           key={`pontuacao-${competition.id}`}
           initialValues={competition}
-          modalidade={competition.modalidade}
           locked={locked}
           warnRecalculation={competition.estrutura_travada && profile?.papel === 'master'}
           saving={saveScoring.isPending}
           error={saveScoring.error ? getErrorMessage(saveScoring.error) : null}
-          onSave={(input, advance) => saveScoring.mutate(input, { onSuccess: () => afterSave(advance) })}
+          onSave={(input, advance) =>
+            confirmAction('Salvar a pontuação da liga?', () =>
+              saveScoring.mutate(input, { onSuccess: () => afterSave(advance) }),
+            )
+          }
         />
       )}
 
@@ -167,13 +232,21 @@ function EditCompetitionWizard({ competitionId }: { competitionId: string }) {
             error={categoryError}
             onClearError={() => setCategoryError(null)}
             onCreate={(values, done) =>
-              categories.createCategory.mutate(values, { onSuccess: done, onError: onCategoryError })
+              confirmAction(`Adicionar a estatística "${values.nome}"?`, () =>
+                categories.createCategory.mutate(values, { onSuccess: done, onError: onCategoryError }),
+              )
             }
             onUpdate={(id, patch, done) =>
-              categories.updateCategory.mutate({ id, patch }, { onSuccess: done, onError: onCategoryError })
+              confirmAction('Salvar as alterações da estatística?', () =>
+                categories.updateCategory.mutate({ id, patch }, { onSuccess: done, onError: onCategoryError }),
+              )
             }
             onRemove={(id, done) => categories.removeCategory.mutate(id, { onSuccess: done, onError: onCategoryError })}
-            onMove={(a, b) => categories.moveCategory.mutate({ a, b }, { onError: onCategoryError })}
+            onMove={(a, b) =>
+              confirmAction('Mudar a ordem das estatísticas?', () =>
+                categories.moveCategory.mutate({ a, b }, { onError: onCategoryError }),
+              )
+            }
           />
           <FormActionsGlobal note="As alterações desta etapa são salvas na hora. Cada estatística ativa ganha um ranking.">
             <ButtonGlobal label="Continuar" onClick={() => goTo(nextWizardStep(step))} />
@@ -195,9 +268,36 @@ function EditCompetitionWizard({ competitionId }: { competitionId: string }) {
             notice={phasesNotice}
             saving={phases.savePhases.isPending}
             error={phases.savePhases.error ? getErrorMessage(phases.savePhases.error) : null}
-            onSave={(payload, advance) => phases.savePhases.mutate(payload, { onSuccess: () => afterSave(advance) })}
+            onSave={(payload, advance) =>
+              confirmAction('Salvar as fases da liga?', () =>
+                phases.savePhases.mutate(payload, { onSuccess: () => afterSave(advance) }),
+              )
+            }
           />
         ))}
+
+      {step === 'cobranca' && (
+        <BillingFormGlobal
+          key={`cobranca-${competition.id}`}
+          initialValues={competition}
+          saving={saveBilling.isPending}
+          error={saveBilling.error ? getErrorMessage(saveBilling.error) : null}
+          onSave={(input, advance) =>
+            confirmAction('Salvar a cobrança da liga?', () =>
+              saveBilling.mutate(input, { onSuccess: () => afterSave(advance) }),
+            )
+          }
+        />
+      )}
+
+      {step === 'times' && (
+        <>
+          <TeamsScreen />
+          <FormActionsGlobal note="Os times são salvos na hora. Também dá para gerenciá-los pela aba Times.">
+            <ButtonGlobal label="Continuar" onClick={() => goTo(nextWizardStep(step))} />
+          </FormActionsGlobal>
+        </>
+      )}
 
       {step === 'revisao' && (
         <>
@@ -215,9 +315,7 @@ function EditCompetitionWizard({ competitionId }: { competitionId: string }) {
               <FormatSummaryGlobal steps={formatSteps} emptyText="Nenhuma fase configurada ainda." />
             </CardGlobal>
           </Section>
-          <FormActionsGlobal>
-            <LinkButtonGlobal to={paths.competitionTeams(competitionId)} label="Ir para os times" variant="primary" />
-          </FormActionsGlobal>
+          <CompetitionOverviewScreen embedded />
         </>
       )}
     </>

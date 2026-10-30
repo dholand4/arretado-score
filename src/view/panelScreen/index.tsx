@@ -15,7 +15,7 @@ interface IShortcut {
 
 // Atalhos sem `to` ficam visíveis como "em breve" até a etapa correspondente.
 const SHORTCUTS: IShortcut[] = [
-  { title: 'Usuários', description: 'Criar admins e donos de time, redefinir senhas.', roles: ['master'], to: ROUTES.users },
+  { title: 'Usuários', description: 'Criar coordenadores e equipes, redefinir senhas.', roles: ['master'], to: ROUTES.users },
   {
     title: 'Competições',
     description: 'Criar e administrar campeonatos, times e jogadores.',

@@ -72,7 +72,7 @@ describe('CompetitionWizardScreen', () => {
     const create = mutation();
     vi.mocked(useCreateCompetition).mockReturnValue(create as unknown as ReturnType<typeof useCreateCompetition>);
     renderAt('/painel/competicoes/nova');
-    expect(screen.getByRole('button', { name: /Pontuação e W.O./ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Pontuação/ })).toBeDisabled();
     fireEvent.change(screen.getByLabelText('Nome da competição'), { target: { value: 'Copa' } });
     fireEvent.click(screen.getByRole('button', { name: 'Salvar e continuar' }));
     await waitFor(() =>
@@ -92,7 +92,7 @@ describe('CompetitionWizardScreen', () => {
       saveScoring: mutation(),
     } as unknown as ReturnType<typeof useCompetition>);
     renderAt('/painel/competicoes/c1/configuracao?etapa=pontuacao');
-    expect(screen.getByRole('button', { name: /Pontuação e W.O./ })).toHaveAttribute('aria-current', 'step');
+    expect(screen.getByRole('button', { name: /Pontuação/ })).toHaveAttribute('aria-current', 'step');
     expect(screen.getByText(/estrutura está travada/)).toBeInTheDocument();
     expect(screen.getByLabelText('Vitória')).toBeDisabled();
   });

@@ -1,11 +1,11 @@
-import { BrandGlobal } from '@/components/brandGlobal';
+import { SportsBackdropGlobal } from '@/components/sportsBackdropGlobal';
 import { Card, Footer, Page, Subtitle, Title } from './style';
 import type { IAuthShellProps } from './types';
 
 export function AuthShellGlobal({ title, subtitle, children, footer }: IAuthShellProps) {
   return (
     <Page>
-      <BrandGlobal to="/" inverse />
+      <SportsBackdropGlobal />
       <Card>
         <Title>{title}</Title>
         {subtitle && <Subtitle>{subtitle}</Subtitle>}

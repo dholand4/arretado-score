@@ -11,13 +11,13 @@ import { BUCKETS, storagePaths } from '@/constants/storage';
 import { storageService } from './storageService';
 import { supabase } from './supabaseService';
 
-const TEAM_DETAIL_SELECT = '*, dono:profiles(nome), competicao:competicoes(id, nome, status, modalidade)';
+const TEAM_DETAIL_SELECT = '*, dono:profiles(nome), competicao:competicoes(id, nome, slug, status, modalidade, cobranca_modelo)';
 
 export const teamsService = {
   async list(competicaoId: string): Promise<ITimeResumo[]> {
     const { data, error } = await supabase
       .from('times')
-      .select('*, dono:profiles(nome), jogadores(count)')
+      .select('*, dono:profiles(nome), jogadores(count), elenco:jogadores(nome, apelido)')
       .eq('competicao_id', competicaoId)
       .order('nome');
     if (error) throw error;

@@ -32,6 +32,8 @@ export interface IFaseForm {
   melhor_de: MelhorDe;
   cruzamento: Cruzamento | null;
   disputa_terceiro: boolean;
+  // "Melhor de" da disputa de 3º lugar; nulo = igual ao da fase.
+  melhor_de_terceiro: MelhorDe | null;
   confrontos: IConfronto[];
   // Fase que já começou: só nome e classificados podem mudar.
   iniciada: boolean;
@@ -49,6 +51,7 @@ export interface IFasePayload {
   melhor_de: number;
   cruzamento: Cruzamento | null;
   disputa_terceiro: boolean;
+  melhor_de_terceiro: number | null;
   confrontos?: { origem_a: IOrigem; origem_b: IOrigem }[];
 }
 

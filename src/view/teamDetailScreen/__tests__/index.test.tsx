@@ -49,7 +49,7 @@ describe('TeamDetailScreen', () => {
       '/painel/competicoes/c1/times/t1',
     );
     expect(screen.getByRole('heading', { level: 1, name: 'Tubarões' })).toBeInTheDocument();
-    expect(screen.getByText('Sem dono vinculado')).toBeInTheDocument();
+    expect(screen.getByText('Sem acesso de equipe')).toBeInTheDocument();
     expect(screen.getByText('Carlos')).toBeInTheDocument();
     expect(useTeamRoster).toHaveBeenCalledWith(expect.objectContaining({ id: 't1' }), true);
     fireEvent.click(screen.getByRole('button', { name: 'Excluir time' }));

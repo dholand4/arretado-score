@@ -51,7 +51,7 @@ export function PhasesEditorGlobal({
       {locked && (
         <AlertGlobal
           variant="warning"
-          message="A estrutura está travada porque já há súmula lançada. Só o admin master pode alterar as fases."
+          message="A estrutura está travada porque já há súmula lançada. Só o Admin pode alterar as fases."
         />
       )}
       {notice && <AlertGlobal variant="warning" message={notice} />}

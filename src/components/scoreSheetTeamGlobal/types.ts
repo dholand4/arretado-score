@@ -14,6 +14,8 @@ export interface IScoreSheetCategory {
 export interface IScoreSheetTeamProps {
   teamName: string;
   score: number;
+  // Placar total digitado: o cabeçalho mostra quanto já foi dividido entre os jogadores.
+  total?: number | null;
   players: IScoreSheetPlayer[];
   categories: IScoreSheetCategory[];
   present: string[];

@@ -1,30 +1,40 @@
-import { NavLink } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import styled from 'styled-components';
 
+const SIDEBAR_WIDTH = 248;
+
 export const Shell = styled.div`
-  display: flex;
-  flex-direction: column;
   min-height: 100vh;
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.md}px) {
+    display: grid;
+    grid-template-columns: ${SIDEBAR_WIDTH}px minmax(0, 1fr);
+  }
 `;
 
-export const Header = styled.header`
+// Barra fina só no celular, com o botão que abre o menu.
+export const TopBar = styled.header`
   position: sticky;
   top: 0;
   z-index: ${({ theme }) => theme.zIndex.header};
-  background-color: ${({ theme }) => theme.colors.secondary};
-  color: ${({ theme }) => theme.colors.textInverse};
-`;
-
-export const HeaderInner = styled.div`
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: ${({ theme }) => theme.spacing.sm}px ${({ theme }) => theme.spacing.md}px;
-  max-width: ${({ theme }) => theme.sizes.contentMaxWidth}px;
   min-height: ${({ theme }) => theme.sizes.headerHeight}px;
-  margin: 0 auto;
   padding: 0 ${({ theme }) => theme.spacing.md}px;
+  background-color: ${({ theme }) => theme.colors.secondary};
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.md}px) {
+    display: none;
+  }
+`;
+
+export const TopBarTitle = styled.span`
+  overflow: hidden;
+  color: ${({ theme }) => theme.colors.textInverse};
+  font-weight: ${({ theme }) => theme.fontWeight.semibold};
+  white-space: nowrap;
+  text-overflow: ellipsis;
 `;
 
 export const MenuButton = styled.button`
@@ -39,31 +49,104 @@ export const MenuButton = styled.button`
   color: ${({ theme }) => theme.colors.textInverse};
   font-size: ${({ theme }) => theme.fontSize.xl}px;
   cursor: pointer;
+`;
+
+export const Backdrop = styled.div<{ $open: boolean }>`
+  display: ${({ $open }) => ($open ? 'block' : 'none')};
+  position: fixed;
+  inset: 0;
+  z-index: ${({ theme }) => theme.zIndex.modal - 2};
+  background-color: ${({ theme }) => theme.colors.overlay};
 
   @media (min-width: ${({ theme }) => theme.breakpoints.md}px) {
     display: none;
   }
 `;
 
-export const Nav = styled.nav<{ $open: boolean }>`
-  display: ${({ $open }) => ($open ? 'flex' : 'none')};
+export const Sidebar = styled.aside<{ $open: boolean }>`
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: ${({ theme }) => theme.zIndex.modal - 1};
+  display: flex;
   flex-direction: column;
-  width: 100%;
-  gap: ${({ theme }) => theme.spacing.xs}px;
-  padding-bottom: ${({ theme }) => theme.spacing.md}px;
+  width: min(${SIDEBAR_WIDTH + 32}px, 85vw);
+  padding: ${({ theme }) => theme.spacing.lg}px ${({ theme }) => theme.spacing.md}px;
+  background-color: ${({ theme }) => theme.colors.secondary};
+  color: ${({ theme }) => theme.colors.textInverse};
+  overflow-y: auto;
+  transform: translateX(${({ $open }) => ($open ? '0' : '-100%')});
+  transition: transform ${({ theme }) => theme.transition.fast};
 
   @media (min-width: ${({ theme }) => theme.breakpoints.md}px) {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
+    position: sticky;
     width: auto;
-    flex: 1;
-    padding-bottom: 0;
+    height: 100vh;
+    transform: none;
   }
 `;
 
-export const NavItem = styled(NavLink)`
-  padding: ${({ theme }) => theme.spacing.sm}px ${({ theme }) => theme.spacing.sm + theme.spacing.xs}px;
+export const Welcome = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xxs}px;
+  margin-bottom: ${({ theme }) => theme.spacing.lg}px;
+  padding-bottom: ${({ theme }) => theme.spacing.md}px;
+  border-bottom: ${({ theme }) => theme.sizes.borderWidth}px solid ${({ theme }) => theme.colors.secondaryHover};
+`;
+
+export const WelcomeText = styled.span`
+  font-size: ${({ theme }) => theme.fontSize.lg}px;
+  font-weight: ${({ theme }) => theme.fontWeight.semibold};
+`;
+
+export const Role = styled.span`
+  font-size: ${({ theme }) => theme.fontSize.xs}px;
+  opacity: 0.75;
+`;
+
+export const Nav = styled.nav`
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.lg}px;
+`;
+
+export const Section = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xxs}px;
+`;
+
+export const BackLink = styled(Link)`
+  margin-bottom: ${({ theme }) => theme.spacing.sm}px;
+  padding: 0 ${({ theme }) => theme.spacing.sm}px;
+  color: ${({ theme }) => theme.colors.textInverse};
+  font-size: ${({ theme }) => theme.fontSize.xs}px;
+  text-decoration: none;
+  opacity: 0.7;
+
+  &:hover {
+    opacity: 1;
+    text-decoration: underline;
+  }
+`;
+
+export const SectionTitle = styled.div`
+  overflow-wrap: anywhere;
+  margin-bottom: ${({ theme }) => theme.spacing.xs}px;
+  padding: 0 ${({ theme }) => theme.spacing.sm}px;
+  font-size: ${({ theme }) => theme.fontSize.xs}px;
+  font-weight: ${({ theme }) => theme.fontWeight.semibold};
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.8;
+`;
+
+export const Item = styled(NavLink)`
+  display: block;
+  padding: ${({ theme }) => theme.spacing.sm + theme.spacing.xxs}px ${({ theme }) => theme.spacing.sm + theme.spacing.xs}px;
   border-radius: ${({ theme }) => theme.radius.md}px;
   color: ${({ theme }) => theme.colors.textInverse};
   font-size: ${({ theme }) => theme.fontSize.sm}px;
@@ -82,39 +165,13 @@ export const NavItem = styled(NavLink)`
   }
 `;
 
-export const UserArea = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: ${({ theme }) => theme.spacing.sm + theme.spacing.xs}px;
-  padding-top: ${({ theme }) => theme.spacing.sm}px;
+export const Footer = styled.div`
+  margin-top: ${({ theme }) => theme.spacing.lg}px;
+  padding-top: ${({ theme }) => theme.spacing.md}px;
   border-top: ${({ theme }) => theme.sizes.borderWidth}px solid ${({ theme }) => theme.colors.secondaryHover};
-
-  @media (min-width: ${({ theme }) => theme.breakpoints.md}px) {
-    margin-left: auto;
-    padding-top: 0;
-    border-top: none;
-  }
-`;
-
-export const UserInfo = styled.div`
-  display: flex;
-  flex-direction: column;
-  line-height: ${({ theme }) => theme.lineHeight.tight};
-`;
-
-export const UserName = styled.span`
-  font-size: ${({ theme }) => theme.fontSize.sm}px;
-  font-weight: ${({ theme }) => theme.fontWeight.semibold};
-`;
-
-export const UserRole = styled.span`
-  font-size: ${({ theme }) => theme.fontSize.xs}px;
-  opacity: 0.75;
 `;
 
 export const Main = styled.main`
-  flex: 1;
   width: 100%;
   max-width: ${({ theme }) => theme.sizes.contentMaxWidth}px;
   margin: 0 auto;

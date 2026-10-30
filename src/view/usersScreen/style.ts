@@ -2,12 +2,12 @@ import styled from 'styled-components';
 
 export const Filters = styled.div`
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: ${({ theme }) => theme.spacing.sm + theme.spacing.xs}px;
   margin-bottom: ${({ theme }) => theme.spacing.md}px;
 
   @media (min-width: ${({ theme }) => theme.breakpoints.md}px) {
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
   }
 `;
 
@@ -17,7 +17,7 @@ export const Feedback = styled.div`
 
 export const List = styled.ul`
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: ${({ theme }) => theme.spacing.sm + theme.spacing.xs}px;
   margin: 0;
   padding: 0;
