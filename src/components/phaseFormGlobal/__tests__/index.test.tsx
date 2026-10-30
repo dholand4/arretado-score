@@ -47,7 +47,14 @@ describe('PhaseFormGlobal', () => {
     const phases = [league(), knockout({ cruzamento: 'manual' })];
     const analysis = analyzeFormat(phases, 5);
     renderWithTheme(
-      <PhaseFormGlobal phase={phases[1]} index={1} isLast analysis={analysis.phases[1]} previousName="Fase 1" onChange={onChange} />,
+      <PhaseFormGlobal
+        phase={phases[1]}
+        index={1}
+        isLast
+        analysis={analysis.phases[1]}
+        previousName="Fase 1"
+        onChange={onChange}
+      />,
     );
     expect(screen.getAllByRole('group')).toHaveLength(2);
     fireEvent.change(screen.getAllByLabelText('Melhor campanha')[0], { target: { value: 'posicao:1:1' } });
@@ -62,11 +69,86 @@ describe('PhaseFormGlobal', () => {
   it('locks structural fields of a phase that already started', () => {
     const onRemove = vi.fn();
     renderWithTheme(
-      <PhaseFormGlobal phase={{ ...league(), iniciada: true }} index={0} isLast={false} onChange={vi.fn()} onRemove={onRemove} />,
+      <PhaseFormGlobal
+        phase={{ ...league(), iniciada: true }}
+        index={0}
+        isLast={false}
+        onChange={vi.fn()}
+        onRemove={onRemove}
+      />,
     );
     expect(screen.getByText('Já começou')).toBeInTheDocument();
     expect(screen.getByLabelText('Tipo')).toBeDisabled();
     expect(screen.getByLabelText('Nome da fase')).toBeEnabled();
     expect(screen.getByRole('button', { name: 'Remover fase 1' })).toBeDisabled();
+  });
+
+  it('takes winners or losers from an earlier knockout phase', () => {
+    const terceiro: IFaseForm = {
+      ...newPhase(2, 'mata_mata'),
+      nome: '3º lugar',
+      cruzamento: 'outra_fase',
+      fase_origem: 2,
+      resultado_origem: 'perdedores',
+    };
+    const final: IFaseForm = { ...terceiro, nome: 'Final', resultado_origem: 'vencedores' };
+    const phases = [league(), knockout(), terceiro, final];
+    const analysis = analyzeFormat(phases, 5);
+    expect(analysis.errors).toEqual([]);
+    const earlier = phases.slice(0, 2).map((p, i) => ({ ordem: i + 1, nome: p.nome, tipo: p.tipo, fase_origem: null }));
+    const onChange = vi.fn();
+    renderWithTheme(
+      <PhaseFormGlobal
+        phase={terceiro}
+        index={2}
+        isLast={false}
+        analysis={analysis.phases[2]}
+        earlierPhases={earlier}
+        onChange={onChange}
+      />,
+    );
+    expect(screen.getByLabelText('Fase de origem')).toHaveValue('2');
+    expect(screen.getByLabelText('Quem entra')).toHaveValue('perdedores');
+    expect(screen.getByRole('list', { name: 'Séries da fase 3' })).toHaveTextContent('Perdedor da S1 x Perdedor da S2');
+    fireEvent.change(screen.getByLabelText('Quem entra'), { target: { value: 'vencedores' } });
+    expect(onChange).toHaveBeenCalledWith({ resultado_origem: 'vencedores' });
+    expect(analysis.phases[3].series[0]).toMatchObject({
+      origem_a: { tipo: 'vencedor', serie: 'S1' },
+      origem_b: { tipo: 'vencedor', serie: 'S2' },
+    });
+  });
+
+  it('suggests the same origin as the 3rd place phase for the final', () => {
+    const final = { ...newPhase(3, 'mata_mata'), nome: 'Final' };
+    const onChange = vi.fn();
+    renderWithTheme(
+      <PhaseFormGlobal
+        phase={final}
+        index={3}
+        isLast
+        earlierPhases={[
+          { ordem: 1, nome: 'Fase 1', tipo: 'todos_contra_todos', fase_origem: null },
+          { ordem: 2, nome: 'Semifinal', tipo: 'mata_mata', fase_origem: null },
+          { ordem: 3, nome: '3º lugar', tipo: 'mata_mata', fase_origem: 2 },
+        ]}
+        onChange={onChange}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText('Confrontos'), { target: { value: 'outra_fase' } });
+    expect(onChange).toHaveBeenCalledWith({ cruzamento: 'outra_fase', fase_origem: 2, resultado_origem: 'vencedores' });
+  });
+
+  it('refuses losers in the last phase', () => {
+    const ultima: IFaseForm = {
+      ...newPhase(2, 'mata_mata'),
+      nome: '3º lugar',
+      cruzamento: 'outra_fase',
+      fase_origem: 2,
+      resultado_origem: 'perdedores',
+    };
+    const analysis = analyzeFormat([league(), knockout(), ultima], 5);
+    expect(analysis.errors.map((e) => e.message)).toContain(
+      'A última fase define o campeão: use os vencedores (o 3º lugar vem antes da final).',
+    );
   });
 });

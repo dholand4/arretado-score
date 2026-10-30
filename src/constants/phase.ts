@@ -1,5 +1,5 @@
 import type { StatusEvento, StatusJogo } from '@/@types/event';
-import type { Cruzamento, MelhorDe, SorteioGrupos, StatusFase, TipoFase } from '@/@types/phase';
+import type { Cruzamento, MelhorDe, ResultadoOrigem, SorteioGrupos, StatusFase, TipoFase } from '@/@types/phase';
 import type { BadgeTone } from '@/components/badgeGlobal';
 
 export const TIPO_FASE_LABEL: Record<TipoFase, string> = {
@@ -20,6 +20,10 @@ export const CRUZAMENTO_LABEL: Record<Cruzamento, { label: string; description: 
   },
   cruzado_grupos: { label: 'Cruzado entre grupos', description: '1ºA x 2ºB, 1ºB x 2ºA, 1ºC x 2ºD…' },
   vencedores: { label: 'Vencedores', description: 'Vencedor da série 1 x vencedor da série 2, 3 x 4…' },
+  outra_fase: {
+    label: 'Vencedores ou perdedores de uma fase',
+    description: 'Escolha uma fase de mata-mata anterior e quem entra: série 1 x série 2, 3 x 4… Ex.: 3º lugar com os perdedores da semifinal.',
+  },
   manual: { label: 'Manual', description: 'Você define cada confronto com as origens disponíveis.' },
 };
 
@@ -27,6 +31,11 @@ export const CRUZAMENTO_OPTIONS = (Object.keys(CRUZAMENTO_LABEL) as Cruzamento[]
   value,
   label: CRUZAMENTO_LABEL[value].label,
 }));
+
+export const RESULTADO_ORIGEM_OPTIONS: { value: ResultadoOrigem; label: string }[] = [
+  { value: 'vencedores', label: 'Vencedores' },
+  { value: 'perdedores', label: 'Perdedores' },
+];
 
 export const MELHOR_DE_OPTIONS: { value: MelhorDe; label: string }[] = [
   { value: 1, label: 'Jogo único' },

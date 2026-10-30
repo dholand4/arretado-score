@@ -68,6 +68,12 @@ export function PhasesEditorGlobal({
               isLast={index === phases.length - 1}
               analysis={analysis.phases[index]}
               previousName={phases[index - 1]?.nome}
+              earlierPhases={phases.slice(0, index).map((p, i) => ({
+                ordem: i + 1,
+                nome: p.nome.trim(),
+                tipo: p.tipo,
+                fase_origem: p.cruzamento === 'outra_fase' ? p.fase_origem : null,
+              }))}
               previousClassificam={phases[index - 1]?.classificam}
               errors={errors}
               messages={warnings}

@@ -112,7 +112,8 @@ export function buildBracketLayout(phases: IBracketPhase[]): IBracketLayout {
       .sort(([a], [b]) => b - a)
       .map(([depth, series]) => ({ title: phases[lastIndex - depth].nome, matches: series.map(toMatch) }));
 
-  const third = lastPhase.series.find(isThirdPlace);
+  // 3º lugar: série com perdedores, na final (formato antigo) ou numa fase própria antes dela.
+  const third = [...phases].reverse().flatMap((phase) => phase.series).find(isThirdPlace);
   return {
     left: columns('left'),
     right: columns('right'),

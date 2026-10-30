@@ -154,8 +154,10 @@ O admin pode adicionar quantas categorias quiser (ex.: no basquete, Rebotes, Ass
 - `classificam int` — quantos avançam (total, ou por grupo quando `tipo = 'grupos'`)
 - `melhores_extras int default 0` — só em `grupos`: quantos melhores colocados seguintes (ex.: melhores 3º) também avançam
 - `melhor_de int default 1` — só em `mata_mata`: 1, 3, 5 ou 7
-- `cruzamento text` — só em `mata_mata`: `'por_campanha' | 'cruzado_grupos' | 'vencedores' | 'manual'`
-- `disputa_terceiro boolean default false` — só em `mata_mata` de final
+- `cruzamento text` — só em `mata_mata`: `'por_campanha' | 'cruzado_grupos' | 'vencedores' | 'outra_fase' | 'manual'`
+- `fase_origem int` — só com `cruzamento = 'outra_fase'`: `ordem` da fase de mata-mata anterior de onde saem os times
+- `resultado_origem text` — só com `cruzamento = 'outra_fase'`: `'vencedores' | 'perdedores'`
+- `disputa_terceiro boolean default false` — formato antigo (3º lugar como série extra da final); a tela só mostra para fases que já o têm. O 3º lugar agora é uma fase própria com `outra_fase` (ver 4.4.1)
 - `status text default 'aguardando'` — `'aguardando' | 'em_andamento' | 'concluida'`
 
 #### 4.4.1 Entrada de times numa fase
@@ -165,8 +167,10 @@ O admin pode adicionar quantas categorias quiser (ex.: no basquete, Rebotes, Ass
   - **`por_campanha`**: ordena os classificados pela campanha geral e cruza 1º x último, 2º x penúltimo… (com 4: 1º x 4º e 2º x 3º).
   - **`cruzado_grupos`**: 1ºA x 2ºB, 1ºB x 2ºA, 1ºC x 2ºD, 1ºD x 2ºC…
   - **`vencedores`**: vencedor da série 1 x vencedor da série 2, vencedor da 3 x vencedor da 4… (para rodadas seguintes do mata-mata). Com `disputa_terceiro`, cria também a série entre os perdedores.
+  - **`outra_fase`** (tela: "Vencedores ou perdedores de uma fase"): o admin escolhe uma fase de mata-mata anterior (`fase_origem`, não precisa ser a imediatamente anterior) e quem entra (`resultado_origem`): vencedor (ou perdedor) da série 1 x da série 2, da 3 x da 4… A fase de origem precisa ter ao menos 2 séries. A **última fase define o campeão**, por isso não pode usar perdedores.
+    - Exemplo de 3º lugar: Fase 2 "Semifinal" (por campanha) → Fase 3 "3º lugar" = perdedores da Semifinal → Fase 4 "Final" = vencedores da Semifinal.
   - **`manual`**: o admin define cada confronto na tela de configuração usando as origens disponíveis (posição X da fase anterior, posição X do grupo Y, vencedor/perdedor da série Z).
-- Ao salvar a configuração, o sistema grava as séries do mata-mata com as **origens** já definidas (ex.: "1º colocado da Fase 1") e os times ainda nulos. Os times são preenchidos quando a fase anterior termina.
+- Ao salvar a configuração, o sistema grava as séries do mata-mata com as **origens** já definidas (ex.: "1º colocado da Fase 1") e os times ainda nulos. Os times são preenchidos quando a fase anterior termina — ou, com `outra_fase`, quando a fase de origem termina.
 
 **`grupos`**
 - `fase_id uuid references fases on delete cascade`
@@ -348,8 +352,10 @@ Colunas: **J** (jogos), **V**, **E** (só se `permite_empate`), **D**, **WO** (d
 - Ao concluir uma fase:
   1. Calcula a classificação final da fase.
   2. Marca a fase `concluida` e a próxima `em_andamento`.
-  3. Resolve as origens da próxima fase: preenche `time_a_id`/`time_b_id` das séries (`time_a` = melhor campanha) ou distribui os classificados e gera os jogos (se for todos contra todos/grupos).
-  4. Se não houver próxima fase, a competição fica `encerrada` e o campeão é o vencedor da última série (ou o 1º da última classificação).
+  3. Resolve as origens da próxima fase: preenche `time_a_id`/`time_b_id` das séries (`time_a` = melhor campanha) ou distribui os classificados e gera os jogos (se for todos contra todos/grupos). Uma próxima fase `outra_fase` só é preenchida se a sua fase de origem já terminou.
+  4. Preenche também, junto, todas as fases `outra_fase` cuja `fase_origem` é a fase que terminou (ex.: 3º lugar e final saem juntos da semifinal e podem ser jogados no mesmo dia).
+  5. A competição fica `encerrada` quando **todas** as fases estão concluídas (a final pode terminar antes do 3º lugar). O campeão é o vencedor da série da última fase (ou o 1º da última classificação).
+- Se uma fase deixa de estar concluída (edição de resultado), as fases que dependem dela voltam a `aguardando`; uma fase `outra_fase` cuja origem é anterior à fase editada não é afetada.
 - Até a fase concluir, a área pública mostra os confrontos futuros com as origens ("1º colocado x 4º colocado").
 
 ### 6.7 Rankings de estatísticas

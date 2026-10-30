@@ -1,7 +1,9 @@
 import type { Tables } from './database';
 
 export type TipoFase = 'todos_contra_todos' | 'grupos' | 'mata_mata';
-export type Cruzamento = 'por_campanha' | 'cruzado_grupos' | 'vencedores' | 'manual';
+export type Cruzamento = 'por_campanha' | 'cruzado_grupos' | 'vencedores' | 'outra_fase' | 'manual';
+// Com cruzamento outra_fase: entram os vencedores ou os perdedores da fase escolhida.
+export type ResultadoOrigem = 'vencedores' | 'perdedores';
 export type SorteioGrupos = 'aleatorio' | 'manual';
 export type StatusFase = 'aguardando' | 'em_andamento' | 'concluida';
 export type MelhorDe = 1 | 3 | 5 | 7;
@@ -31,6 +33,9 @@ export interface IFaseForm {
   melhores_extras: number;
   melhor_de: MelhorDe;
   cruzamento: Cruzamento | null;
+  // Com cruzamento outra_fase: ordem da fase de origem e quem entra dela.
+  fase_origem: number | null;
+  resultado_origem: ResultadoOrigem | null;
   disputa_terceiro: boolean;
   // "Melhor de" da disputa de 3º lugar; nulo = igual ao da fase.
   melhor_de_terceiro: MelhorDe | null;
@@ -50,6 +55,8 @@ export interface IFasePayload {
   melhores_extras: number;
   melhor_de: number;
   cruzamento: Cruzamento | null;
+  fase_origem: number | null;
+  resultado_origem: ResultadoOrigem | null;
   disputa_terceiro: boolean;
   melhor_de_terceiro: number | null;
   confrontos?: { origem_a: IOrigem; origem_b: IOrigem }[];
@@ -74,9 +81,10 @@ export interface IGrupoComTimes {
   grupo_times: { time_id: string; time: { nome: string } | null }[];
 }
 
-export type IFase = Omit<Tables<'fases'>, 'tipo' | 'cruzamento' | 'sorteio_grupos' | 'status'> & {
+export type IFase = Omit<Tables<'fases'>, 'tipo' | 'cruzamento' | 'resultado_origem' | 'sorteio_grupos' | 'status'> & {
   tipo: TipoFase;
   cruzamento: Cruzamento | null;
+  resultado_origem: ResultadoOrigem | null;
   sorteio_grupos: SorteioGrupos;
   status: StatusFase;
   series: ISerie[];

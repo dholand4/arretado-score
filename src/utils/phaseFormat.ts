@@ -58,6 +58,8 @@ export function newPhase(index: number, previousTipo?: TipoFase): IFaseForm {
     melhores_extras: 0,
     melhor_de: 1,
     cruzamento: index === 0 ? null : previousTipo === 'mata_mata' ? 'vencedores' : 'por_campanha',
+    fase_origem: null,
+    resultado_origem: null,
     disputa_terceiro: false,
     melhor_de_terceiro: null,
     confrontos: [],
@@ -78,6 +80,8 @@ export function phaseFromDb(fase: IFase): IFaseForm {
     melhores_extras: fase.melhores_extras,
     melhor_de: ([1, 3, 5, 7] as const).find((n) => n === fase.melhor_de) ?? 1,
     cruzamento: fase.cruzamento,
+    fase_origem: fase.fase_origem,
+    resultado_origem: fase.resultado_origem,
     disputa_terceiro: fase.disputa_terceiro,
     melhor_de_terceiro: ([1, 3, 5, 7] as const).find((n) => n === fase.melhor_de_terceiro) ?? null,
     confrontos: series
@@ -198,6 +202,8 @@ export function analyzeFormat(phases: IFaseForm[], teamsCount: number): IFormatA
   const warnings: IPhaseIssue[] = [];
   const result: IPhaseAnalysis[] = [];
   let prevCodes: string[] = [];
+  // Códigos das séries (sem 3º lugar) de cada fase, para as fases que escolhem outra fase de origem.
+  const codesByPhase: string[][] = [];
   let serieSeq = 0;
 
   if (phases.length === 0) errors.push({ phaseIndex: null, message: 'Adicione ao menos uma fase.' });
@@ -211,7 +217,24 @@ export function analyzeFormat(phases: IFaseForm[], teamsCount: number): IFormatA
       (soft ? warnings : errors).push({ phaseIndex: i, field, message });
 
     let entram: number | null = null;
-    if (i === 0) {
+    const fromOther = p.tipo === 'mata_mata' && p.cruzamento === 'outra_fase';
+    const source = fromOther && p.fase_origem !== null ? phases[p.fase_origem - 1] : undefined;
+    const sourceCodes = fromOther && p.fase_origem !== null ? (codesByPhase[p.fase_origem - 1] ?? []) : [];
+    if (fromOther) {
+      if (p.fase_origem === null || p.fase_origem < 1 || p.fase_origem > i) {
+        report('fase_origem', 'Escolha uma fase anterior para tirar os times.');
+      } else if (source?.tipo !== 'mata_mata') {
+        report('fase_origem', 'A fase escolhida precisa ser de mata-mata.');
+      } else if (!p.resultado_origem) {
+        report('resultado_origem', 'Escolha se entram os vencedores ou os perdedores.');
+      } else if (isLast && p.resultado_origem === 'perdedores') {
+        report('resultado_origem', 'A última fase define o campeão: use os vencedores (o 3º lugar vem antes da final).');
+      } else if (sourceCodes.length < 2) {
+        report('fase_origem', 'A fase escolhida precisa ter ao menos 2 séries.');
+      } else {
+        entram = sourceCodes.length;
+      }
+    } else if (i === 0) {
       if (teamsCount >= 2) entram = teamsCount;
       else report(undefined, 'Cadastre ao menos 2 times para conferir os números da primeira fase.', true);
     } else {
@@ -265,13 +288,14 @@ export function analyzeFormat(phases: IFaseForm[], teamsCount: number): IFormatA
       }
       if (!isLast && gruposOk && isPositiveInt(p.classificam)) analysis.classificados = p.classificam * grupos + extras;
     } else {
-      buildKnockout(p, i, entram, prev, prevCodes, analysis, report, () => {
+      buildKnockout(p, i, entram, prev, fromOther ? sourceCodes : prevCodes, analysis, report, () => {
         serieSeq += 1;
         return `S${serieSeq}`;
       });
     }
 
     prevCodes = analysis.series.filter((s) => !s.terceiro).map((s) => s.codigo);
+    codesByPhase.push(prevCodes);
     result.push(analysis);
   });
 
@@ -330,6 +354,14 @@ function buildKnockout(
       pares.push([
         { tipo: 'posicao_grupo', fase_ordem: ordem, grupo: y, posicao: 1 },
         { tipo: 'posicao_grupo', fase_ordem: ordem, grupo: x, posicao: 2 },
+      ]);
+    }
+  } else if (p.cruzamento === 'outra_fase') {
+    const tipo = p.resultado_origem === 'perdedores' ? 'perdedor' : 'vencedor';
+    for (let k = 0; k < n; k += 1) {
+      pares.push([
+        { tipo, serie: prevCodes[2 * k] },
+        { tipo, serie: prevCodes[2 * k + 1] },
       ]);
     }
   } else if (p.cruzamento === 'vencedores') {
@@ -459,6 +491,8 @@ export function toPayload(phases: IFaseForm[]): IFasePayload[] {
       melhores_extras: p.tipo === 'grupos' && !isLast ? p.melhores_extras : 0,
       melhor_de: p.tipo === 'mata_mata' ? p.melhor_de : 1,
       cruzamento: p.tipo === 'mata_mata' ? p.cruzamento : null,
+      fase_origem: p.tipo === 'mata_mata' && p.cruzamento === 'outra_fase' ? p.fase_origem : null,
+      resultado_origem: p.tipo === 'mata_mata' && p.cruzamento === 'outra_fase' ? p.resultado_origem : null,
       disputa_terceiro: p.tipo === 'mata_mata' ? p.disputa_terceiro : false,
       melhor_de_terceiro: p.tipo === 'mata_mata' && p.disputa_terceiro ? p.melhor_de_terceiro : null,
     };

@@ -1,4 +1,4 @@
-import type { Cruzamento, IConfronto, MelhorDe, SorteioGrupos, TipoFase } from '@/@types/phase';
+import type { Cruzamento, IConfronto, MelhorDe, ResultadoOrigem, SorteioGrupos, TipoFase } from '@/@types/phase';
 import { AlertGlobal } from '@/components/alertGlobal';
 import { BadgeGlobal } from '@/components/badgeGlobal';
 import { ButtonGlobal } from '@/components/buttonGlobal';
@@ -10,6 +10,7 @@ import {
   CRUZAMENTO_LABEL,
   CRUZAMENTO_OPTIONS,
   MELHOR_DE_OPTIONS,
+  RESULTADO_ORIGEM_OPTIONS,
   SORTEIO_GRUPOS_LABEL,
   TIPO_FASE_OPTIONS,
 } from '@/constants/phase';
@@ -27,6 +28,7 @@ export function PhaseFormGlobal({
   isLast,
   analysis,
   previousName = '',
+  earlierPhases = [],
   previousClassificam = null,
   errors = {},
   messages = [],
@@ -40,6 +42,22 @@ export function PhaseFormGlobal({
   const isKnockout = phase.tipo === 'mata_mata';
   const tipoOptions = index === 0 ? TIPO_FASE_OPTIONS.filter((o) => o.value !== 'mata_mata') : TIPO_FASE_OPTIONS;
   const label = (o: Parameters<typeof originLabel>[0]) => originLabel(o, previousName, previousClassificam);
+  const knockoutBefore = earlierPhases.filter((p) => p.tipo === 'mata_mata');
+  // "Vencedores ou perdedores de uma fase" só aparece quando já existe um mata-mata antes.
+  const cruzamentoOptions = CRUZAMENTO_OPTIONS.filter((o) => o.value !== 'outra_fase' || knockoutBefore.length > 0);
+  const fromOther = isKnockout && phase.cruzamento === 'outra_fase';
+
+  const changeCruzamento = (cruzamento: Cruzamento | null) =>
+    onChange(
+      cruzamento === 'outra_fase'
+        ? {
+            cruzamento,
+            // Logo depois de um "3º lugar", a final costuma sair da mesma fase de origem dele.
+            fase_origem: phase.fase_origem ?? earlierPhases.at(-1)?.fase_origem ?? knockoutBefore.at(-1)?.ordem ?? null,
+            resultado_origem: phase.resultado_origem ?? (isLast ? 'vencedores' : 'perdedores'),
+          }
+        : { cruzamento },
+    );
 
   const setConfronto = (k: number, side: keyof IConfronto, key: string) => {
     const origem = analysis?.origens.find((o) => o.key === key)?.origem ?? null;
@@ -169,10 +187,34 @@ export function PhaseFormGlobal({
             <SelectGlobal
               label="Confrontos"
               value={phase.cruzamento ?? ''}
-              options={[{ value: '', label: 'Escolha…' }, ...CRUZAMENTO_OPTIONS]}
+              options={[{ value: '', label: 'Escolha…' }, ...cruzamentoOptions]}
               disabled={structureDisabled}
               error={errors.cruzamento}
-              onChange={(e) => onChange({ cruzamento: (e.target.value || null) as Cruzamento | null })}
+              onChange={(e) => changeCruzamento((e.target.value || null) as Cruzamento | null)}
+            />
+          </>
+        )}
+
+        {fromOther && (
+          <>
+            <SelectGlobal
+              label="Fase de origem"
+              value={phase.fase_origem === null ? '' : String(phase.fase_origem)}
+              options={[
+                { value: '', label: 'Escolha…' },
+                ...knockoutBefore.map((p) => ({ value: String(p.ordem), label: p.nome || `Fase ${p.ordem}` })),
+              ]}
+              disabled={structureDisabled}
+              error={errors.fase_origem}
+              onChange={(e) => onChange({ fase_origem: toNumber(e.target.value) })}
+            />
+            <SelectGlobal
+              label="Quem entra"
+              value={phase.resultado_origem ?? ''}
+              options={[{ value: '', label: 'Escolha…' }, ...RESULTADO_ORIGEM_OPTIONS]}
+              disabled={structureDisabled}
+              error={errors.resultado_origem}
+              onChange={(e) => onChange({ resultado_origem: (e.target.value || null) as ResultadoOrigem | null })}
             />
           </>
         )}
@@ -182,15 +224,16 @@ export function PhaseFormGlobal({
       {isKnockout && phase.cruzamento && <Info>{CRUZAMENTO_LABEL[phase.cruzamento].description}</Info>}
       {isKnockout && analysis?.entram !== null && analysis?.entram !== undefined && (
         <Info>
-          Chegam {pluralize(analysis.entram, 'time', 'times')} da fase anterior →{' '}
+          Chegam {pluralize(analysis.entram, 'time', 'times')} {fromOther ? 'da fase escolhida' : 'da fase anterior'} →{' '}
           {pluralize(Math.floor(analysis.entram / 2), 'confronto', 'confrontos')}.
         </Info>
       )}
 
-      {isKnockout && (analysis?.entram === 2 || phase.disputa_terceiro) && (
+      {/* Formato antigo: o 3º lugar agora é uma fase com os perdedores da semifinal. */}
+      {isKnockout && phase.disputa_terceiro && (
         <CheckboxGlobal
           label="Disputa de 3º lugar"
-          description="Cria também a série entre os perdedores das semifinais."
+          description="Formato antigo. Prefira uma fase de 3º lugar com os perdedores da semifinal."
           checked={phase.disputa_terceiro}
           disabled={structureDisabled}
           onChange={(e) => onChange({ disputa_terceiro: e.target.checked })}
