@@ -5,6 +5,7 @@ import { EntityHeaderGlobal } from '@/components/entityHeaderGlobal';
 import { ErrorStateGlobal } from '@/components/errorStateGlobal';
 import { LoaderGlobal } from '@/components/loaderGlobal';
 import { PublicLayoutGlobal } from '@/components/publicLayoutGlobal';
+import { ShareButtonGlobal } from '@/components/shareButtonGlobal';
 import { SubNavGlobal } from '@/components/subNavGlobal';
 import { MODALIDADE_LABEL, STATUS_COMPETICAO } from '@/constants/competition';
 import { useAuth } from '@/hooks/useAuth';
@@ -53,6 +54,12 @@ function PublicCompetitionLayoutRoute() {
         subtitle={MODALIDADE_LABEL[competicao.modalidade]}
         imageUrl={competicao.logo_url}
         badges={<BadgeGlobal label={status.label} tone={status.tone} />}
+        actions={
+          <ShareButtonGlobal
+            title={competicao.nome}
+            text={`${competicao.nome}: tabela, jogos e playoffs no Arretado Score.`}
+          />
+        }
       />
       <SubNavGlobal
         ariaLabel="Seções da competição"
