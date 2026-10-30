@@ -3,12 +3,14 @@ import { Navigate, Outlet, useMatch, type RouteObject } from 'react-router-dom';
 import type { Papel } from '@/@types/user';
 import { ErrorStateGlobal } from '@/components/errorStateGlobal';
 import { InactiveLeagueNoticeGlobal } from '@/components/inactiveLeagueNoticeGlobal';
+import { LeagueHeaderGlobal } from '@/components/leagueHeaderGlobal';
 import { LoaderGlobal } from '@/components/loaderGlobal';
 import { PanelLayoutGlobal, type IPanelNavItem, type IPanelNavSection } from '@/components/panelLayoutGlobal';
+import { MODALIDADE_LABEL, STATUS_COMPETICAO } from '@/constants/competition';
 import { PAPEL_LABEL } from '@/constants/roles';
 import { useAppNavigate } from '@/hooks/useAppNavigate';
 import { useAuth } from '@/hooks/useAuth';
-import { useCompetition, useCompetitions, useCompetitionSummary } from '@/hooks/useCompetitions';
+import { useCompetition, useCompetitions } from '@/hooks/useCompetitions';
 import { useConfirmAction } from '@/hooks/useConfirm';
 import { useRouteParams } from '@/hooks/useRouteParams';
 import { useMyTeams, useTeamSummary } from '@/hooks/useTeams';
@@ -99,14 +101,13 @@ function PanelLayoutRoute() {
   const match = useMatch(`${ROUTE_PATTERNS.competition}/*`);
   const competitionId = match?.params.competitionId;
   const openCompetitionId = competitionId && competitionId !== 'nova' ? competitionId : undefined;
-  const { competition } = useCompetitionSummary(openCompetitionId);
   const teamMatch = useMatch(`${ROUTE_PATTERNS.myTeam}/*`);
   const openTeamId = teamMatch?.params.teamId;
   const { team } = useTeamSummary(openTeamId);
 
   if (!profile) return null;
 
-  // Dentro de uma competição, o menu mostra só ela, com um "Voltar" para a lista (sem os itens gerais).
+  // Dentro de uma competição, o menu mostra só as opções dela e um "Voltar"; logo e nome ficam no banner da liga.
   const inCompetition = Boolean(openCompetitionId) && profile.papel !== 'dono_time';
   const inTeam = Boolean(openTeamId) && profile.papel === 'dono_time';
   const generalItems = inCompetition
@@ -117,7 +118,6 @@ function PanelLayoutRoute() {
       ? [
           {
             key: 'competicao',
-            title: competition?.nome ?? 'Competição',
             back: { to: ROUTES.competitions, label: 'Voltar' },
             items: competitionNavItems(openCompetitionId, profile.papel),
           },
@@ -182,13 +182,23 @@ function CompetitionHomeRedirect() {
 }
 
 
-// Páginas de uma liga: com ela desativada, mostra o aviso com o botão de reativar no topo.
+// Páginas de uma liga: banner com logo e nome no topo e, com ela desativada, o aviso com o botão de reativar.
 function CompetitionLayoutRoute() {
   const { competitionId } = useRouteParams('competitionId');
   const { competition, setActive } = useCompetition(competitionId);
   const confirmAction = useConfirmAction();
   return (
     <>
+      {competition && (
+        <LeagueHeaderGlobal
+          name={competition.nome}
+          logoUrl={competition.logo_url}
+          tags={[
+            MODALIDADE_LABEL[competition.modalidade],
+            competition.ativa ? STATUS_COMPETICAO[competition.status].label : 'Desativada',
+          ]}
+        />
+      )}
       {competition && !competition.ativa && (
         <InactiveLeagueNoticeGlobal
           loading={setActive.isPending}

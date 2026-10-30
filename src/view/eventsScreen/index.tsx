@@ -249,7 +249,6 @@ export function EventsScreen() {
     <>
       <PageHeaderGlobal
         title="Lançar jogos"
-        subtitle={competition?.nome}
         actions={
           competition?.status === 'em_andamento' && events.length > 0 ? (
             <ButtonGlobal label="Lançar jogos" onClick={openCreate} />

@@ -20,11 +20,11 @@ export const Texts = styled.div`
 `;
 
 export const Title = styled.h1`
-  font-size: ${({ theme }) => theme.fontSize.xl}px;
+  font-size: ${({ theme }) => theme.fontSize.lg}px;
   font-weight: ${({ theme }) => theme.fontWeight.bold};
 
   @media (min-width: ${({ theme }) => theme.breakpoints.md}px) {
-    font-size: ${({ theme }) => theme.fontSize.xxl}px;
+    font-size: ${({ theme }) => theme.fontSize.xl}px;
   }
 `;
 

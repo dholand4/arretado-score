@@ -154,7 +154,6 @@ function EditCompetitionWizard({ competitionId }: { competitionId: string }) {
     <>
       <PageHeaderGlobal
         title="Configuração"
-        subtitle={competition.nome}
         actions={
           competition.ativa && (
             <ButtonGlobal
