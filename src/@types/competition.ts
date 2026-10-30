@@ -20,14 +20,14 @@ export type ITime = Tables<'times'>;
 export type IJogador = Tables<'jogadores'>;
 
 export interface ITimeResumo extends ITime {
-  dono: { nome: string } | null;
+  dono: { nome: string; telefone: string | null } | null;
   jogadores: { count: number }[];
   // Nomes do elenco, para a busca na lista de times.
   elenco?: { nome: string; apelido: string | null }[];
 }
 
 export interface ITimeDetalhe extends ITime {
-  dono: { nome: string } | null;
+  dono: { nome: string; telefone: string | null } | null;
   competicao: Pick<ICompeticao, 'id' | 'nome' | 'slug' | 'status' | 'modalidade' | 'cobranca_modelo'>;
 }
 
@@ -40,6 +40,7 @@ export interface ICompeticaoAdmin {
 export interface IPessoaOpcao {
   id: string;
   nome: string;
+  telefone?: string | null;
 }
 
 export interface ICompeticaoBasicos {
@@ -80,6 +81,14 @@ export interface INovoDonoInput {
   nome: string;
   email: string;
   senha: string;
+  // Opcional; vai só com dígitos.
+  telefone: string;
+}
+
+// Telefone de uma equipe já cadastrada, alterado junto com o time (vazio limpa).
+export interface IContatoEquipe {
+  id: string;
+  telefone: string | null;
 }
 
 export interface IJogadorInput {

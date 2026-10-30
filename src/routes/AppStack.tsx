@@ -106,22 +106,19 @@ function PanelLayoutRoute() {
 
   if (!profile) return null;
 
-  // Dentro de uma competição, o menu mostra só ela (com um link de volta para a lista).
+  // Dentro de uma competição, o menu mostra só ela, com um "Voltar" para a lista (sem os itens gerais).
   const inCompetition = Boolean(openCompetitionId) && profile.papel !== 'dono_time';
   const inTeam = Boolean(openTeamId) && profile.papel === 'dono_time';
-  const generalItems = NAV_ITEMS.filter(
-    (item) =>
-      item.roles.includes(profile.papel) &&
-      !(inCompetition && item.to === ROUTES.competitions) &&
-      !(inTeam && item.to === ROUTES.myTeams),
-  );
+  const generalItems = inCompetition
+    ? []
+    : NAV_ITEMS.filter((item) => item.roles.includes(profile.papel) && !(inTeam && item.to === ROUTES.myTeams));
   const sections: IPanelNavSection[] = [
     ...(openCompetitionId && inCompetition
       ? [
           {
             key: 'competicao',
             title: competition?.nome ?? 'Competição',
-            back: { to: ROUTES.competitions, label: 'Todas as competições' },
+            back: { to: ROUTES.competitions, label: 'Voltar' },
             items: competitionNavItems(openCompetitionId, profile.papel),
           },
         ]

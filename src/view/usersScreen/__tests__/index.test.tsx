@@ -15,6 +15,7 @@ const user = (overrides: Partial<IUsuarioListado>): IUsuarioListado => ({
   papel: 'admin',
   ativo: true,
   precisa_trocar_senha: false,
+  telefone: null,
   created_at: '2026-10-01T00:00:00Z',
   ultimo_acesso: null,
   ...overrides,
@@ -80,7 +81,7 @@ describe('UsersScreen', () => {
     fireEvent.change(within(dialog).getByLabelText('Senha provisória'), { target: { value: 'Provisoria1' } });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Criar usuário' }));
     expect(createUser.mutate).toHaveBeenCalledWith(
-      { nome: 'Novo Admin', email: 'novo@x.com', senha: 'Provisoria1', papel: 'admin' },
+      { nome: 'Novo Admin', email: 'novo@x.com', senha: 'Provisoria1', papel: 'admin', telefone: '' },
       expect.any(Object),
     );
   });

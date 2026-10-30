@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { ImageChange, INovoDonoInput, ITimeInput } from '@/@types/competition';
+import type { IContatoEquipe, ImageChange, INovoDonoInput, ITimeInput } from '@/@types/competition';
 import { QUERY_KEYS } from '@/constants/queryKeys';
 import { teamsService } from '@/services/teamsService';
 import { usersService } from '@/services/usersService';
@@ -11,8 +11,20 @@ export function useTeams(competicaoId: string) {
   const invalidate = () => queryClient.invalidateQueries({ queryKey: key });
 
   // Com novoDono, primeiro cria o login do dono (papel dono_time) e o time já nasce vinculado a ele.
+  // Com contato, atualiza antes o telefone da equipe já cadastrada.
   const createTeam = useMutation({
-    mutationFn: async ({ input, logo, novoDono }: { input: ITimeInput; logo: ImageChange; novoDono?: INovoDonoInput }) => {
+    mutationFn: async ({
+      input,
+      logo,
+      novoDono,
+      contato,
+    }: {
+      input: ITimeInput;
+      logo: ImageChange;
+      novoDono?: INovoDonoInput;
+      contato?: IContatoEquipe;
+    }) => {
+      if (contato) await usersService.update(contato);
       const donoId = novoDono ? (await usersService.create({ ...novoDono, papel: 'dono_time' })).id : input.dono_id;
       return teamsService.create(competicaoId, { ...input, dono_id: donoId }, logo);
     },
@@ -37,10 +49,21 @@ export function useTeam(timeId: string) {
   const queryClient = useQueryClient();
   const query = useQuery({ queryKey: QUERY_KEYS.team(timeId), queryFn: () => teamsService.get(timeId) });
 
-  // Com novoDono, cria o login da equipe e vincula ao time na mesma ação.
+  // Com novoDono, cria o login da equipe e vincula ao time na mesma ação; com contato, troca o telefone dela.
   const updateTeam = useMutation({
-    mutationFn: async ({ patch, logo, novoDono }: { patch: Partial<ITimeInput>; logo: ImageChange; novoDono?: INovoDonoInput }) => {
+    mutationFn: async ({
+      patch,
+      logo,
+      novoDono,
+      contato,
+    }: {
+      patch: Partial<ITimeInput>;
+      logo: ImageChange;
+      novoDono?: INovoDonoInput;
+      contato?: IContatoEquipe;
+    }) => {
       if (!query.data) throw new Error('Time não carregado.');
+      if (contato) await usersService.update(contato);
       const donoId = novoDono ? (await usersService.create({ ...novoDono, papel: 'dono_time' })).id : patch.dono_id;
       return teamsService.update(timeId, query.data.competicao_id, { ...patch, dono_id: donoId }, logo);
     },

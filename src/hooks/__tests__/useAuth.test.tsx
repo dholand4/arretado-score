@@ -14,6 +14,7 @@ const profile = (overrides = {}) => ({
   papel: 'admin' as const,
   ativo: true,
   precisa_trocar_senha: true,
+  telefone: null,
   created_at: '2026-10-01T00:00:00Z',
   ...overrides,
 });

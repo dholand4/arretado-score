@@ -1,4 +1,5 @@
 import { SENHA_MIN_CARACTERES } from '@/constants/auth';
+import { phoneError } from './phone';
 
 export function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
@@ -17,6 +18,7 @@ export interface IUserFormValues {
   email: string;
   senha: string;
   papel: string;
+  telefone?: string;
 }
 
 export type UserFormErrors = Partial<Record<keyof IUserFormValues, string>>;
@@ -25,6 +27,8 @@ export function validateUserForm(values: IUserFormValues, mode: 'create' | 'edit
   const errors: UserFormErrors = {};
   if (!values.nome.trim()) errors.nome = 'Informe o nome.';
   if (!values.papel) errors.papel = 'Escolha o papel.';
+  const telefone = phoneError(values.telefone ?? '');
+  if (telefone) errors.telefone = telefone;
   if (mode === 'create') {
     if (!isValidEmail(values.email)) errors.email = 'Informe um e-mail válido.';
     if (values.senha.length < SENHA_MIN_CARACTERES) {

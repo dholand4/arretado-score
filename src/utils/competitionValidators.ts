@@ -8,6 +8,7 @@ import type {
 } from '@/@types/competition';
 import type { ICompeticaoCobranca } from '@/@types/finance';
 import { isValidSlug } from './slugify';
+import { phoneError } from './phone';
 
 export type FormErrors<T> = Partial<Record<keyof T, string>>;
 
@@ -63,6 +64,8 @@ export function validateNewOwner(values: INovoDonoInput): FormErrors<INovoDonoIn
   if (!values.nome.trim()) errors.nome = 'Informe o nome do responsável pela equipe.';
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) errors.email = 'Informe um e-mail válido (ex.: nome@gmail.com).';
   if (values.senha.length < 8) errors.senha = 'Use pelo menos 8 caracteres.';
+  const telefone = phoneError(values.telefone);
+  if (telefone) errors.telefone = telefone;
   return errors;
 }
 

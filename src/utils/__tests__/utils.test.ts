@@ -41,15 +41,35 @@ describe('getErrorMessage', () => {
 });
 
 describe('filterUsers', () => {
-  const base = { ativo: true, precisa_trocar_senha: false, created_at: '', ultimo_acesso: null };
+  const base = { ativo: true, precisa_trocar_senha: false, telefone: null, created_at: '', ultimo_acesso: null };
   const users: IUsuarioListado[] = [
     { ...base, id: '1', nome: 'João Árbitro', email: 'joao@x.com', papel: 'admin' },
-    { ...base, id: '2', nome: 'Maria', email: 'maria@x.com', papel: 'dono_time' },
+    { ...base, id: '2', nome: 'Maria', email: 'maria@x.com', papel: 'dono_time', telefone: '88999991234' },
   ];
 
   it('ignores accents and filters by role', () => {
     expect(filterUsers(users, { search: 'arbitro', papel: '' })).toHaveLength(1);
     expect(filterUsers(users, { search: '', papel: 'dono_time' })[0].nome).toBe('Maria');
     expect(filterUsers(users, { search: 'maria', papel: 'admin' })).toHaveLength(0);
+  });
+
+  it('finds by phone typed with or without mask', () => {
+    expect(filterUsers(users, { search: '(88) 99999', papel: '' })[0].nome).toBe('Maria');
+    expect(filterUsers(users, { search: '1234', papel: '' })).toHaveLength(1);
+  });
+});
+
+describe('phone', () => {
+  it('formats, validates and builds the WhatsApp link', async () => {
+    const { formatPhone, phoneError, whatsappUrl } = await import('@/utils/phone');
+    expect(formatPhone('88999991234')).toBe('(88) 99999-1234');
+    expect(formatPhone('8833334444')).toBe('(88) 3333-4444');
+    expect(formatPhone('5588999991234')).toBe('+55 (88) 99999-1234');
+    expect(formatPhone(null)).toBe('');
+    expect(phoneError('')).toBeUndefined();
+    expect(phoneError('(88) 99999-1234')).toBeUndefined();
+    expect(phoneError('9999')).toBe('Informe DDD e número (ex.: 88 99999-1234).');
+    expect(whatsappUrl('(88) 99999-1234')).toBe('https://wa.me/5588999991234');
+    expect(whatsappUrl('5588999991234')).toBe('https://wa.me/5588999991234');
   });
 });

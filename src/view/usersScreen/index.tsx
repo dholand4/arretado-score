@@ -21,6 +21,7 @@ import { formatDateTime } from '@/utils/date';
 import { filterUsers, type IUserFilters } from '@/utils/filterUsers';
 import { generateTemporaryPassword } from '@/utils/password';
 import { Actions, Badges, Count, Feedback, Filters, List, Meta, UserEmail, UserHeader, UserName } from './style';
+import { formatPhone, whatsappUrl } from '@/utils/phone';
 
 type ModalState =
   | { type: 'create' }
@@ -65,7 +66,7 @@ export function UsersScreen() {
   const handleEdit = (user: IUsuarioListado, values: IUserFormSubmit) =>
     confirmAction(`Salvar as alterações de ${values.nome}?`, () =>
       updateUser.mutate(
-        { id: user.id, nome: values.nome, papel: values.papel },
+        { id: user.id, nome: values.nome, papel: values.papel, telefone: values.telefone || null },
         {
           onSuccess: () => {
             closeModal();
@@ -144,6 +145,14 @@ export function UsersScreen() {
                     {isSelf && ' (você)'}
                   </UserName>
                   <UserEmail>{user.email}</UserEmail>
+                  {user.telefone && (
+                    <UserEmail>
+                      {formatPhone(user.telefone)} ·{' '}
+                      <a href={whatsappUrl(user.telefone)} target="_blank" rel="noreferrer">
+                        WhatsApp
+                      </a>
+                    </UserEmail>
+                  )}
                 </UserHeader>
                 <Badges>
                   <BadgeGlobal label={PAPEL_LABEL[user.papel]} tone={user.papel === 'master' ? 'primary' : 'info'} />
@@ -199,7 +208,7 @@ export function UsersScreen() {
         <InputGlobal
           label="Buscar"
           type="search"
-          placeholder="Nome ou e-mail"
+          placeholder="Nome, e-mail ou telefone"
           value={filters.search}
           onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
         />
@@ -230,7 +239,12 @@ export function UsersScreen() {
           key={modal.user.id}
           open
           mode="edit"
-          initialValues={{ nome: modal.user.nome, email: modal.user.email, papel: modal.user.papel }}
+          initialValues={{
+            nome: modal.user.nome,
+            email: modal.user.email,
+            papel: modal.user.papel,
+            telefone: modal.user.telefone,
+          }}
           lockPapel={modal.user.id === profile?.id}
           submitting={updateUser.isPending}
           error={mutationError(updateUser.error)}

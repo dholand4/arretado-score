@@ -15,6 +15,7 @@ describe('useUsers', () => {
         papel: 'admin',
         ativo: true,
         precisa_trocar_senha: false,
+        telefone: null,
         created_at: '2026-10-01T00:00:00Z',
         ultimo_acesso: null,
       },

@@ -16,7 +16,8 @@ import { useConfirmAction } from '@/hooks/useConfirm';
 import { paths } from '@/routes/types';
 import { getErrorMessage } from '@/utils/appError';
 import { matchesSearch, pluralize } from '@/utils/text';
-import { Feedback, Found, List, Meta, Name, Search, TeamLink, Texts } from './style';
+import { formatPhone, phoneDigits, whatsappUrl } from '@/utils/phone';
+import { Feedback, Found, Item, List, Meta, Name, Search, TeamLink, Texts, WhatsApp } from './style';
 
 export function TeamsScreen() {
   const { competitionId } = useRouteParams('competitionId');
@@ -44,14 +45,20 @@ export function TeamsScreen() {
         />
       );
     }
-    // Busca por time, sigla, dono ou jogador do elenco.
+    // Busca por time, sigla, equipe, telefone da equipe ou jogador do elenco.
+    const digitosBusca = phoneDigits(busca);
+    const achouTelefone = (telefone: string | null | undefined) =>
+      digitosBusca.length >= 3 && Boolean(telefone?.includes(digitosBusca));
     const resultados = teams
       .map((team) => ({
         team,
         jogadores: busca.trim() ? (team.elenco ?? []).filter((j) => matchesSearch(busca, j.nome, j.apelido)) : [],
       }))
       .filter(
-        ({ team, jogadores }) => jogadores.length > 0 || matchesSearch(busca, team.nome, team.sigla, team.dono?.nome),
+        ({ team, jogadores }) =>
+          jogadores.length > 0 ||
+          matchesSearch(busca, team.nome, team.sigla, team.dono?.nome) ||
+          achouTelefone(team.dono?.telefone),
       );
 
     return (
@@ -60,7 +67,7 @@ export function TeamsScreen() {
           <InputGlobal
             label="Buscar"
             type="search"
-            placeholder="Time, sigla, equipe ou jogador"
+            placeholder="Time, sigla, equipe, telefone ou jogador"
             value={busca}
             onChange={(event) => setBusca(event.target.value)}
           />
@@ -73,7 +80,7 @@ export function TeamsScreen() {
         ) : (
           <List aria-label="Times">
             {resultados.map(({ team, jogadores }) => (
-              <li key={team.id}>
+              <Item key={team.id}>
                 <TeamLink to={paths.competitionTeam(competitionId, team.id)}>
                   <AvatarGlobal name={team.nome} src={team.logo_url} shape="square" />
                   <Texts>
@@ -84,13 +91,24 @@ export function TeamsScreen() {
                     <Meta>
                       {pluralize(team.jogadores[0]?.count ?? 0, 'jogador', 'jogadores')} ·{' '}
                       {team.dono ? `Equipe: ${team.dono.nome}` : 'Sem acesso de equipe'}
+                      {team.dono?.telefone && ` · ${formatPhone(team.dono.telefone)}`}
                     </Meta>
                     {jogadores.length > 0 && (
                       <Found>Jogador: {jogadores.map((j) => j.apelido || j.nome).join(', ')}</Found>
                     )}
                   </Texts>
                 </TeamLink>
-              </li>
+                {team.dono?.telefone && (
+                  <WhatsApp
+                    href={whatsappUrl(team.dono.telefone)}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={`Abrir WhatsApp de ${team.dono.nome}`}
+                  >
+                    WhatsApp
+                  </WhatsApp>
+                )}
+              </Item>
             ))}
           </List>
         )}
@@ -117,10 +135,10 @@ export function TeamsScreen() {
           donos={donos}
           saving={createTeam.isPending}
           error={createTeam.error ? getErrorMessage(createTeam.error) : null}
-          onSubmit={(input, logo, novoDono) =>
+          onSubmit={(input, logo, novoDono, contato) =>
             confirmAction(`Cadastrar o time "${input.nome}"${novoDono ? ` com o acesso ${novoDono.email}` : ''}?`, () =>
               createTeam.mutate(
-                { input, logo, novoDono },
+                { input, logo, novoDono, contato },
                 {
                   onSuccess: (team) => {
                     setCreating(false);

@@ -21,6 +21,7 @@ export interface ICreateUserInput {
   email: string;
   senha: string;
   papel: Papel;
+  telefone?: string;
 }
 
 export interface IUpdateUserInput {
@@ -28,6 +29,8 @@ export interface IUpdateUserInput {
   nome?: string;
   papel?: Papel;
   ativo?: boolean;
+  // Vazio/nulo limpa o telefone. O coordenador só pode mandar este campo (e o id).
+  telefone?: string | null;
 }
 
 export interface IResetPasswordInput {

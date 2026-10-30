@@ -1,4 +1,5 @@
 import type { IUsuarioListado, Papel } from '@/@types/user';
+import { phoneDigits } from './phone';
 
 export interface IUserFilters {
   search: string;
@@ -14,6 +15,11 @@ export function filterUsers(users: IUsuarioListado[], { search, papel }: IUserFi
   return users.filter((user) => {
     if (papel && user.papel !== papel) return false;
     if (!termo) return true;
-    return normalize(user.nome).includes(termo) || normalize(user.email).includes(termo);
+    const digitos = phoneDigits(search);
+    return (
+      normalize(user.nome).includes(termo) ||
+      normalize(user.email).includes(termo) ||
+      (digitos.length >= 3 && Boolean(user.telefone?.includes(digitos)))
+    );
   });
 }

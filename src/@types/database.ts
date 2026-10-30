@@ -225,14 +225,14 @@ isOneToOne: false
                   ]
                 },"fases": {
                   Row: {
-                    "classificam": number | null,"competicao_id": string,"created_at": string,"cruzamento": string | null,"disputa_terceiro": boolean,"entrada": Json | null,"id": string,"melhor_de": number,"melhor_de_terceiro": number | null,"melhores_extras": number,"nome": string,"ordem": number,"qtd_grupos": number | null,"sorteio_grupos": string,"status": string,"tipo": string,"turnos": number
+                    "classificam": number | null,"competicao_id": string,"created_at": string,"cruzamento": string | null,"disputa_terceiro": boolean,"entrada": Json | null,"fase_origem": number | null,"id": string,"melhor_de": number,"melhor_de_terceiro": number | null,"melhores_extras": number,"nome": string,"ordem": number,"qtd_grupos": number | null,"resultado_origem": string | null,"sorteio_grupos": string,"status": string,"tipo": string,"turnos": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "classificam"?: number | null,"competicao_id": string,"created_at"?: string,"cruzamento"?: string | null,"disputa_terceiro"?: boolean,"entrada"?: Json | null,"id"?: string,"melhor_de"?: number,"melhor_de_terceiro"?: number | null,"melhores_extras"?: number,"nome": string,"ordem": number,"qtd_grupos"?: number | null,"sorteio_grupos"?: string,"status"?: string,"tipo": string,"turnos"?: number
+                    "classificam"?: number | null,"competicao_id": string,"created_at"?: string,"cruzamento"?: string | null,"disputa_terceiro"?: boolean,"entrada"?: Json | null,"fase_origem"?: number | null,"id"?: string,"melhor_de"?: number,"melhor_de_terceiro"?: number | null,"melhores_extras"?: number,"nome": string,"ordem": number,"qtd_grupos"?: number | null,"resultado_origem"?: string | null,"sorteio_grupos"?: string,"status"?: string,"tipo": string,"turnos"?: number
                   }
                   Update: {
-                    "classificam"?: number | null,"competicao_id"?: string,"created_at"?: string,"cruzamento"?: string | null,"disputa_terceiro"?: boolean,"entrada"?: Json | null,"id"?: string,"melhor_de"?: number,"melhor_de_terceiro"?: number | null,"melhores_extras"?: number,"nome"?: string,"ordem"?: number,"qtd_grupos"?: number | null,"sorteio_grupos"?: string,"status"?: string,"tipo"?: string,"turnos"?: number
+                    "classificam"?: number | null,"competicao_id"?: string,"created_at"?: string,"cruzamento"?: string | null,"disputa_terceiro"?: boolean,"entrada"?: Json | null,"fase_origem"?: number | null,"id"?: string,"melhor_de"?: number,"melhor_de_terceiro"?: number | null,"melhores_extras"?: number,"nome"?: string,"ordem"?: number,"qtd_grupos"?: number | null,"resultado_origem"?: string | null,"sorteio_grupos"?: string,"status"?: string,"tipo"?: string,"turnos"?: number
                   }
                   Relationships: [
                     {
@@ -437,14 +437,14 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "ativo": boolean,"created_at": string,"criado_por": string | null,"id": string,"nome": string,"papel": string,"precisa_trocar_senha": boolean
+                    "ativo": boolean,"created_at": string,"criado_por": string | null,"id": string,"nome": string,"papel": string,"precisa_trocar_senha": boolean,"telefone": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "ativo"?: boolean,"created_at"?: string,"criado_por"?: string | null,"id": string,"nome": string,"papel": string,"precisa_trocar_senha"?: boolean
+                    "ativo"?: boolean,"created_at"?: string,"criado_por"?: string | null,"id": string,"nome": string,"papel": string,"precisa_trocar_senha"?: boolean,"telefone"?: string | null
                   }
                   Update: {
-                    "ativo"?: boolean,"created_at"?: string,"criado_por"?: string | null,"id"?: string,"nome"?: string,"papel"?: string,"precisa_trocar_senha"?: boolean
+                    "ativo"?: boolean,"created_at"?: string,"criado_por"?: string | null,"id"?: string,"nome"?: string,"papel"?: string,"precisa_trocar_senha"?: boolean,"telefone"?: string | null
                   }
                   Relationships: [
                     {
@@ -803,7 +803,7 @@ isOneToOne: false
                            },
 "listar_usuarios":
 { Args: Record<PropertyKey, never>; Returns: {
-              "ativo": boolean,"created_at": string,"email": string,"id": string,"nome": string,"papel": string,"precisa_trocar_senha": boolean,"ultimo_acesso": string
+              "ativo": boolean,"created_at": string,"email": string,"id": string,"nome": string,"papel": string,"precisa_trocar_senha": boolean,"telefone": string,"ultimo_acesso": string
             }[]
                            },
 "melhores_extras":
@@ -825,6 +825,9 @@ isOneToOne: false
                            },
 "pos_resultado_jogo":
 { Args: { "p_jogo_id": string }; Returns: undefined
+                           },
+"preencher_series_fase":
+{ Args: { "p_fase_id": string }; Returns: undefined
                            },
 "publicar_evento":
 { Args: { "p_evento_id": string }; Returns: undefined

@@ -2,8 +2,9 @@
 // O admin de liga também pode criar usuários, mas só com o papel dono_time (para o time dele).
 // Usa a chave service_role, que só existe aqui dentro.
 //
-// POST { action: 'create', nome, email, senha, papel }
-// POST { action: 'update', id, nome?, papel?, ativo? }
+// POST { action: 'create', nome, email, senha, papel, telefone? }
+// POST { action: 'update', id, nome?, papel?, ativo?, telefone? }
+// O coordenador só usa 'update' para trocar o telefone das equipes que ele enxerga.
 // POST { action: 'reset_password', id, senha }
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
@@ -67,6 +68,18 @@ function validarEmail(email: string) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new HttpError(400, 'E-mail inválido.');
 }
 
+// Telefone: só dígitos com DDD (10 a 13, aceitando o 55). Vazio limpa; ausente não muda.
+function telefoneOpcional(body: Record<string, unknown>): string | null | undefined {
+  const valor = body.telefone;
+  if (valor === undefined) return undefined;
+  if (valor === null) return null;
+  if (typeof valor !== 'string') throw new HttpError(400, 'Campo inválido: telefone.');
+  const digitos = valor.replace(/\D/g, '');
+  if (!digitos) return null;
+  if (digitos.length < 10 || digitos.length > 13) throw new HttpError(400, 'Telefone inválido: informe DDD e número.');
+  return digitos;
+}
+
 function getServiceRoleKey(): string {
   const direta = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   if (direta) return direta;
@@ -118,6 +131,7 @@ async function criarUsuario(admin: SupabaseClient, body: Record<string, unknown>
   }
   validarEmail(email);
   validarSenha(senha);
+  const telefone = telefoneOpcional(body) ?? null;
 
   const { data, error } = await admin.auth.admin.createUser({
     email,
@@ -137,7 +151,7 @@ async function criarUsuario(admin: SupabaseClient, body: Record<string, unknown>
   const { data: perfil, error: perfilError } = await admin
     .from('profiles')
     // criado_por separa as equipes por coordenador (cada um só vê as que cadastrou).
-    .update({ nome, papel, ativo: true, precisa_trocar_senha: true, criado_por: chamador.id })
+    .update({ nome, papel, telefone, ativo: true, precisa_trocar_senha: true, criado_por: chamador.id })
     .eq('id', data.user.id)
     .select()
     .single();
@@ -155,6 +169,7 @@ async function atualizarUsuario(admin: SupabaseClient, body: Record<string, unkn
   const papel = papelTexto === undefined ? undefined : validarPapel(papelTexto);
   const ativo = body.ativo;
   if (ativo !== undefined && typeof ativo !== 'boolean') throw new HttpError(400, 'Campo inválido: ativo.');
+  const telefone = telefoneOpcional(body);
   if (nome !== undefined && !nome) throw new HttpError(400, 'O nome não pode ficar vazio.');
 
   if (id === masterId && (ativo === false || (papel !== undefined && papel !== 'master'))) {
@@ -165,6 +180,7 @@ async function atualizarUsuario(admin: SupabaseClient, body: Record<string, unkn
   if (nome !== undefined) mudancas.nome = nome;
   if (papel !== undefined) mudancas.papel = papel;
   if (ativo !== undefined) mudancas.ativo = ativo;
+  if (telefone !== undefined) mudancas.telefone = telefone;
   if (Object.keys(mudancas).length === 0) throw new HttpError(400, 'Nada para atualizar.');
 
   const { data: perfil, error } = await admin
@@ -184,6 +200,39 @@ async function atualizarUsuario(admin: SupabaseClient, body: Record<string, unkn
     if (banError) throw banError;
   }
   return perfil;
+}
+
+// Coordenador: só o telefone de uma equipe que ele cadastrou ou que é de um time das ligas dele.
+async function atualizarTelefoneEquipe(admin: SupabaseClient, body: Record<string, unknown>, coordenadorId: string) {
+  const id = texto(body, 'id', true);
+  if (Object.keys(body).some((campo) => !['action', 'id', 'telefone'].includes(campo))) {
+    throw new HttpError(403, 'O coordenador só pode alterar o telefone das equipes.');
+  }
+  const telefone = telefoneOpcional(body);
+  if (telefone === undefined) throw new HttpError(400, 'Nada para atualizar.');
+
+  const { data: perfil, error } = await admin.from('profiles').select('id, papel, criado_por').eq('id', id).maybeSingle();
+  if (error) throw error;
+  if (!perfil || perfil.papel !== 'dono_time') throw new HttpError(404, 'Equipe não encontrada.');
+  if (perfil.criado_por !== coordenadorId) {
+    const { data: ligas, error: ligasError } = await admin
+      .from('competicao_admins')
+      .select('competicao_id')
+      .eq('user_id', coordenadorId);
+    if (ligasError) throw ligasError;
+    const ids = (ligas ?? []).map((l) => l.competicao_id);
+    const { count, error: timesError } = await admin
+      .from('times')
+      .select('id', { count: 'exact', head: true })
+      .eq('dono_id', id)
+      .in('competicao_id', ids.length ? ids : ['00000000-0000-0000-0000-000000000000']);
+    if (timesError) throw timesError;
+    if (!count) throw new HttpError(403, 'Esta equipe não é de uma liga sua.');
+  }
+
+  const { data, error: updateError } = await admin.from('profiles').update({ telefone }).eq('id', id).select().single();
+  if (updateError) throw updateError;
+  return data;
 }
 
 async function redefinirSenha(admin: SupabaseClient, body: Record<string, unknown>) {
@@ -226,7 +275,9 @@ Deno.serve(async (req) => {
       case 'create':
         return json(201, { data: await criarUsuario(admin, body, chamador) });
       case 'update':
-        exigirMaster(chamador);
+        if (chamador.papel === 'admin') {
+          return json(200, { data: await atualizarTelefoneEquipe(admin, body, chamador.id) });
+        }
         return json(200, { data: await atualizarUsuario(admin, body, chamador.id) });
       case 'reset_password':
         exigirMaster(chamador);

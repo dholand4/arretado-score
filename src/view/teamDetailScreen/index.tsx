@@ -20,6 +20,7 @@ import { paths } from '@/routes/types';
 import type { ITimeDetalhe } from '@/@types/competition';
 import { getErrorMessage } from '@/utils/appError';
 import { Feedback } from './style';
+import { formatPhone } from '@/utils/phone';
 
 function TeamRoster({ team }: { team: ITimeDetalhe }) {
   const roster = useTeamRoster(team, true);
@@ -61,7 +62,7 @@ export function TeamDetailScreen() {
     <>
       <EntityHeaderGlobal
         title={team.nome}
-        subtitle={team.dono ? `Equipe: ${team.dono.nome}` : 'Sem acesso de equipe'}
+        subtitle={team.dono ? `Equipe: ${team.dono.nome}${team.dono.telefone ? ` · ${formatPhone(team.dono.telefone)}` : ''}` : 'Sem acesso de equipe'}
         imageUrl={team.logo_url}
         badges={team.sigla ? <BadgeGlobal label={team.sigla} /> : undefined}
         actions={
@@ -80,15 +81,15 @@ export function TeamDetailScreen() {
           initialValues={{ nome: team.nome, sigla: team.sigla ?? '', dono_id: team.dono_id, logo_url: team.logo_url }}
           donos={
             team.dono && !donos.some((d) => d.id === team.dono_id)
-              ? [...donos, { id: team.dono_id as string, nome: team.dono.nome }]
+              ? [...donos, { id: team.dono_id as string, nome: team.dono.nome, telefone: team.dono.telefone }]
               : donos
           }
           saving={updateTeam.isPending}
           error={updateTeam.error ? getErrorMessage(updateTeam.error) : null}
-          onSubmit={(patch, logo, novoDono) =>
+          onSubmit={(patch, logo, novoDono, contato) =>
             confirmAction(
               novoDono ? `Salvar o time e criar o acesso ${novoDono.email}?` : 'Salvar as alterações do time?',
-              () => updateTeam.mutate({ patch, logo, novoDono }, { onSuccess: () => setModal(null) }),
+              () => updateTeam.mutate({ patch, logo, novoDono, contato }, { onSuccess: () => setModal(null) }),
             )
           }
           onClose={() => setModal(null)}

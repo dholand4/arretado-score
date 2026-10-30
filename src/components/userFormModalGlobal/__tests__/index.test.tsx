@@ -21,8 +21,15 @@ describe('UserFormModalGlobal', () => {
     fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'ANA@x.com' } });
     fireEvent.click(screen.getByRole('button', { name: 'Gerar' }));
     fireEvent.change(screen.getByLabelText('Papel'), { target: { value: 'dono_time' } });
+    fireEvent.change(screen.getByLabelText('Telefone / WhatsApp'), { target: { value: '(88) 99999-1234' } });
     fireEvent.click(screen.getByRole('button', { name: 'Criar usuário' }));
-    expect(onSubmit).toHaveBeenCalledWith({ nome: 'Ana', email: 'ana@x.com', senha: 'Gerada123', papel: 'dono_time' });
+    expect(onSubmit).toHaveBeenCalledWith({
+      nome: 'Ana',
+      email: 'ana@x.com',
+      senha: 'Gerada123',
+      papel: 'dono_time',
+      telefone: '88999991234',
+    });
   });
 
   it('edit mode hides password and locks email', () => {

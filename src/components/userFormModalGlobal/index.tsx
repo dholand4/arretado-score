@@ -6,6 +6,7 @@ import { InputGlobal } from '@/components/inputGlobal';
 import { ModalGlobal } from '@/components/modalGlobal';
 import { SelectGlobal } from '@/components/selectGlobal';
 import { PAPEL_OPTIONS } from '@/constants/roles';
+import { formatPhone, phoneDigits } from '@/utils/phone';
 import { validateUserForm, type UserFormErrors } from '@/utils/validators';
 import { Form } from './style';
 import type { IUserFormModalProps } from './types';
@@ -26,14 +27,15 @@ export function UserFormModalGlobal({
   const [email, setEmail] = useState(initialValues?.email ?? '');
   const [senha, setSenha] = useState('');
   const [papel, setPapel] = useState<Papel>(initialValues?.papel ?? 'admin');
+  const [telefone, setTelefone] = useState(formatPhone(initialValues?.telefone));
   const [errors, setErrors] = useState<UserFormErrors>({});
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
-    const found = validateUserForm({ nome, email, senha, papel }, mode);
+    const found = validateUserForm({ nome, email, senha, papel, telefone }, mode);
     setErrors(found);
     if (Object.keys(found).length > 0) return;
-    onSubmit({ nome: nome.trim(), email: email.trim().toLowerCase(), senha, papel });
+    onSubmit({ nome: nome.trim(), email: email.trim().toLowerCase(), senha, papel, telefone: phoneDigits(telefone) });
   };
 
   const isCreate = mode === 'create';
@@ -87,6 +89,16 @@ export function UserFormModalGlobal({
             }
           />
         )}
+        <InputGlobal
+          label="Telefone / WhatsApp"
+          type="tel"
+          inputMode="tel"
+          value={telefone}
+          onChange={(e) => setTelefone(e.target.value)}
+          error={errors.telefone}
+          hint="Opcional. DDD + número."
+          autoComplete="off"
+        />
         <SelectGlobal
           label="Papel"
           value={papel}

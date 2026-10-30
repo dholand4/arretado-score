@@ -8,6 +8,7 @@ import { ModalGlobal } from '@/components/modalGlobal';
 import { SegmentedGlobal } from '@/components/segmentedGlobal';
 import { SelectGlobal } from '@/components/selectGlobal';
 import { hasErrors, validateNewOwner, validateTeam, type FormErrors } from '@/utils/competitionValidators';
+import { formatPhone, phoneDigits, phoneError } from '@/utils/phone';
 import { Form, OwnerBox, OwnerTitle } from './style';
 import type { ITeamFormModalProps } from './types';
 
@@ -33,7 +34,12 @@ export function TeamFormModalGlobal({
   const isNew = !initialValues && !ownerMode;
   // Time novo começa cadastrando o acesso; na edição, parte do acesso atual (e pode cadastrar outro).
   const [ownerChoice, setOwnerChoice] = useState<'novo' | 'existente'>(initialValues ? 'existente' : 'novo');
-  const [novoDono, setNovoDono] = useState<INovoDonoInput>({ nome: '', email: '', senha: '' });
+  const [novoDono, setNovoDono] = useState<INovoDonoInput>({ nome: '', email: '', senha: '', telefone: '' });
+  // Telefone da equipe escolhida; null = sem edição (mostra o que já está cadastrado).
+  const [telefoneEquipe, setTelefoneEquipe] = useState<string | null>(null);
+  const [telefoneErro, setTelefoneErro] = useState<string | undefined>();
+  const equipeEscolhida = donos.find((d) => d.id === values.dono_id);
+  const telefoneMostrado = telefoneEquipe ?? formatPhone(equipeEscolhida?.telefone);
   const [ownerErrors, setOwnerErrors] = useState<FormErrors<INovoDonoInput>>({});
   const [ownerMissing, setOwnerMissing] = useState(false);
 
@@ -43,18 +49,31 @@ export function TeamFormModalGlobal({
     const found = validateTeam(payload);
     setErrors(found);
     const criandoDono = !ownerMode && ownerChoice === 'novo';
-    const dono = { nome: novoDono.nome.trim(), email: novoDono.email.trim().toLowerCase(), senha: novoDono.senha };
+    const dono = {
+      nome: novoDono.nome.trim(),
+      email: novoDono.email.trim().toLowerCase(),
+      senha: novoDono.senha,
+      telefone: phoneDigits(novoDono.telefone),
+    };
     const foundOwner = criandoDono ? validateNewOwner(dono) : {};
     setOwnerErrors(foundOwner);
     const semDono = isNew && ownerChoice === 'existente' && !payload.dono_id;
     setOwnerMissing(semDono);
-    if (hasErrors(found) || hasErrors(foundOwner) || semDono) return;
+    const editandoTelefone = !ownerMode && ownerChoice === 'existente' && Boolean(payload.dono_id) && telefoneEquipe !== null;
+    const erroTelefone = editandoTelefone ? phoneError(telefoneEquipe ?? '') : undefined;
+    setTelefoneErro(erroTelefone);
+    if (hasErrors(found) || hasErrors(foundOwner) || semDono || erroTelefone) return;
     // No modo dono, sigla e dono seguem os atuais (o banco não deixa o dono mudá-los).
     if (ownerMode) {
       onSubmit({ nome: payload.nome, sigla: initialValues?.sigla ?? '', dono_id: initialValues?.dono_id ?? null }, logo);
       return;
     }
-    onSubmit(criandoDono ? { ...payload, dono_id: null } : payload, logo, criandoDono ? dono : undefined);
+    const novoTelefone = phoneDigits(telefoneEquipe ?? '');
+    const contato =
+      editandoTelefone && payload.dono_id && novoTelefone !== (equipeEscolhida?.telefone ?? '')
+        ? { id: payload.dono_id, telefone: novoTelefone || null }
+        : undefined;
+    onSubmit(criandoDono ? { ...payload, dono_id: null } : payload, logo, criandoDono ? dono : undefined, contato);
   };
 
   const ownerField = (field: keyof INovoDonoInput, label: string, extra: Record<string, string> = {}) => (
@@ -125,18 +144,41 @@ export function TeamFormModalGlobal({
                     autoComplete: 'new-password',
                     hint: 'Mínimo de 8 caracteres. A equipe troca no primeiro acesso.',
                   })}
+                  {ownerField('telefone', 'Telefone / WhatsApp', {
+                    type: 'tel',
+                    inputMode: 'tel',
+                    autoComplete: 'off',
+                    hint: 'Opcional. DDD + número, para falar com a equipe.',
+                  })}
                 </>
               ) : (
-                <SelectGlobal
-                  label="Equipe"
-                  value={values.dono_id ?? ''}
-                  error={ownerMissing ? 'Escolha a equipe.' : undefined}
-                  options={[
-                    { value: '', label: isNew ? 'Escolha…' : 'Sem acesso vinculado' },
-                    ...donos.map((d) => ({ value: d.id, label: d.nome })),
-                  ]}
-                  onChange={(e) => setValues((v) => ({ ...v, dono_id: e.target.value || null }))}
-                />
+                <>
+                  <SelectGlobal
+                    label="Equipe"
+                    value={values.dono_id ?? ''}
+                    error={ownerMissing ? 'Escolha a equipe.' : undefined}
+                    options={[
+                      { value: '', label: isNew ? 'Escolha…' : 'Sem acesso vinculado' },
+                      ...donos.map((d) => ({ value: d.id, label: d.nome })),
+                    ]}
+                    onChange={(e) => {
+                      setTelefoneEquipe(null);
+                      setValues((v) => ({ ...v, dono_id: e.target.value || null }));
+                    }}
+                  />
+                  {values.dono_id && (
+                    <InputGlobal
+                      label="Telefone / WhatsApp da equipe"
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="off"
+                      value={telefoneMostrado}
+                      error={telefoneErro}
+                      hint="Opcional. DDD + número."
+                      onChange={(e) => setTelefoneEquipe(e.target.value)}
+                    />
+                  )}
+                </>
               )}
             </OwnerBox>
           </>

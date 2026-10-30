@@ -106,11 +106,11 @@ export const competitionsService = {
 };
 
 export const peopleService = {
-  // Admin enxerga nome/papel dos donos para vincular (seção 10.2).
+  // Admin enxerga nome e telefone dos donos para vincular e contatar (seção 10.2).
   async listDonos(): Promise<IPessoaOpcao[]> {
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, nome')
+      .select('id, nome, telefone')
       .eq('papel', 'dono_time')
       .eq('ativo', true)
       .order('nome');
