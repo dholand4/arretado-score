@@ -1,9 +1,11 @@
 import { useEffect, useRef } from 'react';
+import { useScrollEdges } from '@/hooks/useScrollEdges';
 import { List, Number, StepButton } from './style';
 import type { IStepperProps } from './types';
 
 export function StepperGlobal({ steps, current, onSelect }: IStepperProps) {
   const activeRef = useRef<HTMLButtonElement>(null);
+  const { ref: listRef, edges } = useScrollEdges<HTMLOListElement>();
 
   // No celular a lista rola na horizontal: mantém a etapa atual visível.
   useEffect(() => {
@@ -12,7 +14,7 @@ export function StepperGlobal({ steps, current, onSelect }: IStepperProps) {
 
   return (
     <nav aria-label="Etapas">
-      <List>
+      <List ref={listRef} $fadeStart={edges.start} $fadeEnd={edges.end}>
         {steps.map((step, index) => {
           const active = step.key === current;
           return (

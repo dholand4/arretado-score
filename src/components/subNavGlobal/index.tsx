@@ -1,9 +1,11 @@
+import { useScrollEdges } from '@/hooks/useScrollEdges';
 import { Item, List, Nav } from './style';
 import type { ISubNavProps } from './types';
 
 export function SubNavGlobal({ items, ariaLabel }: ISubNavProps) {
+  const { ref, edges } = useScrollEdges<HTMLElement>();
   return (
-    <Nav aria-label={ariaLabel}>
+    <Nav ref={ref} aria-label={ariaLabel} $fadeStart={edges.start} $fadeEnd={edges.end}>
       <List>
         {items.map((item) => (
           <li key={item.to}>

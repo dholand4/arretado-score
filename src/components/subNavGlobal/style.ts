@@ -1,10 +1,19 @@
 import { NavLink } from 'react-router-dom';
 import styled from 'styled-components';
+import { edgeFade } from '@/utils/edgeFade';
 
-export const Nav = styled.nav`
+export const Nav = styled.nav<{ $fadeStart: boolean; $fadeEnd: boolean }>`
   margin-bottom: ${({ theme }) => theme.spacing.lg}px;
   border-bottom: ${({ theme }) => theme.sizes.borderWidth}px solid ${({ theme }) => theme.colors.border};
   overflow-x: auto;
+  /* Continua rolando no toque, mas sem a barra visível. */
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  ${edgeFade}
 `;
 
 export const List = styled.ul`

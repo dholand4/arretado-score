@@ -1,6 +1,7 @@
 import styled from 'styled-components';
+import { edgeFade } from '@/utils/edgeFade';
 
-export const List = styled.ol`
+export const List = styled.ol<{ $fadeStart: boolean; $fadeEnd: boolean }>`
   display: flex;
   gap: ${({ theme }) => theme.spacing.sm}px;
   margin: 0 0 ${({ theme }) => theme.spacing.lg}px;
@@ -14,6 +15,8 @@ export const List = styled.ol`
   &::-webkit-scrollbar {
     display: none;
   }
+
+  ${edgeFade}
 `;
 
 export const StepButton = styled.button<{ $active: boolean }>`
