@@ -53,13 +53,10 @@ export function TeamsScreen() {
       .map((team) => ({
         team,
         jogadores: busca.trim() ? (team.elenco ?? []).filter((j) => matchesSearch(busca, j.nome, j.apelido)) : [],
+        porNome: matchesSearch(busca, team.nome, team.sigla, team.dono?.nome),
+        porTelefone: achouTelefone(team.dono?.telefone),
       }))
-      .filter(
-        ({ team, jogadores }) =>
-          jogadores.length > 0 ||
-          matchesSearch(busca, team.nome, team.sigla, team.dono?.nome) ||
-          achouTelefone(team.dono?.telefone),
-      );
+      .filter(({ jogadores, porNome, porTelefone }) => jogadores.length > 0 || porNome || porTelefone);
 
     return (
       <>
@@ -79,7 +76,7 @@ export function TeamsScreen() {
           />
         ) : (
           <List aria-label="Times">
-            {resultados.map(({ team, jogadores }) => (
+            {resultados.map(({ team, jogadores, porNome, porTelefone }) => (
               <Item key={team.id}>
                 <TeamLink to={paths.competitionTeam(competitionId, team.id)}>
                   <AvatarGlobal name={team.nome} src={team.logo_url} shape="square" />
@@ -94,6 +91,9 @@ export function TeamsScreen() {
                     </Meta>
                     {jogadores.length > 0 && (
                       <Found>Jogador: {jogadores.map((j) => j.apelido || j.nome).join(', ')}</Found>
+                    )}
+                    {porTelefone && !porNome && jogadores.length === 0 && (
+                      <Found>Encontrado pelo telefone da equipe</Found>
                     )}
                   </Texts>
                 </TeamLink>
