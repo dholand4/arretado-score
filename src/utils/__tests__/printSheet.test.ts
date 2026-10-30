@@ -1,4 +1,4 @@
-import { sheetDate, sheetPlayerRows, sheetPointRows, sheetTime } from '@/utils/printSheet';
+import { sheetDate, sheetPlayerRows, sheetPointRows, sheetRowHeightMm, sheetTime } from '@/utils/printSheet';
 
 describe('sheetPlayerRows', () => {
   it('keeps the number when there is one and leaves it blank otherwise', () => {
@@ -35,5 +35,13 @@ describe('sheet date and time', () => {
     expect(sheetDate({ evento: null, inicioPrevisto: null })).toBe('');
     expect(sheetTime('2026-11-07T22:00:00Z')).toBe('19:00');
     expect(sheetTime(null)).toBe('');
+  });
+});
+
+describe('sheetRowHeightMm', () => {
+  it('keeps the default height up to 12 + 12 rows and shrinks for bigger rosters', () => {
+    expect(sheetRowHeightMm(24)).toBe(4.8);
+    expect(sheetRowHeightMm(26)).toBe(4.4);
+    expect(sheetRowHeightMm(30)).toBeLessThan(4);
   });
 });

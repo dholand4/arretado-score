@@ -7,6 +7,15 @@ export const SHEET_MIN_PLAYER_ROWS = 12;
 export const SHEET_POINT_ROWS = 40;
 export const SHEET_POINT_BLOCKS = 3;
 
+// Altura padrão da linha de jogador e o espaço que as duas equipes somadas cabem no A4.
+export const SHEET_ROW_HEIGHT_MM = 4.8;
+const SHEET_ROWS_SPACE_MM = SHEET_ROW_HEIGHT_MM * SHEET_MIN_PLAYER_ROWS * 2;
+
+// Elencos maiores que 12 encolhem as linhas para a súmula continuar em uma folha.
+export function sheetRowHeightMm(totalRows: number): number {
+  return Math.min(SHEET_ROW_HEIGHT_MM, Math.floor((SHEET_ROWS_SPACE_MM / totalRows) * 10) / 10);
+}
+
 export interface ISheetPlayerRow {
   key: string;
   nome: string;

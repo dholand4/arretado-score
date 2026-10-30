@@ -1,5 +1,5 @@
 import { Fragment } from 'react';
-import { sheetDate, sheetPlayerRows, sheetPointRows, sheetTime } from '@/utils/printSheet';
+import { sheetDate, sheetPlayerRows, sheetPointRows, sheetRowHeightMm, sheetTime } from '@/utils/printSheet';
 import {
   BlockEdge,
   Bottom,
@@ -192,9 +192,14 @@ function PointsCount() {
 // Súmula de basquete no modelo em papel, com a logo da liga e os elencos já preenchidos.
 export function ScoreSheetPrintGlobal({ sheet }: IScoreSheetPrintProps) {
   const categoria = sheet.grupo ? `${sheet.fase} · ${sheet.grupo}` : sheet.fase;
+  const linhasCasa = sheetPlayerRows(sheet.casaJogadores);
+  const linhasFora = sheetPlayerRows(sheet.foraJogadores);
 
   return (
-    <Sheet aria-label={`Súmula ${sheet.casa} x ${sheet.fora}`}>
+    <Sheet
+      aria-label={`Súmula ${sheet.casa} x ${sheet.fora}`}
+      $rowHeight={sheetRowHeightMm(linhasCasa.length + linhasFora.length)}
+    >
       <Header>
         <League>{sheet.competicao.nome}</League>
         {sheet.competicao.logo_url ? (
@@ -218,7 +223,7 @@ export function ScoreSheetPrintGlobal({ sheet }: IScoreSheetPrintProps) {
       </TeamsLine>
 
       <InfoBox>
-        <Fields $columns="1.7fr 0.9fr 0.7fr 1.2fr">
+        <Fields $columns="1.5fr 1.5fr 0.8fr 1fr">
           <Blank label="Competição:" value={sheet.competicao.nome} />
           <Blank label="Data:" value={sheetDate(sheet)} />
           <Blank label="Hora:" value={sheetTime(sheet.inicioPrevisto)} />
@@ -232,8 +237,8 @@ export function ScoreSheetPrintGlobal({ sheet }: IScoreSheetPrintProps) {
 
       <Main>
         <Teams>
-          <TeamBlock letter="A" name={sheet.casa} rows={sheetPlayerRows(sheet.casaJogadores)} />
-          <TeamBlock letter="B" name={sheet.fora} rows={sheetPlayerRows(sheet.foraJogadores)} />
+          <TeamBlock letter="A" name={sheet.casa} rows={linhasCasa} />
+          <TeamBlock letter="B" name={sheet.fora} rows={linhasFora} />
         </Teams>
         <PointsCount />
       </Main>

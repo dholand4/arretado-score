@@ -5,7 +5,6 @@ export const SHEET = {
   width: '194mm',
   line: '0.25mm',
   thick: '0.5mm',
-  rowHeight: '4.8mm',
   box: '4mm',
   circle: '3.6mm',
   logoHeight: '22mm',
@@ -19,7 +18,8 @@ const ink = css`
   border-color: ${({ theme }) => theme.colors.text};
 `;
 
-export const Sheet = styled.article`
+export const Sheet = styled.article<{ $rowHeight: number }>`
+  --row-height: ${({ $rowHeight }) => $rowHeight}mm;
   width: ${SHEET.width};
   margin: 0 auto;
   padding: ${({ theme }) => theme.spacing.xs}px;
@@ -213,7 +213,7 @@ const cell = css`
   border: ${SHEET.line} solid;
   ${ink}
   padding: 0 ${({ theme }) => theme.spacing.xxs}px;
-  height: ${SHEET.rowHeight};
+  height: var(--row-height);
   font-size: ${SHEET.font};
   font-weight: ${({ theme }) => theme.fontWeight.regular};
 `;
