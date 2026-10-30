@@ -3,9 +3,20 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { defineConfig } from 'vitest/config';
 
+// Endereço público do site, para a imagem da pré-visualização de links (WhatsApp exige URL completa).
+// Na Vercel vem do domínio de produção; dá para forçar com VITE_SITE_URL.
+const siteUrl = (
+  process.env.VITE_SITE_URL ||
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : '')
+).replace(/\/$/, '');
+
 export default defineConfig({
   plugins: [
     react(),
+    {
+      name: 'site-url',
+      transformIndexHtml: { order: 'pre', handler: (html) => html.replaceAll('%SITE_URL%', siteUrl) },
+    },
     // Permite instalar o app na tela inicial; atualiza sozinho a cada deploy.
     VitePWA({
       registerType: 'autoUpdate',
@@ -30,6 +41,7 @@ export default defineConfig({
       workbox: {
         // Guarda só os arquivos do app; dados do Supabase sempre vêm da rede.
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+        globIgnores: ['og-image.png'],
         navigateFallback: '/index.html',
         cleanupOutdatedCaches: true,
       },
