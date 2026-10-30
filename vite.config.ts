@@ -9,7 +9,7 @@ export default defineConfig({
     // Permite instalar o app na tela inicial; atualiza sozinho a cada deploy.
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
+      includeAssets: ['favicon.ico', 'favicon.svg', 'apple-touch-icon.png'],
       manifest: {
         name: 'Arretado Score',
         short_name: 'Arretado',
