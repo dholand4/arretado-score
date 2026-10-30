@@ -3,8 +3,21 @@
 const BLOCKED_WITH_SHIFT = new Set(['i', 'j', 'c']);
 const BLOCKED_WITH_MOD = new Set(['u', 's']);
 
+// Campos de texto mantêm o menu (colar, copiar, selecionar tudo).
+function isEditable(target: EventTarget | null): boolean {
+  return (
+    target instanceof HTMLElement &&
+    (target.isContentEditable || target.closest('input, textarea, select, [contenteditable="true"]') !== null)
+  );
+}
+
 export function blockInspect() {
-  document.addEventListener('contextmenu', (event) => event.preventDefault());
+  // No celular o menu de pressionar e segurar é o único jeito de colar; lá não há inspecionar.
+  const touch = window.matchMedia('(pointer: coarse)').matches;
+  document.addEventListener('contextmenu', (event) => {
+    if (touch || isEditable(event.target)) return;
+    event.preventDefault();
+  });
   document.addEventListener('keydown', (event) => {
     const key = event.key.toLowerCase();
     const mod = event.ctrlKey || event.metaKey;

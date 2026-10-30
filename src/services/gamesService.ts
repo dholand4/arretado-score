@@ -5,9 +5,11 @@ import type {
   IMelhorExtra,
   IResultadoInput,
   ISumula,
+  ISumulaImpressa,
   ITabelaPublica,
 } from '@/@types/game';
 import { AppError } from '@/utils/appError';
+import { sortByNumber } from '@/utils/scoreSheet';
 import { supabase } from './supabaseService';
 
 export const GAME_LIST_SELECT =
@@ -41,6 +43,51 @@ export const gamesService = {
     if (times.error) throw times.error;
     const grupos = await groupsOf(fases.data.map((f) => f.id));
     return { jogos: jogos.data as unknown as IJogoLista[], fases: fases.data, times: times.data, grupos };
+  },
+
+  async getPrintableSheet(jogoId: string): Promise<ISumulaImpressa> {
+    const { data, error } = await supabase
+      .from('jogos')
+      .select(
+        'time_casa_id, time_fora_id, inicio_previsto, casa:times!jogos_time_casa_id_fkey(nome), ' +
+          'fora:times!jogos_time_fora_id_fkey(nome), fase:fases(nome), grupo:grupos(nome), ' +
+          'evento:eventos(data, local), competicao:competicoes(nome, logo_url)',
+      )
+      .eq('id', jogoId)
+      .single();
+    if (error) throw error;
+    const jogo = data as unknown as {
+      time_casa_id: string;
+      time_fora_id: string;
+      inicio_previsto: string | null;
+      casa: { nome: string };
+      fora: { nome: string };
+      fase: { nome: string };
+      grupo: { nome: string } | null;
+      evento: ISumulaImpressa['evento'];
+      competicao: ISumulaImpressa['competicao'];
+    };
+
+    const { data: jogadores, error: jogadoresError } = await supabase
+      .from('jogadores')
+      .select('id, time_id, nome, numero')
+      .in('time_id', [jogo.time_casa_id, jogo.time_fora_id])
+      .eq('ativo', true);
+    if (jogadoresError) throw jogadoresError;
+    const doTime = (timeId: string) =>
+      sortByNumber(jogadores.filter((j) => j.time_id === timeId)).map(({ id, nome, numero }) => ({ id, nome, numero }));
+
+    return {
+      competicao: jogo.competicao,
+      casa: jogo.casa.nome,
+      fora: jogo.fora.nome,
+      fase: jogo.fase.nome,
+      grupo: jogo.grupo?.nome ?? null,
+      inicioPrevisto: jogo.inicio_previsto,
+      evento: jogo.evento,
+      casaJogadores: doTime(jogo.time_casa_id),
+      foraJogadores: doTime(jogo.time_fora_id),
+    };
   },
 
   async getScoreSheet(jogoId: string): Promise<ISumula> {

@@ -1,6 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { useGames } from '@/hooks/useGames';
-import { useScoreSheet } from '@/hooks/useScoreSheet';
+import { usePrintableSheet, useScoreSheet } from '@/hooks/useScoreSheet';
 import { gamesService } from '@/services/gamesService';
 import { createQueryWrapper } from '@/utils/testUtils';
 
@@ -30,5 +30,14 @@ describe('useScoreSheet', () => {
     const input = { modo: 'placar' as const, casa: 10, fora: 7, ausente: null, jogadores: [] };
     await act(() => result.current.saveResult.mutateAsync(input));
     expect(gamesService.saveResult).toHaveBeenCalledWith('g1', input);
+  });
+});
+
+describe('usePrintableSheet', () => {
+  it('loads the paper score sheet data', async () => {
+    vi.mocked(gamesService.getPrintableSheet).mockResolvedValue({ casa: 'Falcões' } as never);
+    const { result } = renderHook(() => usePrintableSheet('g1'), { wrapper: createQueryWrapper() });
+    await waitFor(() => expect(result.current.sheet).toBeDefined());
+    expect(gamesService.getPrintableSheet).toHaveBeenCalledWith('g1');
   });
 });

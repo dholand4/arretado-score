@@ -105,7 +105,7 @@ describe('ScoreSheetScreen', () => {
   it('locks editing for admins when the next phase already has results', () => {
     mockSheet(sumula({ edicaoRestrita: true }));
     renderAt();
-    expect(screen.getByText(/só o admin master pode editar/)).toBeInTheDocument();
+    expect(screen.getByText(/só o Admin pode editar/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Salvar resultado' })).toBeDisabled();
   });
 

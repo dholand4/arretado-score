@@ -27,3 +27,12 @@ export function useScoreSheet(competicaoId: string, jogoId: string) {
 
   return { sumula: query.data, isLoading: query.isPending, error: query.error, refetch: query.refetch, saveResult };
 }
+
+// Dados da súmula em papel (times, dia de jogos e elencos).
+export function usePrintableSheet(jogoId: string) {
+  const query = useQuery({
+    queryKey: QUERY_KEYS.printableSheet(jogoId),
+    queryFn: () => gamesService.getPrintableSheet(jogoId),
+  });
+  return { sheet: query.data, isLoading: query.isPending, error: query.error, refetch: query.refetch };
+}

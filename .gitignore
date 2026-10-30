@@ -9,6 +9,7 @@ coverage/
 .env.local
 .env.*.local
 .env.production
+vercel.env
 supabase/functions/.env
 supabase/functions/.env.local
 

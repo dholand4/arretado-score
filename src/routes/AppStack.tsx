@@ -28,6 +28,7 @@ import {
   MyTeamDetailScreen,
   MyTeamLeagueScreen,
   MyTeamsScreen,
+  PrintScoreSheetScreen,
   ScoreSheetScreen,
   TeamDetailScreen,
   TeamsScreen,
@@ -212,6 +213,15 @@ const ADMIN_ROLES: Papel[] = ['master', 'admin'];
 export const appStack: RouteObject = {
   element: <RequireAuth />,
   children: [
+    // Súmula em papel: página inteira, sem o menu do painel, para imprimir.
+    {
+      path: ROUTE_PATTERNS.gamePrintSheet,
+      element: (
+        <RequireRole roles={ADMIN_ROLES}>
+          <PrintScoreSheetScreen />
+        </RequireRole>
+      ),
+    },
     {
       path: ROUTES.panel,
       element: <PanelLayoutRoute />,

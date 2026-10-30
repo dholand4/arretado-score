@@ -281,7 +281,10 @@ export function ScoreSheetScreen() {
       <PageHeaderGlobal
         title="Súmula"
         actions={
-          <LinkButtonGlobal to={paths.competitionGames(competitionId)} label="← Jogos" size="sm" variant="ghost" />
+          <>
+            <LinkButtonGlobal to={paths.competitionGames(competitionId)} label="← Jogos" size="sm" variant="ghost" />
+            <LinkButtonGlobal to={paths.gamePrintSheet(competitionId, gameId)} label="Imprimir súmula" size="sm" />
+          </>
         }
       />
       {renderContent()}

@@ -31,6 +31,19 @@ export interface ISumula {
   estatisticas: Record<string, Record<string, number>>;
 }
 
+// Súmula em papel, impressa antes do jogo já com times, data, local e elencos.
+export interface ISumulaImpressa {
+  competicao: Pick<Tables<'competicoes'>, 'nome' | 'logo_url'>;
+  casa: string;
+  fora: string;
+  fase: string;
+  grupo: string | null;
+  inicioPrevisto: string | null;
+  evento: Pick<Tables<'eventos'>, 'data' | 'local'> | null;
+  casaJogadores: Pick<IJogador, 'id' | 'nome' | 'numero'>[];
+  foraJogadores: Pick<IJogador, 'id' | 'nome' | 'numero'>[];
+}
+
 export interface IResultadoInput {
   modo: ModoResultado;
   casa: number | null;
