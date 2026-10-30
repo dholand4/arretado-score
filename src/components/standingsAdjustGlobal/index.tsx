@@ -1,25 +1,48 @@
 import { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertGlobal } from '@/components/alertGlobal';
 import { ButtonGlobal } from '@/components/buttonGlobal';
 import { InputGlobal } from '@/components/inputGlobal';
-import { QUERY_KEYS } from '@/constants/queryKeys';
-import { gamesService } from '@/services/gamesService';
-import { getErrorMessage } from '@/utils/appError';
-import { Box, Line } from './style';
+import { Box, Buttons, Help, Line } from './style';
 import type { IStandingsAdjustProps } from './types';
-export function StandingsAdjustGlobal({ phase, group }: IStandingsAdjustProps) {
-  const client = useQueryClient();
-  const query = useQuery({ queryKey: QUERY_KEYS.classification(phase,group), queryFn: () => gamesService.classification(phase,group) });
-  const [priorities, setPriorities] = useState<Record<string,string>>({});
-  const mutation = useMutation({ mutationFn: ({team,priority}: {team:string;priority:number | null}) => gamesService.adjust(phase,group,team,priority), onSuccess: () => void client.invalidateQueries({queryKey:QUERY_KEYS.classification(phase,group)}) });
-  if (query.isPending) return <p>Carregando classificação…</p>;
-  if (query.error) return <AlertGlobal variant="error" message={getErrorMessage(query.error)} />;
-  const tied = query.data.filter((row) => row.empate_tecnico);
-  if (!tied.length) return <p>Não há empate técnico nesta classificação.</p>;
-  return <Box><p>Em caso de empate técnico, use números menores para priorizar um time. A alteração fica registrada.</p>{mutation.error && <AlertGlobal variant="error" message={getErrorMessage(mutation.error)} />}{tied.map((row) => <Line key={row.time_id}>
-    <InputGlobal label={`Prioridade de ${row.nome}`} type="number" min={1} step={1} value={priorities[row.time_id] ?? ''} onChange={(event) => setPriorities((current) => ({...current,[row.time_id]:event.target.value}))} />
-    <ButtonGlobal label="Salvar ajuste" size="sm" disabled={mutation.isPending || !priorities[row.time_id] || Number(priorities[row.time_id]) < 1} onClick={() => mutation.mutate({team:row.time_id,priority:Number(priorities[row.time_id])})} />
-    <ButtonGlobal label="Remover ajuste" size="sm" variant="outline" disabled={mutation.isPending} onClick={() => mutation.mutate({team:row.time_id,priority:null})} />
-  </Line>)}</Box>;
+
+// Desempate manual só para times em empate técnico (seção 6.3); cada ajuste fica registrado.
+export function StandingsAdjustGlobal({ tiedRows, busy = false, error, onSave, onRemove }: IStandingsAdjustProps) {
+  const [priorities, setPriorities] = useState<Record<string, string>>({});
+
+  if (tiedRows.length === 0) return <Help>Não há empate técnico nesta classificação.</Help>;
+
+  return (
+    <Box>
+      <Help>Em empate técnico, informe a prioridade (1 fica na frente). A alteração fica registrada.</Help>
+      {tiedRows.map((row) => {
+        const value = priorities[row.time_id] ?? '';
+        const valid = Number.isInteger(Number(value)) && Number(value) >= 1;
+        return (
+          <Line key={row.time_id}>
+            <InputGlobal
+              label={`${row.posicao}º ${row.nome} — prioridade`}
+              type="number"
+              inputMode="numeric"
+              min={1}
+              step={1}
+              value={value}
+              onChange={(event) => setPriorities((current) => ({ ...current, [row.time_id]: event.target.value }))}
+            />
+            <Buttons>
+              <ButtonGlobal
+                label="Salvar"
+                size="sm"
+                disabled={busy || value === '' || !valid}
+                onClick={() => onSave(row.time_id, Number(value))}
+              />
+              <ButtonGlobal label="Remover" size="sm" variant="ghost" disabled={busy} onClick={() => onRemove(row.time_id)} />
+            </Buttons>
+          </Line>
+        );
+      })}
+      {error && <AlertGlobal variant="error" message={error} />}
+    </Box>
+  );
 }
+
+export type { IStandingsAdjustProps, IStandingsAdjustRow } from './types';

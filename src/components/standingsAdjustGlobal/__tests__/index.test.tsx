@@ -1,11 +1,28 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
-import { renderScreen } from '@/utils/testUtils';
+import { fireEvent, screen } from '@testing-library/react';
+import { renderWithTheme } from '@/utils/testUtils';
 import { StandingsAdjustGlobal } from '..';
-const adjust = vi.fn().mockResolvedValue(undefined);
-vi.mock('@/services/gamesService', () => ({ gamesService: { classification: async () => [{time_id:'a',nome:'Águias',empate_tecnico:true}], adjust: (...args: unknown[]) => adjust(...args) } }));
-it('registra prioridade para empate técnico', async () => {
-  renderScreen(<StandingsAdjustGlobal phase="f" group={null} />);
-  fireEvent.change(await screen.findByLabelText('Prioridade de Águias'), {target:{value:'1'}});
-  fireEvent.click(screen.getByRole('button',{name:'Salvar ajuste'}));
-  await waitFor(() => expect(adjust).toHaveBeenCalledWith('f',null,'a',1));
+
+const tiedRows = [
+  { time_id: 't1', nome: 'Falcões', posicao: 1 },
+  { time_id: 't2', nome: 'Trovão', posicao: 2 },
+];
+
+describe('StandingsAdjustGlobal', () => {
+  it('says when there is no technical tie', () => {
+    renderWithTheme(<StandingsAdjustGlobal tiedRows={[]} onSave={() => {}} onRemove={() => {}} />);
+    expect(screen.getByText(/Não há empate técnico/)).toBeInTheDocument();
+  });
+
+  it('saves a valid priority and removes an adjustment', () => {
+    const onSave = vi.fn();
+    const onRemove = vi.fn();
+    renderWithTheme(<StandingsAdjustGlobal tiedRows={tiedRows} onSave={onSave} onRemove={onRemove} />);
+    const [saveFirst] = screen.getAllByRole('button', { name: 'Salvar' });
+    expect(saveFirst).toBeDisabled();
+    fireEvent.change(screen.getByLabelText('2º Trovão — prioridade'), { target: { value: '1' } });
+    fireEvent.click(screen.getAllByRole('button', { name: 'Salvar' })[1]);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Remover' })[0]);
+    expect(onSave).toHaveBeenCalledWith('t2', 1);
+    expect(onRemove).toHaveBeenCalledWith('t1');
+  });
 });

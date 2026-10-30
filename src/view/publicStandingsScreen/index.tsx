@@ -1,39 +1,76 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { ButtonGlobal } from '@/components/buttonGlobal';
+import type { ITabelaPublica } from '@/@types/game';
 import { EmptyStateGlobal } from '@/components/emptyStateGlobal';
 import { ErrorStateGlobal } from '@/components/errorStateGlobal';
 import { LoaderGlobal } from '@/components/loaderGlobal';
 import { PageHeaderGlobal } from '@/components/pageHeaderGlobal';
-import { QUERY_KEYS } from '@/constants/queryKeys';
+import { SegmentedGlobal } from '@/components/segmentedGlobal';
+import { StandingsTableGlobal } from '@/components/standingsTableGlobal';
+import { useClassification, usePublicStandings } from '@/hooks/useClassification';
 import { useRouteParams } from '@/hooks/useRouteParams';
-import { gamesService } from '@/services/gamesService';
-import { TableWrap, Table, Row } from './style';
+import { Stack } from './style';
 
-type StandingsData = Awaited<ReturnType<typeof gamesService.standings>>;
-function GroupTable({ phase, group, draws }: { phase: StandingsData['phases'][number]; group: string | null; draws: boolean }) {
-  const query = useQuery({ queryKey: QUERY_KEYS.classification(phase.id, group), queryFn: () => gamesService.classification(phase.id, group) });
-  const extras = useQuery({ queryKey: ['etapa4','extras',phase.id,phase.classificam], queryFn: () => gamesService.extras(phase.id, (phase.classificam ?? 0) + 1), enabled: phase.tipo === 'grupos' && phase.melhores_extras > 0 && phase.classificam !== null });
-  if (query.isPending) return <LoaderGlobal label="Carregando classificação" />;
-  if (query.error) return <ErrorStateGlobal error={query.error} onRetry={() => void query.refetch()} />;
-  if (extras.error) return <ErrorStateGlobal error={extras.error} onRetry={() => void extras.refetch()} />;
-  if (!query.data.length) return <EmptyStateGlobal title="Ainda não há classificação" />;
-  return <TableWrap><Table><thead><tr><th>Pos.</th><th>Time</th><th>J</th><th>V</th>{draws && <th>E</th>}<th>D</th><th>WO</th><th>PTS</th><th>PF</th><th>PC</th><th>SALDO</th><th>%</th></tr></thead><tbody>
-    {query.data.map((row) => <Row key={row.time_id} $qualified={row.posicao <= (phase.classificam ?? 0) || !!extras.data?.some((extra) => extra.time_id === row.time_id && extra.posicao <= phase.melhores_extras)}><td>{row.posicao}º</td><td>{row.nome}{row.empate_tecnico && ' *'}</td><td>{row.j}</td><td>{row.v}</td>{draws && <td>{row.e}</td>}<td>{row.d}</td><td>{row.wo}</td><td>{row.pts}</td><td>{row.pf}</td><td>{row.pc}</td><td>{row.saldo}</td><td>{Math.round(row.aproveitamento * 100)}%</td></Row>)}
-  </tbody></Table><p>* Empate técnico</p></TableWrap>;
+type Fase = ITabelaPublica['fases'][number];
+
+function GroupStandings({ fase, grupoId, caption, showDraws }: { fase: Fase; grupoId: string | null; caption?: string; showDraws: boolean }) {
+  const { linhas, extrasClassificados, isLoading, error, refetch } = useClassification(fase, grupoId);
+  if (isLoading) return <LoaderGlobal label="Carregando classificação" />;
+  if (error) return <ErrorStateGlobal error={error} onRetry={refetch} />;
+  if (linhas.length === 0) return <EmptyStateGlobal title="Ainda não há classificação nesta fase" />;
+  return (
+    <StandingsTableGlobal
+      rows={linhas}
+      showDraws={showDraws}
+      qualifiedCount={fase.classificam ?? 0}
+      extraQualified={extrasClassificados}
+      caption={caption}
+    />
+  );
 }
-function Standings({ data }: { data: StandingsData }) {
-  const [phaseId, setPhaseId] = useState(data.phases[0]?.id ?? '');
-  const phase = data.phases.find((item) => item.id === phaseId);
-  if (!phase) return <EmptyStateGlobal title="Ainda não há fases com tabela" />;
-  const groups = data.groups.filter((item) => item.fase_id === phase.id);
-  return <>
-    <nav aria-label="Fases">{data.phases.map((item) => <ButtonGlobal key={item.id} label={item.nome} variant={phaseId === item.id ? "primary" : "outline"} aria-pressed={phaseId === item.id} onClick={() => setPhaseId(item.id)} />)}</nav>
-    {phase.tipo === 'grupos' ? groups.map((group) => <section key={group.id}><h2>Grupo {group.nome}</h2><GroupTable phase={phase} group={group.id} draws={data.competition.permite_empate} /></section>) : <GroupTable phase={phase} group={null} draws={data.competition.permite_empate} />}
-  </>;
+
+function Standings({ tabela }: { tabela: ITabelaPublica }) {
+  const [faseId, setFaseId] = useState(tabela.fases[0]?.id ?? '');
+  const fase = tabela.fases.find((item) => item.id === faseId);
+  if (!fase) return <EmptyStateGlobal title="Esta competição ainda não tem fase de classificação" />;
+
+  const grupos = tabela.grupos.filter((grupo) => grupo.fase_id === fase.id);
+  const showDraws = tabela.competicao.permite_empate;
+
+  return (
+    <Stack>
+      {tabela.fases.length > 1 && (
+        <SegmentedGlobal
+          ariaLabel="Fases"
+          options={tabela.fases.map((item) => ({ value: item.id, label: item.nome }))}
+          value={fase.id}
+          onChange={setFaseId}
+        />
+      )}
+      {fase.tipo === 'grupos' ? (
+        grupos.map((grupo) => (
+          <GroupStandings key={grupo.id} fase={fase} grupoId={grupo.id} caption={`Grupo ${grupo.nome}`} showDraws={showDraws} />
+        ))
+      ) : (
+        <GroupStandings fase={fase} grupoId={null} showDraws={showDraws} />
+      )}
+    </Stack>
+  );
 }
+
 export function PublicStandingsScreen() {
   const { slug } = useRouteParams('slug');
-  const query = useQuery({ queryKey: QUERY_KEYS.standings(slug), queryFn: () => gamesService.standings(slug) });
-  return <><PageHeaderGlobal title="Tabela" subtitle={query.data?.competition.nome} />{query.isPending ? <LoaderGlobal label="Carregando tabela" /> : query.error ? <ErrorStateGlobal error={query.error} onRetry={() => void query.refetch()} /> : <Standings data={query.data} />}</>;
+  const { tabela, isLoading, error, refetch } = usePublicStandings(slug);
+
+  const renderContent = () => {
+    if (isLoading) return <LoaderGlobal label="Carregando tabela" />;
+    if (error || !tabela) return <ErrorStateGlobal error={error} onRetry={() => void refetch()} />;
+    return <Standings tabela={tabela} />;
+  };
+
+  return (
+    <>
+      <PageHeaderGlobal title="Tabela" subtitle={tabela?.competicao.nome} />
+      {renderContent()}
+    </>
+  );
 }

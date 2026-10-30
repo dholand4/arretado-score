@@ -1,0 +1,49 @@
+import type { BadgeTone } from '@/components/badgeGlobal';
+import type { StatusJogo } from '@/@types/event';
+import type { IJogoLista } from '@/@types/game';
+import { STATUS_JOGO } from '@/constants/phase';
+import { formatDateTime } from './date';
+
+export interface IGameFilters {
+  faseId: string;
+  timeId: string;
+  status: StatusJogo | '';
+}
+
+export function filterGames(jogos: IJogoLista[], { faseId, timeId, status }: IGameFilters): IJogoLista[] {
+  return jogos.filter(
+    (jogo) =>
+      (!faseId || jogo.fase_id === faseId) &&
+      (!timeId || jogo.time_casa_id === timeId || jogo.time_fora_id === timeId) &&
+      (!status || jogo.status === status),
+  );
+}
+
+const STATUS_TONE: Record<StatusJogo, BadgeTone> = {
+  pendente: 'neutral',
+  agendado: 'info',
+  encerrado: 'success',
+  wo: 'warning',
+  cancelado: 'danger',
+};
+
+export function gameStatus(status: StatusJogo) {
+  return { label: STATUS_JOGO[status], tone: STATUS_TONE[status] };
+}
+
+// "Fase de classificação · Rodada 2 · 25/10/2026 19:00 · Ginásio"
+export function describeGame(jogo: IJogoLista): string {
+  const partes = [
+    jogo.fase?.nome,
+    jogo.grupo && `Grupo ${jogo.grupo.nome}`,
+    jogo.serie && `${jogo.serie.codigo} · Jogo ${jogo.numero_na_serie}`,
+    !jogo.serie && jogo.rodada && `Rodada ${jogo.rodada}`,
+    jogo.inicio_previsto ? formatDateTime(jogo.inicio_previsto) : 'Sem data',
+    jogo.evento?.local,
+  ];
+  return partes.filter(Boolean).join(' · ');
+}
+
+export function hasResult(jogo: Pick<IJogoLista, 'status'>): boolean {
+  return jogo.status === 'encerrado' || jogo.status === 'wo';
+}

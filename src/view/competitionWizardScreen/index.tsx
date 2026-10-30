@@ -147,6 +147,7 @@ function EditCompetitionWizard({ competitionId }: { competitionId: string }) {
           initialValues={competition}
           modalidade={competition.modalidade}
           locked={locked}
+          warnRecalculation={competition.estrutura_travada && profile?.papel === 'master'}
           saving={saveScoring.isPending}
           error={saveScoring.error ? getErrorMessage(saveScoring.error) : null}
           onSave={(input, advance) => saveScoring.mutate(input, { onSuccess: () => afterSave(advance) })}

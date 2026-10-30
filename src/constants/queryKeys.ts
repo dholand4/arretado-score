@@ -1,11 +1,4 @@
 export const QUERY_KEYS = {
-  // Etapa 5
-  bracket: (slug: string) => ['etapa5', 'bracket', slug] as const,
-  // Etapa 4
-  games: (id: string) => ['etapa4', 'games', id] as const,
-  sheet: (competitionId: string, gameId: string) => ['etapa4', 'sheet', competitionId, gameId] as const,
-  standings: (slug: string) => ['etapa4', 'standings', slug] as const,
-  classification: (phase: string, group: string | null) => ['etapa4', 'classification', phase, group] as const,
   profile: (userId: string) => ['profile', userId] as const,
   users: ['users'] as const,
   competitions: ['competitions'] as const,
@@ -19,9 +12,18 @@ export const QUERY_KEYS = {
   myTeams: (userId: string) => ['my-teams', userId] as const,
   donos: ['people', 'donos'] as const,
   adminUsers: ['people', 'admins'] as const,
-  // Etapa 3
+  // Fases e dias de jogos
   phases: (competicaoId: string) => ['competitions', competicaoId, 'phases'] as const,
   gamesProgress: (competicaoId: string) => ['competitions', competicaoId, 'games-progress'] as const,
   events: (competicaoId: string) => ['competitions', competicaoId, 'events'] as const,
   eventCandidates: (competicaoId: string) => ['competitions', competicaoId, 'event-candidates'] as const,
+  // Jogos, súmula e classificação
+  games: (competicaoId: string) => ['competitions', competicaoId, 'games'] as const,
+  scoreSheet: (jogoId: string) => ['games', jogoId, 'score-sheet'] as const,
+  classificationAll: ['classification'] as const,
+  classification: (faseId: string, grupoId: string | null) => ['classification', faseId, grupoId ?? 'geral'] as const,
+  bestExtras: (faseId: string, colocacao: number) => ['classification', faseId, 'extras', colocacao] as const,
+  // Área pública
+  publicStandings: (slug: string) => ['public', slug, 'standings'] as const,
+  bracket: (slug: string) => ['public', slug, 'bracket'] as const,
 };

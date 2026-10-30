@@ -1,39 +1,143 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import type { StatusJogo } from '@/@types/event';
+import type { IJogosContexto } from '@/@types/game';
+import { CardGlobal } from '@/components/cardGlobal';
 import { EmptyStateGlobal } from '@/components/emptyStateGlobal';
 import { ErrorStateGlobal } from '@/components/errorStateGlobal';
+import { GameCardGlobal } from '@/components/gameCardGlobal';
 import { LoaderGlobal } from '@/components/loaderGlobal';
 import { PageHeaderGlobal } from '@/components/pageHeaderGlobal';
-import { StandingsAdjustGlobal } from '@/components/standingsAdjustGlobal';
 import { SelectGlobal } from '@/components/selectGlobal';
-import { QUERY_KEYS } from '@/constants/queryKeys';
+import { StandingsAdjustGlobal } from '@/components/standingsAdjustGlobal';
+import { STATUS_JOGO } from '@/constants/phase';
+import { useAdjustClassification, useClassification } from '@/hooks/useClassification';
+import { useGames } from '@/hooks/useGames';
 import { useRouteParams } from '@/hooks/useRouteParams';
 import { paths } from '@/routes/types';
-import { gamesService } from '@/services/gamesService';
-import { Filters, List, GameLink } from './style';
+import { getErrorMessage } from '@/utils/appError';
+import { describeGame, filterGames, gameStatus, hasResult, type IGameFilters } from '@/utils/games';
+import { pluralize } from '@/utils/text';
+import { Adjustments, Count, Filters, List } from './style';
+
+type Fase = IJogosContexto['fases'][number];
+
+const STATUS_OPTIONS = [
+  { value: '', label: 'Todos' },
+  ...(Object.keys(STATUS_JOGO) as StatusJogo[]).map((status) => ({ value: status, label: STATUS_JOGO[status] })),
+];
+
+function TieAdjust({ fase, grupoId, title }: { fase: Fase; grupoId: string | null; title: string }) {
+  const { linhas, isLoading, error } = useClassification(fase, grupoId);
+  const adjust = useAdjustClassification(fase.id, grupoId);
+  if (isLoading || error) return null;
+  return (
+    <CardGlobal title={title}>
+      <StandingsAdjustGlobal
+        tiedRows={linhas.filter((linha) => linha.empate_tecnico && linha.j > 0)}
+        busy={adjust.isPending}
+        error={adjust.error ? getErrorMessage(adjust.error) : null}
+        onSave={(timeId, prioridade) => adjust.mutate({ timeId, prioridade })}
+        onRemove={(timeId) => adjust.mutate({ timeId, prioridade: null })}
+      />
+    </CardGlobal>
+  );
+}
 
 export function GamesScreen() {
   const { competitionId } = useRouteParams('competitionId');
-  const query = useQuery({ queryKey: QUERY_KEYS.games(competitionId), queryFn: () => gamesService.context(competitionId) });
-  const [phase, setPhase] = useState('');
-  const [team, setTeam] = useState('');
-  const [status, setStatus] = useState('');
-  const data = query.data;
-  const games = data?.games.filter((game) => (!phase || game.fase_id === phase) && (!team || game.time_casa_id === team || game.time_fora_id === team) && (!status || game.status === status)) ?? [];
-  const name = (id: string) => data?.teams.find((item) => item.id === id)?.nome ?? 'Time';
-  return <>
-    <PageHeaderGlobal title="Jogos" subtitle="Consulte os jogos e lance súmulas ou W.O." />
-    {query.isPending ? <LoaderGlobal label="Carregando jogos" /> : query.error ? <ErrorStateGlobal error={query.error} onRetry={() => void query.refetch()} /> : <>
+  const { jogos, fases, times, grupos, isLoading, error, refetch } = useGames(competitionId);
+  const [filters, setFilters] = useState<IGameFilters>({ faseId: '', timeId: '', status: '' });
+
+  const setFilter = <K extends keyof IGameFilters>(key: K, value: IGameFilters[K]) =>
+    setFilters((current) => ({ ...current, [key]: value }));
+
+  const renderContent = () => {
+    if (isLoading) return <LoaderGlobal label="Carregando jogos" />;
+    if (error) return <ErrorStateGlobal error={error} onRetry={() => void refetch()} />;
+    if (jogos.length === 0) {
+      return (
+        <EmptyStateGlobal
+          title="Nenhum jogo gerado"
+          description="Os jogos aparecem aqui quando a competição é iniciada."
+        />
+      );
+    }
+
+    const visiveis = filterGames(jogos, filters);
+    const faseSelecionada = fases.find((fase) => fase.id === filters.faseId);
+    const gruposDaFase = grupos.filter((grupo) => grupo.fase_id === filters.faseId);
+
+    return (
+      <>
+        <Count>{pluralize(visiveis.length, 'jogo', 'jogos')}</Count>
+        {visiveis.length === 0 ? (
+          <EmptyStateGlobal title="Nenhum jogo com esses filtros" />
+        ) : (
+          <List aria-label="Jogos">
+            {visiveis.map((jogo) => {
+              const status = gameStatus(jogo.status);
+              return (
+                <li key={jogo.id}>
+                  <GameCardGlobal
+                    to={paths.gameScoreSheet(competitionId, jogo.id)}
+                    home={jogo.casa?.nome ?? 'A definir'}
+                    away={jogo.fora?.nome ?? 'A definir'}
+                    homeScore={jogo.placar_casa}
+                    awayScore={jogo.placar_fora}
+                    statusLabel={status.label}
+                    statusTone={status.tone}
+                    description={describeGame(jogo)}
+                    actionLabel={hasResult(jogo) ? 'Editar resultado' : 'Lançar súmula ou W.O.'}
+                  />
+                </li>
+              );
+            })}
+          </List>
+        )}
+        {faseSelecionada && faseSelecionada.tipo !== 'mata_mata' && (
+          <Adjustments>
+            {faseSelecionada.tipo === 'grupos' ? (
+              gruposDaFase.map((grupo) => (
+                <TieAdjust
+                  key={grupo.id}
+                  fase={faseSelecionada}
+                  grupoId={grupo.id}
+                  title={`Empate técnico — Grupo ${grupo.nome}`}
+                />
+              ))
+            ) : (
+              <TieAdjust fase={faseSelecionada} grupoId={null} title="Empate técnico" />
+            )}
+          </Adjustments>
+        )}
+      </>
+    );
+  };
+
+  return (
+    <>
+      <PageHeaderGlobal title="Jogos" subtitle="Lance súmulas, placares e W.O. Escolha uma fase para ajustar empates técnicos." />
       <Filters>
-        <SelectGlobal label="Fase" value={phase} onChange={(event) => setPhase(event.target.value)} options={[{ value: '', label: 'Todas' }, ...(data?.phases ?? []).map((item) => ({ value: item.id, label: item.nome }))]} />
-        <SelectGlobal label="Time" value={team} onChange={(event) => setTeam(event.target.value)} options={[{ value: '', label: 'Todos' }, ...(data?.teams ?? []).map((item) => ({ value: item.id, label: item.nome }))]} />
-        <SelectGlobal label="Status" value={status} onChange={(event) => setStatus(event.target.value)} options={[{ value: '', label: 'Todos' }, ...[['pendente','Pendente'],['agendado','Agendado'],['encerrado','Encerrado'],['wo','W.O.'],['cancelado','Cancelado']].map(([value,label]) => ({ value, label }))]} />
+        <SelectGlobal
+          label="Fase"
+          value={filters.faseId}
+          options={[{ value: '', label: 'Todas' }, ...fases.map((fase) => ({ value: fase.id, label: fase.nome }))]}
+          onChange={(event) => setFilter('faseId', event.target.value)}
+        />
+        <SelectGlobal
+          label="Time"
+          value={filters.timeId}
+          options={[{ value: '', label: 'Todos' }, ...times.map((time) => ({ value: time.id, label: time.nome }))]}
+          onChange={(event) => setFilter('timeId', event.target.value)}
+        />
+        <SelectGlobal
+          label="Status"
+          value={filters.status}
+          options={STATUS_OPTIONS}
+          onChange={(event) => setFilter('status', event.target.value as StatusJogo | '')}
+        />
       </Filters>
-      {phase && data?.phases.find((item) => item.id === phase)?.tipo !== 'mata_mata' && <section><h2>Ajuste de empate técnico</h2>{data?.phases.find((item) => item.id === phase)?.tipo === 'grupos' ? data.groups.filter((group) => group.fase_id === phase).map((group) => <div key={group.id}><h3>Grupo {group.nome}</h3><StandingsAdjustGlobal phase={phase} group={group.id} /></div>) : <StandingsAdjustGlobal phase={phase} group={null} />}</section>}
-      {games.length === 0 ? <EmptyStateGlobal title="Nenhum jogo encontrado" /> : <List>{games.map((game) => <li key={game.id}><GameLink to={paths.gameScoreSheet(competitionId,game.id)}>
-        <strong>{name(game.time_casa_id)} {game.placar_casa ?? '–'} × {game.placar_fora ?? '–'} {name(game.time_fora_id)}</strong>
-        <span>{data?.phases.find((item) => item.id === game.fase_id)?.nome} · {game.status === 'wo' ? 'W.O.' : game.status} · Súmula / W.O.</span>
-      </GameLink></li>)}</List>}
-    </>}
-  </>;
+      {renderContent()}
+    </>
+  );
 }

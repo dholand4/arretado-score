@@ -72,9 +72,6 @@ export function CompetitionReviewGlobal({ competition: c, categories, teamsCount
         </Muted>
       </CardGlobal>
 
-      <CardGlobal title="Fases e cobrança">
-        <Muted>Configuração das fases (e o botão “Iniciar competição”) e da cobrança entram nas próximas etapas.</Muted>
-      </CardGlobal>
     </Sections>
   );
 }

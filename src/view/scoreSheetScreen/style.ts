@@ -1,5 +1,29 @@
 import styled from 'styled-components';
-export const Score = styled.p`font-size: ${({ theme }) => theme.fontSize.xl}px; font-weight: ${({ theme }) => theme.fontWeight.bold}; text-align: center;`;
-export const Grid = styled.div`display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: ${({ theme }) => theme.spacing.sm}px;`;
-export const TeamSection = styled.section`margin: ${({ theme }) => theme.spacing.lg}px 0;`;
-export const Player = styled.div`padding: ${({ theme }) => theme.spacing.md}px; margin-bottom: ${({ theme }) => theme.spacing.sm}px; background: ${({ theme }) => theme.colors.surface}; border: ${({ theme }) => theme.sizes.borderWidth}px solid ${({ theme }) => theme.colors.border}; border-radius: ${({ theme }) => theme.radius.md}px;`;
+
+export const Stack = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.md}px;
+`;
+
+// minmax(0, …): a tabela de cada time rola por dentro em vez de alargar a página.
+export const Teams = styled.div`
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: ${({ theme }) => theme.spacing.lg}px;
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+`;
+
+export const Grid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: ${({ theme }) => theme.spacing.sm + theme.spacing.xs}px;
+`;
+
+export const Help = styled.p`
+  font-size: ${({ theme }) => theme.fontSize.sm}px;
+  color: ${({ theme }) => theme.colors.textMuted};
+`;

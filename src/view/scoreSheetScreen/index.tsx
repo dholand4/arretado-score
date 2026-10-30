@@ -1,64 +1,225 @@
 import { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { ISumula, ModoResultado, WoAusente } from '@/@types/game';
 import { AlertGlobal } from '@/components/alertGlobal';
 import { ButtonGlobal } from '@/components/buttonGlobal';
-import { CheckboxGlobal } from '@/components/checkboxGlobal';
 import { ErrorStateGlobal } from '@/components/errorStateGlobal';
+import { FormActionsGlobal } from '@/components/formActionsGlobal';
 import { InputGlobal } from '@/components/inputGlobal';
+import { LinkButtonGlobal } from '@/components/linkButtonGlobal';
 import { LoaderGlobal } from '@/components/loaderGlobal';
 import { PageHeaderGlobal } from '@/components/pageHeaderGlobal';
+import { ScoreboardGlobal } from '@/components/scoreboardGlobal';
+import { ScoreSheetTeamGlobal } from '@/components/scoreSheetTeamGlobal';
+import { SegmentedGlobal } from '@/components/segmentedGlobal';
 import { SelectGlobal } from '@/components/selectGlobal';
-import { QUERY_KEYS } from '@/constants/queryKeys';
+import { useAuth } from '@/hooks/useAuth';
 import { useRouteParams } from '@/hooks/useRouteParams';
-import { gamesService } from '@/services/gamesService';
+import { useScoreSheet } from '@/hooks/useScoreSheet';
+import { paths } from '@/routes/types';
 import { getErrorMessage } from '@/utils/appError';
-import { Grid, Player, Score, TeamSection } from './style';
+import {
+  buildResultInput,
+  displayedScore,
+  initialSheetState,
+  sheetError,
+  sortByNumber,
+  teamScore,
+  type ISheetState,
+} from '@/utils/scoreSheet';
+import { Grid, Help, Stack, Teams } from './style';
 
-type Sheet = Awaited<ReturnType<typeof gamesService.sheet>>;
-type Values = Record<string, Record<string, string>>;
-function SheetForm({ data }: { data: Sheet }) {
-  const client = useQueryClient();
-  const { game, competition, categories, players } = data;
-  const [mode, setMode] = useState(game.status === 'wo' ? 'wo' : game.so_placar ? 'placar' : 'completa');
-  const [present, setPresent] = useState<string[]>(data.presence.map((item) => item.jogador_id));
-  const [values, setValues] = useState<Values>(() => {
-    const initial: Values = {};
-    data.statistics.forEach((item) => { initial[item.jogador_id] ??= {}; initial[item.jogador_id][item.categoria_id] = String(item.valor); });
-    return initial;
-  });
-  const [casa, setCasa] = useState(game.placar_casa?.toString() ?? '');
-  const [fora, setFora] = useState(game.placar_fora?.toString() ?? '');
-  const [ausente, setAusente] = useState(game.wo_ausente ?? '');
-  const [saved, setSaved] = useState(false);
-  const mutation = useMutation({ mutationFn: () => gamesService.save(game.id, mode, casa === '' ? null : Number(casa), fora === '' ? null : Number(fora), ausente || null,
-    present.map((id) => ({ jogador_id: id, valores: Object.fromEntries(Object.entries(values[id] ?? {}).filter(([, value]) => value !== '').map(([key,value]) => [key, Number(value)])) }))),
-    onSuccess: () => { setSaved(true); void client.invalidateQueries({ queryKey: ['etapa4'] }); },
-  });
-  const phase = data.phases.find((item) => item.id === game.fase_id);
-  const next = data.phases.find((item) => item.ordem === (phase?.ordem ?? 0) + 1);
-  const limited = phase?.status === 'concluida' && data.games.some((item) => item.fase_id === next?.id && ['encerrado','wo'].includes(item.status));
-  const teamName = (id: string) => data.teams.find((item) => item.id === id)?.nome ?? 'Time';
-  const scoreCategory = categories.find((item) => item.soma_no_placar);
-  const score = (teamId: string) => players.filter((player) => player.time_id === teamId && present.includes(player.id)).reduce((sum, player) => sum + (Number(values[player.id]?.[scoreCategory?.id ?? ''] || 0) || 0), 0);
-  const submit = () => { setSaved(false); mutation.mutate(); };
-  return <>
-    <Score aria-live="polite">{teamName(game.time_casa_id)} {mode === 'completa' ? score(game.time_casa_id) : mode === 'placar' ? casa || '–' : '–'} × {mode === 'completa' ? score(game.time_fora_id) : mode === 'placar' ? fora || '–' : '–'} {teamName(game.time_fora_id)}</Score>
-    {limited && <AlertGlobal variant="warning" message="A fase seguinte já tem jogo encerrado. Só o master pode editar esta súmula." />}
-    {game.status === 'cancelado' && <AlertGlobal variant="warning" message="Jogo cancelado não recebe súmula." />}
-    {saved && <AlertGlobal variant="success" message="Resultado salvo." />}
-    {mutation.error && <AlertGlobal variant="error" message={getErrorMessage(mutation.error)} />}
-    <SelectGlobal label="Tipo de lançamento" value={mode} onChange={(event) => setMode(event.target.value)} options={[{ value:'completa',label:'Súmula completa' },{ value:'placar',label:'Lançar só o placar' },{ value:'wo',label:'Marcar W.O.' }]} />
-    {mode === 'placar' && <><p>O placar conta na tabela. Estatísticas anteriores serão removidas.</p><Grid><InputGlobal label={`Placar ${teamName(game.time_casa_id)}`} type="number" min={0} inputMode="numeric" value={casa} onChange={(event) => setCasa(event.target.value)} /><InputGlobal label={`Placar ${teamName(game.time_fora_id)}`} type="number" min={0} inputMode="numeric" value={fora} onChange={(event) => setFora(event.target.value)} /></Grid></>}
-    {mode === 'wo' && <><p>Placar automático: {competition.wo_placar_vencedor} × {competition.wo_placar_perdedor}. W.O. duplo: 0 × 0. Estatísticas anteriores serão removidas.</p><SelectGlobal label="Quem faltou?" value={ausente} onChange={(event) => setAusente(event.target.value)} options={[{value:'',label:'Selecione'}, {value:'casa',label:teamName(game.time_casa_id)}, {value:'fora',label:teamName(game.time_fora_id)}, {value:'ambos',label:'Ambos'}]} /></>}
-    {mode === 'completa' && [game.time_casa_id, game.time_fora_id].map((teamId) => <TeamSection key={teamId}><h2>{teamName(teamId)}</h2>{players.filter((player) => player.time_id === teamId).map((player) => <Player key={player.id}>
-      <CheckboxGlobal label={`${player.numero !== null ? `${player.numero} · ` : ''}${player.nome} — jogou`} checked={present.includes(player.id)} onChange={(event) => setPresent((current) => event.target.checked ? [...current,player.id] : current.filter((id) => id !== player.id))} />
-      <Grid>{categories.map((category) => <InputGlobal key={category.id} label={`${category.sigla} — ${player.nome}`} type="number" min={0} step={1} inputMode="numeric" value={values[player.id]?.[category.id] ?? ''} onChange={(event) => { const value = event.target.value; setValues((current) => ({ ...current, [player.id]: { ...current[player.id], [category.id]: value } })); if (value !== '') setPresent((current) => current.includes(player.id) ? current : [...current,player.id]); }} />)}</Grid>
-    </Player>)}</TeamSection>)}
-    <ButtonGlobal label="Salvar resultado" onClick={submit} loading={mutation.isPending} disabled={game.status === 'cancelado' || mutation.isPending} />
-  </>;
+const MODOS: { value: ModoResultado; label: string }[] = [
+  { value: 'completa', label: 'Súmula completa' },
+  { value: 'placar', label: 'Só o placar' },
+  { value: 'wo', label: 'W.O.' },
+];
+
+interface ISheetFormProps {
+  sumula: ISumula;
+  isMaster: boolean;
+  saving: boolean;
+  saveError: unknown;
+  onSave: (state: ISheetState) => Promise<unknown>;
 }
+
+function SheetForm({ sumula, isMaster, saving, saveError, onSave }: ISheetFormProps) {
+  const [state, setState] = useState<ISheetState>(() => initialSheetState(sumula));
+  const [validation, setValidation] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const { jogo } = sumula;
+
+  const cancelado = jogo.status === 'cancelado';
+  const bloqueado = cancelado || (sumula.edicaoRestrita && !isMaster);
+  const [placarCasa, placarFora] = displayedScore(sumula, state);
+
+  const update = (patch: Partial<ISheetState>) => {
+    setSaved(false);
+    setState((current) => ({ ...current, ...patch }));
+  };
+
+  const togglePresent = (jogadorId: string, presente: boolean) =>
+    update({
+      presentes: presente
+        ? [...new Set([...state.presentes, jogadorId])]
+        : state.presentes.filter((id) => id !== jogadorId),
+    });
+
+  // Preencher qualquer número marca a presença (seção 6.5).
+  const changeValue = (jogadorId: string, categoriaId: string, valor: string) =>
+    update({
+      valores: { ...state.valores, [jogadorId]: { ...state.valores[jogadorId], [categoriaId]: valor } },
+      presentes:
+        valor !== '' && !state.presentes.includes(jogadorId) ? [...state.presentes, jogadorId] : state.presentes,
+    });
+
+  const submit = async () => {
+    const erro = sheetError(sumula, state);
+    setValidation(erro);
+    if (erro) return;
+    try {
+      await onSave(state);
+      setSaved(true);
+    } catch {
+      // A mensagem vem de saveError.
+    }
+  };
+
+  const teamProps = (timeId: string, nome: string) => ({
+    teamName: nome,
+    score: teamScore(sumula, state, timeId),
+    players: sortByNumber(sumula.jogadores.filter((jogador) => jogador.time_id === timeId)),
+    categories: sumula.categorias,
+    present: state.presentes,
+    values: state.valores,
+    disabled: bloqueado,
+    onTogglePresent: togglePresent,
+    onChangeValue: changeValue,
+  });
+
+  return (
+    <>
+      <ScoreboardGlobal
+        home={sumula.casa}
+        away={sumula.fora}
+        homeScore={placarCasa}
+        awayScore={placarFora}
+        subtitle={sumula.fase.nome}
+      />
+      <Stack>
+        {cancelado && <AlertGlobal variant="warning" message="Jogo cancelado não recebe súmula." />}
+        {sumula.edicaoRestrita && (
+          <AlertGlobal
+            variant="warning"
+            message={
+              isMaster
+                ? 'A fase seguinte já tem resultado. Ao editar, confira séries e classificação depois.'
+                : 'A fase seguinte já tem resultado: só o admin master pode editar esta súmula.'
+            }
+          />
+        )}
+        <SegmentedGlobal
+          ariaLabel="Tipo de lançamento"
+          options={MODOS}
+          value={state.modo}
+          disabled={bloqueado}
+          onChange={(modo) => update({ modo })}
+        />
+
+        {state.modo === 'completa' && (
+          <Teams>
+            <ScoreSheetTeamGlobal {...teamProps(jogo.time_casa_id, sumula.casa)} />
+            <ScoreSheetTeamGlobal {...teamProps(jogo.time_fora_id, sumula.fora)} />
+          </Teams>
+        )}
+
+        {state.modo === 'placar' && (
+          <>
+            <Help>O placar conta na tabela e nas séries, mas não nos rankings. Estatísticas já lançadas são apagadas.</Help>
+            <Grid>
+              <InputGlobal
+                label={sumula.casa}
+                type="number"
+                inputMode="numeric"
+                min={0}
+                value={state.placarCasa}
+                disabled={bloqueado}
+                onChange={(event) => update({ placarCasa: event.target.value })}
+              />
+              <InputGlobal
+                label={sumula.fora}
+                type="number"
+                inputMode="numeric"
+                min={0}
+                value={state.placarFora}
+                disabled={bloqueado}
+                onChange={(event) => update({ placarFora: event.target.value })}
+              />
+            </Grid>
+          </>
+        )}
+
+        {state.modo === 'wo' && (
+          <>
+            <Help>
+              Placar automático de {sumula.competicao.wo_placar_vencedor} x {sumula.competicao.wo_placar_perdedor} para o
+              time presente; W.O. duplo fica 0 x 0, sem vencedor. Sem estatísticas de jogadores.
+            </Help>
+            <SelectGlobal
+              label="Quem faltou?"
+              value={state.ausente}
+              disabled={bloqueado}
+              options={[
+                { value: '', label: 'Selecione' },
+                { value: 'casa', label: sumula.casa },
+                { value: 'fora', label: sumula.fora },
+                { value: 'ambos', label: 'Os dois times' },
+              ]}
+              onChange={(event) => update({ ausente: event.target.value as WoAusente | '' })}
+            />
+          </>
+        )}
+
+        {validation && <AlertGlobal variant="error" message={validation} />}
+        {!validation && saveError !== null && saveError !== undefined && (
+          <AlertGlobal variant="error" message={getErrorMessage(saveError)} />
+        )}
+        {saved && <AlertGlobal variant="success" message="Resultado salvo. Tabela e séries já foram atualizadas." />}
+
+        <FormActionsGlobal>
+          <ButtonGlobal label="Salvar resultado" loading={saving} disabled={bloqueado || saving} onClick={() => void submit()} />
+        </FormActionsGlobal>
+      </Stack>
+    </>
+  );
+}
+
 export function ScoreSheetScreen() {
-  const { competitionId, gameId } = useRouteParams('competitionId','gameId');
-  const query = useQuery({ queryKey: QUERY_KEYS.sheet(competitionId,gameId), queryFn: () => gamesService.sheet(competitionId,gameId) });
-  return <><PageHeaderGlobal title="Súmula" />{query.isPending ? <LoaderGlobal label="Carregando súmula" /> : query.error ? <ErrorStateGlobal error={query.error} onRetry={() => void query.refetch()} /> : <SheetForm key={gameId} data={query.data} />}</>;
+  const { competitionId, gameId } = useRouteParams('competitionId', 'gameId');
+  const { profile } = useAuth();
+  const { sumula, isLoading, error, refetch, saveResult } = useScoreSheet(competitionId, gameId);
+
+  const renderContent = () => {
+    if (isLoading) return <LoaderGlobal label="Carregando súmula" />;
+    if (error || !sumula) return <ErrorStateGlobal error={error} onRetry={() => void refetch()} />;
+    return (
+      <SheetForm
+        key={sumula.jogo.id}
+        sumula={sumula}
+        isMaster={profile?.papel === 'master'}
+        saving={saveResult.isPending}
+        saveError={saveResult.error}
+        onSave={(state) => saveResult.mutateAsync(buildResultInput(state))}
+      />
+    );
+  };
+
+  return (
+    <>
+      <PageHeaderGlobal
+        title="Súmula"
+        actions={<LinkButtonGlobal to={paths.competitionGames(competitionId)} label="← Jogos" size="sm" variant="ghost" />}
+      />
+      {renderContent()}
+    </>
+  );
 }
