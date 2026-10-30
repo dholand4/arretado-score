@@ -6,7 +6,7 @@ import { InputGlobal } from '@/components/inputGlobal';
 import { ModalGlobal } from '@/components/modalGlobal';
 import { SelectGlobal } from '@/components/selectGlobal';
 import { PAPEL_OPTIONS } from '@/constants/roles';
-import { formatPhone, phoneDigits } from '@/utils/phone';
+import { formatPhone, maskPhone, phoneDigits } from '@/utils/phone';
 import { validateUserForm, type UserFormErrors } from '@/utils/validators';
 import { Form } from './style';
 import type { IUserFormModalProps } from './types';
@@ -94,7 +94,7 @@ export function UserFormModalGlobal({
           type="tel"
           inputMode="tel"
           value={telefone}
-          onChange={(e) => setTelefone(e.target.value)}
+          onChange={(e) => setTelefone(maskPhone(e.target.value))}
           error={errors.telefone}
           hint="Opcional. DDD + número."
           autoComplete="off"

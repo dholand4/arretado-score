@@ -8,7 +8,7 @@ import { ModalGlobal } from '@/components/modalGlobal';
 import { SegmentedGlobal } from '@/components/segmentedGlobal';
 import { SelectGlobal } from '@/components/selectGlobal';
 import { hasErrors, validateNewOwner, validateTeam, type FormErrors } from '@/utils/competitionValidators';
-import { formatPhone, phoneDigits, phoneError } from '@/utils/phone';
+import { formatPhone, maskPhone, phoneDigits, phoneError } from '@/utils/phone';
 import { Form, OwnerBox, OwnerTitle } from './style';
 import type { ITeamFormModalProps } from './types';
 
@@ -80,7 +80,10 @@ export function TeamFormModalGlobal({
     <InputGlobal
       label={label}
       value={novoDono[field]}
-      onChange={(e) => setNovoDono((d) => ({ ...d, [field]: e.target.value }))}
+      onChange={(e) => {
+        const value = field === 'telefone' ? maskPhone(e.target.value) : e.target.value;
+        setNovoDono((d) => ({ ...d, [field]: value }));
+      }}
       error={ownerErrors[field]}
       {...extra}
     />
@@ -175,7 +178,7 @@ export function TeamFormModalGlobal({
                       value={telefoneMostrado}
                       error={telefoneErro}
                       hint="Opcional. DDD + número."
-                      onChange={(e) => setTelefoneEquipe(e.target.value)}
+                      onChange={(e) => setTelefoneEquipe(maskPhone(e.target.value))}
                     />
                   )}
                 </>

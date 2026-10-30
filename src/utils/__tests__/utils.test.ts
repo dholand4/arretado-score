@@ -70,4 +70,17 @@ describe('phone', () => {
     expect(phoneError('(88) 99999-1234')).toBeUndefined();
     expect(phoneError('9999')).toBe('Informe DDD e número (ex.: 88 99999-1234).');
   });
+
+  it('masks while typing', async () => {
+    const { maskPhone } = await import('@/utils/phone');
+    expect(maskPhone('')).toBe('');
+    expect(maskPhone('8')).toBe('(8');
+    expect(maskPhone('889')).toBe('(88) 9');
+    expect(maskPhone('8899999')).toBe('(88) 9999-9');
+    expect(maskPhone('8833334444')).toBe('(88) 3333-4444');
+    expect(maskPhone('88999991234')).toBe('(88) 99999-1234');
+    expect(maskPhone('88 9999a9-1234 99')).toBe('(88) 99999-1234');
+    expect(maskPhone('5588999991234')).toBe('+55 (88) 99999-1234');
+    expect(maskPhone('(88')).toBe('(88');
+  });
 });

@@ -32,6 +32,15 @@ describe('UserFormModalGlobal', () => {
     });
   });
 
+  it('formats the phone while typing', () => {
+    renderWithTheme(<UserFormModalGlobal {...base} mode="create" onSubmit={() => {}} />);
+    const telefone = screen.getByLabelText('Telefone / WhatsApp');
+    fireEvent.change(telefone, { target: { value: '88999991234' } });
+    expect(telefone).toHaveValue('(88) 99999-1234');
+    fireEvent.change(telefone, { target: { value: '(88) 99999-12345abc' } });
+    expect(telefone).toHaveValue('(88) 99999-1234');
+  });
+
   it('edit mode hides password and locks email', () => {
     renderWithTheme(
       <UserFormModalGlobal
