@@ -21,7 +21,7 @@ import { formatDateTime } from '@/utils/date';
 import { filterUsers, type IUserFilters } from '@/utils/filterUsers';
 import { generateTemporaryPassword } from '@/utils/password';
 import { Actions, Badges, Count, Feedback, Filters, List, Meta, UserEmail, UserHeader, UserName } from './style';
-import { formatPhone, whatsappUrl } from '@/utils/phone';
+import { formatPhone } from '@/utils/phone';
 
 type ModalState =
   | { type: 'create' }
@@ -145,14 +145,7 @@ export function UsersScreen() {
                     {isSelf && ' (você)'}
                   </UserName>
                   <UserEmail>{user.email}</UserEmail>
-                  {user.telefone && (
-                    <UserEmail>
-                      {formatPhone(user.telefone)} ·{' '}
-                      <a href={whatsappUrl(user.telefone)} target="_blank" rel="noreferrer">
-                        WhatsApp
-                      </a>
-                    </UserEmail>
-                  )}
+                  {user.telefone && <UserEmail>{formatPhone(user.telefone)}</UserEmail>}
                 </UserHeader>
                 <Badges>
                   <BadgeGlobal label={PAPEL_LABEL[user.papel]} tone={user.papel === 'master' ? 'primary' : 'info'} />

@@ -16,8 +16,8 @@ import { useConfirmAction } from '@/hooks/useConfirm';
 import { paths } from '@/routes/types';
 import { getErrorMessage } from '@/utils/appError';
 import { matchesSearch, pluralize } from '@/utils/text';
-import { formatPhone, phoneDigits, whatsappUrl } from '@/utils/phone';
-import { Feedback, Found, Item, List, Meta, Name, Search, TeamLink, Texts, WhatsApp } from './style';
+import { phoneDigits } from '@/utils/phone';
+import { Feedback, Found, Item, List, Meta, Name, Search, TeamLink, Texts } from './style';
 
 export function TeamsScreen() {
   const { competitionId } = useRouteParams('competitionId');
@@ -91,23 +91,12 @@ export function TeamsScreen() {
                     <Meta>
                       {pluralize(team.jogadores[0]?.count ?? 0, 'jogador', 'jogadores')} ·{' '}
                       {team.dono ? `Equipe: ${team.dono.nome}` : 'Sem acesso de equipe'}
-                      {team.dono?.telefone && ` · ${formatPhone(team.dono.telefone)}`}
                     </Meta>
                     {jogadores.length > 0 && (
                       <Found>Jogador: {jogadores.map((j) => j.apelido || j.nome).join(', ')}</Found>
                     )}
                   </Texts>
                 </TeamLink>
-                {team.dono?.telefone && (
-                  <WhatsApp
-                    href={whatsappUrl(team.dono.telefone)}
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label={`Abrir WhatsApp de ${team.dono.nome}`}
-                  >
-                    WhatsApp
-                  </WhatsApp>
-                )}
               </Item>
             ))}
           </List>

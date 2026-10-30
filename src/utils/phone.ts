@@ -21,9 +21,3 @@ export function formatPhone(value: string | null | undefined): string {
   const formatado = `(${local.slice(0, 2)}) ${local.slice(2, -4)}-${local.slice(-4)}`;
   return comPais ? `+55 ${formatado}` : formatado;
 }
-
-// Link para abrir a conversa no WhatsApp (assume Brasil quando não tem o 55).
-export function whatsappUrl(value: string): string {
-  const digitos = phoneDigits(value);
-  return `https://wa.me/${digitos.length <= 11 ? `55${digitos}` : digitos}`;
-}

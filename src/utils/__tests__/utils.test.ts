@@ -60,8 +60,8 @@ describe('filterUsers', () => {
 });
 
 describe('phone', () => {
-  it('formats, validates and builds the WhatsApp link', async () => {
-    const { formatPhone, phoneError, whatsappUrl } = await import('@/utils/phone');
+  it('formats and validates', async () => {
+    const { formatPhone, phoneError } = await import('@/utils/phone');
     expect(formatPhone('88999991234')).toBe('(88) 99999-1234');
     expect(formatPhone('8833334444')).toBe('(88) 3333-4444');
     expect(formatPhone('5588999991234')).toBe('+55 (88) 99999-1234');
@@ -69,7 +69,5 @@ describe('phone', () => {
     expect(phoneError('')).toBeUndefined();
     expect(phoneError('(88) 99999-1234')).toBeUndefined();
     expect(phoneError('9999')).toBe('Informe DDD e número (ex.: 88 99999-1234).');
-    expect(whatsappUrl('(88) 99999-1234')).toBe('https://wa.me/5588999991234');
-    expect(whatsappUrl('5588999991234')).toBe('https://wa.me/5588999991234');
   });
 });

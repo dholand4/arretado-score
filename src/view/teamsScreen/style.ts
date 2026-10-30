@@ -18,12 +18,9 @@ export const List = styled.ul`
   }
 `;
 
-// O cartão leva o link do time e, ao lado, o botão do WhatsApp (links não podem ficar um dentro do outro).
 export const Item = styled.li`
   display: flex;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm}px;
-  padding-right: ${({ theme }) => theme.spacing.md}px;
   border: ${({ theme }) => theme.sizes.borderWidth}px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radius.lg}px;
   background-color: ${({ theme }) => theme.colors.surface};
@@ -43,21 +40,6 @@ export const TeamLink = styled(Link)`
   padding: ${({ theme }) => theme.spacing.md}px;
   color: ${({ theme }) => theme.colors.text};
   text-decoration: none;
-`;
-
-export const WhatsApp = styled.a`
-  flex-shrink: 0;
-  padding: ${({ theme }) => theme.spacing.xs}px ${({ theme }) => theme.spacing.sm + theme.spacing.xs}px;
-  border: ${({ theme }) => theme.sizes.borderWidth}px solid ${({ theme }) => theme.colors.success};
-  border-radius: ${({ theme }) => theme.radius.pill}px;
-  color: ${({ theme }) => theme.colors.success};
-  font-size: ${({ theme }) => theme.fontSize.sm}px;
-  font-weight: ${({ theme }) => theme.fontWeight.semibold};
-  text-decoration: none;
-
-  &:hover {
-    background-color: ${({ theme }) => theme.colors.successSoft};
-  }
 `;
 
 export const Texts = styled.span`
