@@ -3,7 +3,7 @@ import styled from 'styled-components';
 // Fica preso abaixo do cabeçalho do painel enquanto a súmula rola.
 export const Board = styled.div`
   position: sticky;
-  top: ${({ theme }) => theme.sizes.headerHeight}px;
+  top: calc(${({ theme }) => theme.sizes.headerHeight}px + ${({ theme }) => theme.safeArea.top});
   z-index: ${({ theme }) => theme.zIndex.header - 1};
   display: grid;
   grid-template-columns: 1fr auto 1fr;

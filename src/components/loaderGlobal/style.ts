@@ -11,7 +11,7 @@ export const Wrapper = styled.div<{ $fullScreen: boolean; $inline: boolean }>`
   justify-content: center;
   gap: ${({ theme }) => theme.spacing.sm}px;
   padding: ${({ theme, $inline }) => ($inline ? 0 : theme.spacing.lg)}px;
-  min-height: ${({ $fullScreen }) => ($fullScreen ? '100vh' : 'auto')};
+  min-height: ${({ theme, $fullScreen }) => ($fullScreen ? theme.safeArea.viewportHeight : 'auto')};
   color: ${({ theme }) => theme.colors.textMuted};
   font-size: ${({ theme }) => theme.fontSize.sm}px;
 `;

@@ -4,12 +4,12 @@ import styled from 'styled-components';
 export const Shell = styled.div`
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  min-height: ${({ theme }) => theme.safeArea.viewportHeight};
 `;
 
 export const Header = styled.header`
   position: sticky;
-  top: 0;
+  top: ${({ theme }) => theme.safeArea.top};
   z-index: ${({ theme }) => theme.zIndex.header};
   background-color: ${({ theme }) => theme.colors.secondary};
 `;

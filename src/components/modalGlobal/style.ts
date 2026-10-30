@@ -24,6 +24,8 @@ export const Dialog = styled.div`
   background-color: ${({ theme }) => theme.colors.surface};
   border-radius: ${({ theme }) => theme.radius.lg}px ${({ theme }) => theme.radius.lg}px 0 0;
   box-shadow: ${({ theme }) => theme.shadows.lg};
+  /* No celular a janela sobe de baixo: deixa livre a barra de gestos do iPhone. */
+  padding-bottom: ${({ theme }) => theme.safeArea.bottom};
 
   @media (min-width: ${({ theme }) => theme.breakpoints.md}px) {
     border-radius: ${({ theme }) => theme.radius.lg}px;

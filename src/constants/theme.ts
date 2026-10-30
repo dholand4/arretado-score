@@ -85,6 +85,12 @@ export const theme = {
     header: 10,
     modal: 100,
   },
+  // Áreas do iPhone ocupadas pela barra de status e pela barra de gestos (zero fora do app instalado no iOS).
+  safeArea: {
+    top: 'env(safe-area-inset-top, 0px)',
+    bottom: 'env(safe-area-inset-bottom, 0px)',
+    viewportHeight: 'calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))',
+  },
   transition: {
     fast: '120ms ease',
   },

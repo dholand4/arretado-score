@@ -4,7 +4,7 @@ import styled from 'styled-components';
 const SIDEBAR_WIDTH = 248;
 
 export const Shell = styled.div`
-  min-height: 100vh;
+  min-height: ${({ theme }) => theme.safeArea.viewportHeight};
 
   @media (min-width: ${({ theme }) => theme.breakpoints.md}px) {
     display: grid;
@@ -15,7 +15,7 @@ export const Shell = styled.div`
 // Barra fina só no celular, com o botão que abre o menu.
 export const TopBar = styled.header`
   position: sticky;
-  top: 0;
+  top: ${({ theme }) => theme.safeArea.top};
   z-index: ${({ theme }) => theme.zIndex.header};
   display: flex;
   align-items: center;
@@ -65,7 +65,7 @@ export const Backdrop = styled.div<{ $open: boolean }>`
 
 export const Sidebar = styled.aside<{ $open: boolean }>`
   position: fixed;
-  top: 0;
+  top: ${({ theme }) => theme.safeArea.top};
   bottom: 0;
   left: 0;
   z-index: ${({ theme }) => theme.zIndex.modal - 1};
@@ -73,6 +73,7 @@ export const Sidebar = styled.aside<{ $open: boolean }>`
   flex-direction: column;
   width: min(${SIDEBAR_WIDTH + 32}px, 85vw);
   padding: ${({ theme }) => theme.spacing.lg}px ${({ theme }) => theme.spacing.md}px;
+  padding-bottom: calc(${({ theme }) => theme.spacing.lg}px + ${({ theme }) => theme.safeArea.bottom});
   background-color: ${({ theme }) => theme.colors.secondary};
   color: ${({ theme }) => theme.colors.textInverse};
   overflow-y: auto;
@@ -82,7 +83,7 @@ export const Sidebar = styled.aside<{ $open: boolean }>`
   @media (min-width: ${({ theme }) => theme.breakpoints.md}px) {
     position: sticky;
     width: auto;
-    height: 100vh;
+    height: ${({ theme }) => theme.safeArea.viewportHeight};
     transform: none;
   }
 `;

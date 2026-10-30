@@ -6,7 +6,7 @@ export const Page = styled.div`
   align-items: center;
   justify-content: center;
   gap: ${({ theme }) => theme.spacing.lg}px;
-  min-height: 100vh;
+  min-height: ${({ theme }) => theme.safeArea.viewportHeight};
   padding: ${({ theme }) => theme.spacing.lg}px ${({ theme }) => theme.spacing.md}px;
   background-color: ${({ theme }) => theme.colors.secondary};
   isolation: isolate;

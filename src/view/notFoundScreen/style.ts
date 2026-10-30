@@ -7,7 +7,7 @@ export const Wrapper = styled.main`
   align-items: center;
   justify-content: center;
   gap: ${({ theme }) => theme.spacing.md}px;
-  min-height: 100vh;
+  min-height: ${({ theme }) => theme.safeArea.viewportHeight};
   padding: ${({ theme }) => theme.spacing.lg}px;
   text-align: center;
 `;
