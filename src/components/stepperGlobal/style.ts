@@ -7,7 +7,13 @@ export const List = styled.ol`
   padding: 0 0 ${({ theme }) => theme.spacing.xs}px;
   list-style: none;
   overflow-x: auto;
-  scrollbar-width: thin;
+  /* Continua rolando no toque, mas sem a barra visível. */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 `;
 
 export const StepButton = styled.button<{ $active: boolean }>`
