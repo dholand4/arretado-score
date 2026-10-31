@@ -3,6 +3,7 @@ import type { StatusJogo } from '@/@types/event';
 import type { IJogoLista } from '@/@types/game';
 import { STATUS_JOGO } from '@/constants/phase';
 import { formatDateTime } from './date';
+import { gameSides, type IDayContext } from './eventSchedule';
 
 export interface IGameFilters {
   faseId: string;
@@ -38,6 +39,16 @@ const STATUS_TONE: Record<StatusJogo, BadgeTone> = {
 
 export function gameStatus(status: StatusJogo) {
   return { label: STATUS_JOGO[status], tone: STATUS_TONE[status] };
+}
+
+// Textos do cartão de jogo: lados (ou confronto condicional), descrição e "Jogo N" do dia.
+export function gameCardTexts(jogo: IJogoLista, dia: IDayContext) {
+  const numero = dia.numeros.get(jogo.id);
+  return {
+    ...gameSides(jogo, dia.dependentes),
+    description: describeGame(jogo, dia.dependentes.has(jogo.id)),
+    order: numero ? `Jogo ${numero}` : undefined,
+  };
 }
 
 // "Fase de classificação · Rodada 2 · 25/10/2026 19:00 · Ginásio". Num confronto que depende do resultado

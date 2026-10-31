@@ -11,8 +11,8 @@ import { usePublicGames, useRanking, useRealtimeCompetition } from '@/hooks/useP
 import { useRouteParams } from '@/hooks/useRouteParams';
 import { useTeam } from '@/hooks/useTeams';
 import { paths } from '@/routes/types';
-import { dependentGames, gameSides, type IGameSides } from '@/utils/eventSchedule';
-import { describeGame, gameStatus } from '@/utils/games';
+import { dayContext, type IDayContext } from '@/utils/eventSchedule';
+import { gameCardTexts, gameStatus } from '@/utils/games';
 import { latestResults, sortRanking, upcomingGames } from '@/utils/publicView';
 import { BracketContent } from '@/view/publicBracketScreen';
 import { GamesContent } from '@/view/publicGamesScreen';
@@ -36,12 +36,12 @@ function GameList({
   slug,
   jogos,
   empty,
-  dependentes,
+  contexto,
 }: {
   slug: string;
   jogos: IJogoLista[];
   empty: string;
-  dependentes: Map<string, IGameSides>;
+  contexto: IDayContext;
 }) {
   if (jogos.length === 0) return <Muted>{empty}</Muted>;
   return (
@@ -52,12 +52,11 @@ function GameList({
           <li key={jogo.id}>
             <GameCardGlobal
               to={paths.publicGame(slug, jogo.id)}
-              {...gameSides(jogo, dependentes)}
+              {...gameCardTexts(jogo, contexto)}
               homeScore={jogo.placar_casa}
               awayScore={jogo.placar_fora}
               statusLabel={status.label}
               statusTone={status.tone}
-              description={describeGame(jogo, dependentes.has(jogo.id))}
               actionLabel="Ver jogo"
             />
           </li>
@@ -76,7 +75,7 @@ function TeamHome({ team }: { team: ITimeDetalhe }) {
   if (isLoading) return <LoaderGlobal label="Carregando jogos" />;
   if (error) return <ErrorStateGlobal error={error} onRetry={() => void refetch()} />;
   // Confrontos que dependem do resultado anterior do dia, calculados com todos os jogos.
-  const dependentes = dependentGames(jogos);
+  const contexto = dayContext(jogos);
 
   const proximos = upcomingGames(jogos, new Date(), jogos.length);
   const proximoDoTime = proximos.find(playsIn(team.id));
@@ -86,15 +85,15 @@ function TeamHome({ team }: { team: ITimeDetalhe }) {
     <Stack>
       <Section>
         <SectionTitle>Próximo jogo do {team.nome}</SectionTitle>
-        <GameList slug={slug} dependentes={dependentes} jogos={proximoDoTime ? [proximoDoTime] : []} empty="Nenhum jogo do time marcado ainda." />
+        <GameList slug={slug} contexto={contexto} jogos={proximoDoTime ? [proximoDoTime] : []} empty="Nenhum jogo do time marcado ainda." />
       </Section>
       <Section>
         <SectionTitle>Próximo jogo da liga</SectionTitle>
-        <GameList slug={slug} dependentes={dependentes} jogos={proximoDaLiga ? [proximoDaLiga] : []} empty="Nenhum jogo marcado nos próximos dias." />
+        <GameList slug={slug} contexto={contexto} jogos={proximoDaLiga ? [proximoDaLiga] : []} empty="Nenhum jogo marcado nos próximos dias." />
       </Section>
       <Section>
         <SectionTitle>Últimos resultados do {team.nome}</SectionTitle>
-        <GameList slug={slug} dependentes={dependentes} jogos={latestResults(jogos.filter(playsIn(team.id)), 4)} empty="O time ainda não jogou." />
+        <GameList slug={slug} contexto={contexto} jogos={latestResults(jogos.filter(playsIn(team.id)), 4)} empty="O time ainda não jogou." />
       </Section>
       <Section>
         <SectionTitle>Destaques</SectionTitle>

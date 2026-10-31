@@ -8,8 +8,8 @@ import { SelectGlobal } from '@/components/selectGlobal';
 import { usePublicCompetition, usePublicGames } from '@/hooks/usePublic';
 import { useRouteParams } from '@/hooks/useRouteParams';
 import { paths } from '@/routes/types';
-import { dependentGames, gameSides } from '@/utils/eventSchedule';
-import { describeGame, filterGames, gameStatus } from '@/utils/games';
+import { dayContext } from '@/utils/eventSchedule';
+import { filterGames, gameCardTexts, gameStatus } from '@/utils/games';
 import { groupGamesByDay, latestFirst } from '@/utils/publicView';
 import { Day, DayTitle, Filters, List } from './style';
 
@@ -41,7 +41,7 @@ export function GamesContent({ slug, competicaoId, initialTimeId = '' }: IGamesC
   const renderContent = () => {
     if (isLoading) return <LoaderGlobal label="Carregando jogos" />;
     if (error) return <ErrorStateGlobal error={error} onRetry={() => void refetch()} />;
-    const dependentes = dependentGames(jogos);
+    const contexto = dayContext(jogos);
     // O último jogo que aconteceu aparece primeiro.
     const dias = groupGamesByDay(latestFirst(filterGames(jogos, { faseId, timeId, status: '' })));
     if (dias.length === 0) return <EmptyStateGlobal title="Nenhum jogo publicado ainda" />;
@@ -55,12 +55,11 @@ export function GamesContent({ slug, competicaoId, initialTimeId = '' }: IGamesC
               <li key={jogo.id}>
                 <GameCardGlobal
                   to={paths.publicGame(slug, jogo.id)}
-                  {...gameSides(jogo, dependentes)}
+                  {...gameCardTexts(jogo, contexto)}
                   homeScore={jogo.placar_casa}
                   awayScore={jogo.placar_fora}
                   statusLabel={status.label}
                   statusTone={status.tone}
-                  description={describeGame(jogo, dependentes.has(jogo.id))}
                   actionLabel="Ver jogo"
                 />
               </li>

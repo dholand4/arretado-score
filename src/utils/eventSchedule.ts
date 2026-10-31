@@ -52,7 +52,8 @@ export function gameDetails(jogo: IJogoResumo): string {
 // termina, o próximo é o que menos repete os times dele — vencedor pesa 2, perdedor 1 —, então quem
 // perdeu joga em seguida e quem venceu descansa. Antes do resultado, simula as duas saídas do primeiro
 // jogo sem placar de cada dia: se o jogo seguinte depende de quem vencer e os dois candidatos têm o
-// mesmo adversário, as duas posições viram "Perdedor entre A e B" x C e "Vencedor entre A e B" x C.
+// mesmo adversário, as duas posições viram "Perdedor do Jogo N" x C e "Vencedor do Jogo N" x C
+// (N = número do jogo no dia, o mesmo de dayGameNumbers).
 export interface IGameSides {
   home: string;
   away: string;
@@ -88,9 +89,9 @@ function dependentInDay(dia: IJogoDoDia[], out: Map<string, IGameSides>) {
   if (!advCasaVence || advCasaVence.nome !== advForaVence?.nome || !posicoes.includes(proximaPosicao)) return;
 
   const outraPosicao = posicoes.find((p) => p !== proximaPosicao) as number;
-  const entre = `entre ${jogo.casa?.nome ?? '?'} e ${jogo.fora?.nome ?? '?'}`;
-  out.set(dia[proximaPosicao].id, { home: `Perdedor ${entre}`, away: advCasaVence.nome });
-  out.set(dia[outraPosicao].id, { home: `Vencedor ${entre}`, away: advCasaVence.nome });
+  const doJogo = `do Jogo ${atual + 1}`;
+  out.set(dia[proximaPosicao].id, { home: `Perdedor ${doJogo}`, away: advCasaVence.nome });
+  out.set(dia[outraPosicao].id, { home: `Vencedor ${doJogo}`, away: advCasaVence.nome });
 }
 
 // Jogos (de um ou de vários dias) cujo confronto depende do resultado anterior.
@@ -102,6 +103,33 @@ export function dependentGames(jogos: IJogoDoDia[]): Map<string, IGameSides> {
   });
   dias.forEach((dia) => dependentInDay([...dia].sort((a, b) => (a.ordem_no_evento ?? 0) - (b.ordem_no_evento ?? 0)), out));
   return out;
+}
+
+// Número de cada jogo no seu dia (1, 2, 3…), pela ordem do dia; só em dias com mais de um jogo.
+export function dayGameNumbers(jogos: Pick<IJogoResumo, 'id' | 'evento_id' | 'ordem_no_evento'>[]): Map<string, number> {
+  const dias = new Map<string, Pick<IJogoResumo, 'id' | 'ordem_no_evento'>[]>();
+  jogos.forEach((j) => {
+    if (j.evento_id) dias.set(j.evento_id, [...(dias.get(j.evento_id) ?? []), j]);
+  });
+  const numeros = new Map<string, number>();
+  dias.forEach((dia) => {
+    if (dia.length < 2) return;
+    [...dia]
+      .sort((a, b) => (a.ordem_no_evento ?? 0) - (b.ordem_no_evento ?? 0))
+      .forEach((j, i) => numeros.set(j.id, i + 1));
+  });
+  return numeros;
+}
+
+// O que os cartões de jogo precisam saber do dia: confrontos condicionais e número de cada jogo.
+// Calcule com todos os jogos da competição, mesmo quando a tela mostra só parte deles.
+export interface IDayContext {
+  dependentes: Map<string, IGameSides>;
+  numeros: Map<string, number>;
+}
+
+export function dayContext(jogos: IJogoDoDia[]): IDayContext {
+  return { dependentes: dependentGames(jogos), numeros: dayGameNumbers(jogos) };
 }
 
 // Os dois lados de um jogo para mostrar: o confronto condicional, se houver, senão os nomes.

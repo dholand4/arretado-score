@@ -54,9 +54,10 @@ describe('PublicCompetitionScreen', () => {
     );
     // O primeiro jogo continua com os nomes; os dois seguintes dependem do resultado dele.
     expect(screen.getByText('Estadual')).toBeInTheDocument();
-    expect(screen.getAllByText('Perdedor entre Estadual e QuixaRocks')).toHaveLength(1);
-    expect(screen.getAllByText('Vencedor entre Estadual e QuixaRocks')).toHaveLength(1);
+    expect(screen.getAllByText('Perdedor do Jogo 1')).toHaveLength(1);
+    expect(screen.getAllByText('Vencedor do Jogo 1')).toHaveLength(1);
     expect(screen.getAllByText('Okami BC')).toHaveLength(2);
+    expect(['Jogo 1', 'Jogo 2', 'Jogo 3'].map((n) => screen.getByText(n))).toHaveLength(3);
     // A rodada dos confrontos condicionais só se define depois do resultado.
     expect(screen.getByText(/Rodada 3/)).toBeInTheDocument();
     expect(screen.queryByText(/Rodada 2/)).not.toBeInTheDocument();

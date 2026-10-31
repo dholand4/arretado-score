@@ -10,6 +10,8 @@ export interface IGameCardProps {
   statusLabel: string;
   statusTone: BadgeTone;
   description: string;
+  // Posição no dia de jogos ("Jogo 2").
+  order?: string;
   // Sem texto de ação, o cartão continua clicável, só fica mais compacto.
   actionLabel?: string;
 }

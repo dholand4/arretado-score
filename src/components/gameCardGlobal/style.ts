@@ -26,11 +26,22 @@ export const Matchup = styled.span`
   font-weight: ${({ theme }) => theme.fontWeight.semibold};
 `;
 
+// Até 2 linhas: cabe "Perdedor entre A e B" no celular sem cortar.
 export const Team = styled.span<{ $align: 'left' | 'right' }>`
+  display: -webkit-box;
   overflow: hidden;
   text-align: ${({ $align }) => $align};
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+`;
+
+export const Order = styled.span`
+  color: ${({ theme }) => theme.colors.primary};
+  font-size: ${({ theme }) => theme.fontSize.xs}px;
+  font-weight: ${({ theme }) => theme.fontWeight.bold};
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 `;
 
 export const Score = styled.span`

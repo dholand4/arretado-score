@@ -2,6 +2,7 @@ import type { IJogoResumo, IMontagemEvento } from '@/@types/event';
 import {
   assemblyNotice,
   defaultEventInput,
+  dayGameNumbers,
   dependentGames,
   doubleGameMessage,
   doubledTeams,
@@ -79,13 +80,19 @@ describe('event schedule', () => {
         confronto('j3', 'Estadual', 'Okami BC'),
       ];
       expect(Object.fromEntries(dependentGames(dia))).toEqual({
-        j2: { home: 'Perdedor entre Estadual e QuixaRocks', away: 'Okami BC' },
-        j3: { home: 'Vencedor entre Estadual e QuixaRocks', away: 'Okami BC' },
+        j2: { home: 'Perdedor do Jogo 1', away: 'Okami BC' },
+        j3: { home: 'Vencedor do Jogo 1', away: 'Okami BC' },
       });
       // A ordem vem de ordem_no_evento, não da posição na lista; outros dias não se misturam.
       const embaralhado = [dia[2], dia[0], confronto('j9', 'X', 'Y', { evento_id: 'dia2' }), dia[1]];
       expect([...dependentGames(embaralhado).keys()].sort()).toEqual(['j2', 'j3']);
       expect(gameSides(dia[0], dependentGames(dia))).toEqual({ home: 'Estadual', away: 'QuixaRocks' });
+    });
+
+    it('numbers the games of each day in order', () => {
+      const dia = [confronto('j3', 'A', 'C'), confronto('j1', 'A', 'B'), confronto('j2', 'B', 'C')];
+      const sozinho = confronto('j9', 'X', 'Y', { evento_id: 'dia2' });
+      expect(Object.fromEntries(dayGameNumbers([...dia, sozinho]))).toEqual({ j1: 1, j2: 2, j3: 3 });
     });
 
     it('stops once the order no longer depends on a result', () => {

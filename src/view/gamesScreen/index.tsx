@@ -22,8 +22,8 @@ import { useRouteParams } from '@/hooks/useRouteParams';
 import { useTeams } from '@/hooks/useTeams';
 import { paths, type IGamesRouteState } from '@/routes/types';
 import { getErrorMessage } from '@/utils/appError';
-import { dependentGames, gameSides } from '@/utils/eventSchedule';
-import { currentPhaseId, describeGame, filterGames, gameStatus, hasResult, type IGameFilters } from '@/utils/games';
+import { dayContext } from '@/utils/eventSchedule';
+import { currentPhaseId, filterGames, gameCardTexts, gameStatus, hasResult, type IGameFilters } from '@/utils/games';
 import { pluralize } from '@/utils/text';
 import { CompetitionOverviewScreen } from '@/view/competitionOverviewScreen';
 import { Adjustments, Count, Filters, List, Notice } from './style';
@@ -122,7 +122,7 @@ export function GamesScreen() {
 
     const visiveis = filterGames(jogos, filters);
     // Confrontos que dependem do resultado anterior do dia, calculados com todos os jogos.
-    const dependentes = dependentGames(jogos);
+    const contexto = dayContext(jogos);
     const faseSelecionada = fases.find((fase) => fase.id === filters.faseId);
     const gruposDaFase = grupos.filter((grupo) => grupo.fase_id === filters.faseId);
 
@@ -139,12 +139,11 @@ export function GamesScreen() {
                 <li key={jogo.id}>
                   <GameCardGlobal
                     to={paths.gameScoreSheet(competitionId, jogo.id)}
-                    {...gameSides(jogo, dependentes)}
+                    {...gameCardTexts(jogo, contexto)}
                     homeScore={jogo.placar_casa}
                     awayScore={jogo.placar_fora}
                     statusLabel={status.label}
                     statusTone={status.tone}
-                    description={describeGame(jogo, dependentes.has(jogo.id))}
                     actionLabel={hasResult(jogo) ? 'Editar resultado' : 'Lançar súmula ou W.O.'}
                   />
                 </li>

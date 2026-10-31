@@ -1,5 +1,5 @@
 import { BadgeGlobal } from '@/components/badgeGlobal';
-import { Action, Card, Footer, Matchup, Score, Team } from './style';
+import { Action, Card, Footer, Matchup, Order, Score, Team } from './style';
 import type { IGameCardProps } from './types';
 
 export function GameCardGlobal({
@@ -11,10 +11,12 @@ export function GameCardGlobal({
   statusLabel,
   statusTone,
   description,
+  order,
   actionLabel,
 }: IGameCardProps) {
   return (
     <Card to={to}>
+      {order && <Order>{order}</Order>}
       <Matchup>
         <Team $align="right">{home}</Team>
         <Score>
