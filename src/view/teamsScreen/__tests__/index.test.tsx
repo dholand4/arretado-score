@@ -43,8 +43,10 @@ describe('TeamsScreen', () => {
   it('lists teams with dono and player count', () => {
     renderScreenAt();
     expect(screen.getByRole('link', { name: /Tubarões/ })).toHaveAttribute('href', '/painel/competicoes/c1/times/t1');
-    expect(screen.getByText('8 jogadores · Equipe: Davi')).toBeInTheDocument();
-    expect(screen.getByText('0 jogadores · Sem acesso de equipe')).toBeInTheDocument();
+    expect(screen.getByText('8 jogadores')).toBeInTheDocument();
+    expect(screen.getByText('Responsável: Davi')).toBeInTheDocument();
+    expect(screen.getByText('0 jogadores')).toBeInTheDocument();
+    expect(screen.getByText('Sem responsável')).toBeInTheDocument();
   });
 
   it('keeps the phone out of the card and explains a match by phone', () => {

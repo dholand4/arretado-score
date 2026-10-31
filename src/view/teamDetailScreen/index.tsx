@@ -70,7 +70,7 @@ export function TeamDetailScreen() {
     <>
       <EntityHeaderGlobal
         title={team.nome}
-        subtitle={team.dono ? `Equipe: ${team.dono.nome}${team.dono.telefone ? ` · ${formatPhone(team.dono.telefone)}` : ''}` : 'Sem acesso de equipe'}
+        subtitle={team.dono ? `Responsável: ${team.dono.nome}${team.dono.telefone ? ` · ${formatPhone(team.dono.telefone)}` : ''}` : 'Sem responsável'}
         imageUrl={team.logo_url}
         badges={team.sigla ? <BadgeGlobal label={team.sigla} /> : undefined}
         actions={

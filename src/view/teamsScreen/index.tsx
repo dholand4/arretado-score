@@ -89,10 +89,8 @@ export function TeamsScreen({ fromSettings = false }: { fromSettings?: boolean }
                       {team.nome}
                       {team.sigla && <BadgeGlobal label={team.sigla} />}
                     </Name>
-                    <Meta>
-                      {pluralize(team.jogadores[0]?.count ?? 0, 'jogador', 'jogadores')} ·{' '}
-                      {team.dono ? `Equipe: ${team.dono.nome}` : 'Sem acesso de equipe'}
-                    </Meta>
+                    <Meta>{pluralize(team.jogadores[0]?.count ?? 0, 'jogador', 'jogadores')}</Meta>
+                    <Meta>{team.dono ? `Responsável: ${team.dono.nome}` : 'Sem responsável'}</Meta>
                     {jogadores.length > 0 && (
                       <Found>Jogador: {jogadores.map((j) => j.apelido || j.nome).join(', ')}</Found>
                     )}
