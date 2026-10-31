@@ -9,4 +9,6 @@ export interface ILinkButtonProps {
   variant?: ButtonVariant;
   size?: ButtonSize;
   fullWidth?: boolean;
+  // No celular o "voltar" fica no topo (BackLinkGlobal); este some.
+  hideOnMobile?: boolean;
 }

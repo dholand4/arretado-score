@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { ITimeDetalhe } from '@/@types/competition';
 import { AlertGlobal } from '@/components/alertGlobal';
+import { BackLinkGlobal } from '@/components/backLinkGlobal';
 import { BadgeGlobal } from '@/components/badgeGlobal';
 import { CardGlobal } from '@/components/cardGlobal';
 import { ButtonGlobal } from '@/components/buttonGlobal';
@@ -84,6 +85,7 @@ export function MyTeamDetailScreen() {
 
   return (
     <>
+      <BackLinkGlobal to={ROUTES.myTeams} label="Meus times" />
       <EntityHeaderGlobal
         title={team.nome}
         subtitle={team.competicao.nome}
@@ -91,7 +93,7 @@ export function MyTeamDetailScreen() {
         badges={team.sigla ? <BadgeGlobal label={team.sigla} /> : undefined}
         actions={
           <>
-            <LinkButtonGlobal to={ROUTES.myTeams} label="← Meus times" size="sm" variant="ghost" />
+            <LinkButtonGlobal to={ROUTES.myTeams} label="← Meus times" size="sm" variant="ghost" hideOnMobile />
             <ButtonGlobal
               label="Editar nome e logo"
               size="sm"

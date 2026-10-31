@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { AlertGlobal } from '@/components/alertGlobal';
+import { BackLinkGlobal } from '@/components/backLinkGlobal';
 import { BadgeGlobal } from '@/components/badgeGlobal';
 import { ButtonGlobal } from '@/components/buttonGlobal';
 import { ConfirmDialogGlobal } from '@/components/confirmDialogGlobal';
@@ -60,6 +61,7 @@ export function TeamDetailScreen() {
 
   return (
     <>
+      <BackLinkGlobal to={paths.competitionTeams(competitionId)} label="Times" />
       <EntityHeaderGlobal
         title={team.nome}
         subtitle={team.dono ? `Equipe: ${team.dono.nome}${team.dono.telefone ? ` · ${formatPhone(team.dono.telefone)}` : ''}` : 'Sem acesso de equipe'}
@@ -67,7 +69,7 @@ export function TeamDetailScreen() {
         badges={team.sigla ? <BadgeGlobal label={team.sigla} /> : undefined}
         actions={
           <>
-            <LinkButtonGlobal to={paths.competitionTeams(competitionId)} label="← Times" size="sm" variant="ghost" />
+            <LinkButtonGlobal to={paths.competitionTeams(competitionId)} label="← Times" size="sm" variant="ghost" hideOnMobile />
             <ButtonGlobal label="Editar time" size="sm" variant="outline" onClick={() => open('edit')} />
             <ButtonGlobal label="Excluir time" size="sm" variant="ghost" onClick={() => open('delete')} />
           </>

@@ -9,9 +9,10 @@ export function LinkButtonGlobal({
   variant = 'outline',
   size = 'md',
   fullWidth = false,
+  hideOnMobile = false,
 }: ILinkButtonProps) {
   return (
-    <StyledLink to={to} $variant={variant} $size={size} $fullWidth={fullWidth}>
+    <StyledLink to={to} $variant={variant} $size={size} $fullWidth={fullWidth} $hideOnMobile={hideOnMobile}>
       {label ?? children}
     </StyledLink>
   );

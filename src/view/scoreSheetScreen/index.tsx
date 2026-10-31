@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { ISumula, ModoResultado, WoAusente } from '@/@types/game';
 import { AlertGlobal } from '@/components/alertGlobal';
+import { BackLinkGlobal } from '@/components/backLinkGlobal';
 import { ButtonGlobal } from '@/components/buttonGlobal';
 import { CheckboxGlobal } from '@/components/checkboxGlobal';
 import { ErrorStateGlobal } from '@/components/errorStateGlobal';
@@ -278,11 +279,12 @@ export function ScoreSheetScreen() {
 
   return (
     <>
+      <BackLinkGlobal to={paths.competitionGames(competitionId)} label="Jogos" />
       <PageHeaderGlobal
         title="Súmula"
         actions={
           <>
-            <LinkButtonGlobal to={paths.competitionGames(competitionId)} label="← Jogos" size="sm" variant="ghost" />
+            <LinkButtonGlobal to={paths.competitionGames(competitionId)} label="← Jogos" size="sm" variant="ghost" hideOnMobile />
             <LinkButtonGlobal to={paths.gamePrintSheet(competitionId, gameId)} label="Imprimir súmula" size="sm" />
           </>
         }
