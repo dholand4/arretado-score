@@ -20,7 +20,6 @@ const arena = css`
   border-radius: ${({ theme }) => theme.radius.lg}px;
   color: ${({ theme }) => theme.colors.text};
   background:
-    radial-gradient(circle at 50% 50%, ${ARENA.glow}, transparent 42%),
     radial-gradient(circle at 50% 50%, transparent 118px, ${GLASS} 119px, ${GLASS} 121px, transparent 122px),
     linear-gradient(90deg, transparent calc(50% - 1px), ${GLASS} calc(50% - 1px), ${GLASS} calc(50% + 1px), transparent calc(50% + 1px)),
     linear-gradient(160deg, ${({ theme }) => theme.colors.surface}, ${({ theme }) => theme.colors.background});
@@ -240,7 +239,7 @@ export const Card = styled.button<{ $highlight?: boolean }>`
       background:
         linear-gradient(${ARENA_DEEP}, ${ARENA_DEEP}) padding-box,
         linear-gradient(135deg, ${theme.colors.primary}, ${GOLD}) border-box;
-      box-shadow: 0 6px 28px rgba(232, 89, 12, 0.22);
+      box-shadow: ${theme.shadows.md};
 
       &:hover {
         border-color: transparent;

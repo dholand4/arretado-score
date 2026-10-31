@@ -44,7 +44,7 @@ export function StandingsTableGlobal({
             {rows.map((row) => {
               const qualified = row.posicao <= qualifiedCount || extraQualified.includes(row.time_id);
               return (
-                <Row key={row.time_id} $qualified={qualified}>
+                <Row key={row.time_id}>
                   <Position $qualified={qualified}>
                     <span>{row.posicao}</span>
                   </Position>

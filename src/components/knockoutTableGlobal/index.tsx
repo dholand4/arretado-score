@@ -35,7 +35,7 @@ export function KnockoutTableGlobal({ rows, provisional, caption, logos = {} }: 
           </thead>
           <tbody>
             {rows.map((row) => (
-              <Row key={row.time_id} $qualified={row.classificado}>
+              <Row key={row.time_id}>
                 <Position $qualified={row.classificado}>
                   <span>{row.posicao}</span>
                 </Position>

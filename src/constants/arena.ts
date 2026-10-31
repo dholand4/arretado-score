@@ -8,10 +8,8 @@ export const ARENA = {
   glassBorder: 'rgba(31, 42, 68, 0.12)',
   line: 'rgba(31, 42, 68, 0.2)',
   muted: '#5B6270',
-  glow: 'rgba(232, 89, 12, 0.12)',
   gold: '#F5B841',
   bronze: '#B8733A',
   positive: '#2B8A3E',
   negative: '#C92A2A',
-  qualified: 'rgba(43, 138, 62, 0.07)',
 } as const;

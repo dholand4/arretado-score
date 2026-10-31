@@ -7,15 +7,13 @@ export const Wrap = styled.div`
   gap: ${({ theme }) => theme.spacing.xs}px;
 `;
 
-// Mesmo painel escuro dos Playoffs, com um brilho laranja no canto.
+// Mesmo painel claro dos Playoffs.
 export const Scroll = styled.div`
   overflow-x: auto;
   border: ${({ theme }) => theme.sizes.borderWidth}px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radius.lg}px;
   color: ${({ theme }) => theme.colors.text};
-  background:
-    radial-gradient(circle at 100% 0%, ${ARENA.glow}, transparent 45%),
-    ${({ theme }) => theme.colors.surface};
+  background-color: ${({ theme }) => theme.colors.surface};
   box-shadow: ${({ theme }) => theme.shadows.sm};
 `;
 
@@ -62,9 +60,8 @@ export const Table = styled.table`
   }
 `;
 
-export const Row = styled.tr<{ $qualified: boolean }>`
-  background-color: ${({ $qualified }) => ($qualified ? ARENA.qualified : 'transparent')};
-  box-shadow: ${({ $qualified, theme }) => ($qualified ? `inset 3px 0 0 ${theme.colors.success}` : 'none')};
+// Quem se classifica é marcado só pela bolinha verde da posição.
+export const Row = styled.tr`
   transition: background-color ${({ theme }) => theme.transition.fast};
 
   &:hover {
