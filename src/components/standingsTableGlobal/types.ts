@@ -6,4 +6,6 @@ export interface IStandingsTableProps {
   qualifiedCount: number;
   extraQualified?: string[];
   caption?: string;
+  // time_id → logo (escudo); sem logo, mostra as iniciais.
+  logos?: Record<string, string | null>;
 }

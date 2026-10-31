@@ -1,7 +1,9 @@
-import { Note, Points, Row, Scroll, Table, TeamCell, Wrap } from './style';
+import { AvatarGlobal } from '@/components/avatarGlobal';
+import { Balance, Dot, Note, Points, Position, Rate, RateFill, Row, Scroll, Table, TeamCell, Wrap } from './style';
 import type { IStandingsTableProps } from './types';
 
 const percent = (value: number) => `${Math.round(value * 100)}%`;
+const signed = (value: number) => (value > 0 ? `+${value}` : String(value));
 
 // Colunas da seção 6.3; E só aparece quando a competição permite empate.
 export function StandingsTableGlobal({
@@ -10,6 +12,7 @@ export function StandingsTableGlobal({
   qualifiedCount,
   extraQualified = [],
   caption,
+  logos = {},
 }: IStandingsTableProps) {
   const hasTechnicalTie = rows.some((row) => row.empate_tecnico && row.j > 0);
   return (
@@ -38,32 +41,53 @@ export function StandingsTableGlobal({
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
-              <Row
-                key={row.time_id}
-                $qualified={row.posicao <= qualifiedCount || extraQualified.includes(row.time_id)}
-              >
-                <td>{row.posicao}º</td>
-                <TeamCell>
-                  {row.nome}
-                  {row.empate_tecnico && row.j > 0 && ' *'}
-                </TeamCell>
-                <Points>{row.pts}</Points>
-                <td>{row.j}</td>
-                <td>{row.v}</td>
-                {showDraws && <td>{row.e}</td>}
-                <td>{row.d}</td>
-                <td>{row.wo}</td>
-                <td>{row.pf}</td>
-                <td>{row.pc}</td>
-                <td>{row.saldo}</td>
-                <td>{percent(row.aproveitamento)}</td>
-              </Row>
-            ))}
+            {rows.map((row) => {
+              const qualified = row.posicao <= qualifiedCount || extraQualified.includes(row.time_id);
+              return (
+                <Row key={row.time_id} $qualified={qualified}>
+                  <Position $qualified={qualified}>
+                    <span>{row.posicao}</span>
+                  </Position>
+                  <TeamCell>
+                    <div>
+                      <AvatarGlobal name={row.nome} src={logos[row.time_id]} size="sm" />
+                      <span>
+                        {row.nome}
+                        {row.empate_tecnico && row.j > 0 && ' *'}
+                      </span>
+                    </div>
+                  </TeamCell>
+                  <Points>
+                    <strong>{row.pts}</strong>
+                  </Points>
+                  <td>{row.j}</td>
+                  <td>{row.v}</td>
+                  {showDraws && <td>{row.e}</td>}
+                  <td>{row.d}</td>
+                  <td>{row.wo}</td>
+                  <td>{row.pf}</td>
+                  <td>{row.pc}</td>
+                  <Balance $value={row.saldo}>{signed(row.saldo)}</Balance>
+                  <Rate>
+                    <div>
+                      <i>
+                        <RateFill $value={row.aproveitamento} />
+                      </i>
+                      <small>{percent(row.aproveitamento)}</small>
+                    </div>
+                  </Rate>
+                </Row>
+              );
+            })}
           </tbody>
         </Table>
       </Scroll>
-      {qualifiedCount > 0 && <Note>Linhas em verde: classificados para a próxima fase.</Note>}
+      {qualifiedCount > 0 && (
+        <Note>
+          <Dot aria-hidden="true" />
+          Classificados para a próxima fase.
+        </Note>
+      )}
       {hasTechnicalTie && <Note>* Empate técnico: ordem alfabética até o ajuste do organizador.</Note>}
     </Wrap>
   );

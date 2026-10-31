@@ -5,19 +5,36 @@ type BracketSeries = IBracketPhase['series'][number];
 
 export interface IBracketTeam {
   name: string;
+  logo: string | null;
   // Vitórias na série (melhor de 3+) ou pontos do jogo (melhor de 1); nulo antes de jogar.
   score: number | null;
   winner: boolean;
   defined: boolean;
 }
 
+// Um jogo da série, para a lista que abre ao clicar no confronto.
+export interface IBracketGame {
+  id: string;
+  number: number | null;
+  home: string;
+  away: string;
+  homeScore: number | null;
+  awayScore: number | null;
+  status: string;
+  startsAt: string | null;
+}
+
 export interface IBracketMatch {
   id: string;
   code: string;
+  // Nome da fase da série (título da lista de jogos).
+  phase: string;
   bestOf: number;
+  // Série com jogo já disputado e sem vencedor ainda.
+  live: boolean;
   teamA: IBracketTeam;
   teamB: IBracketTeam;
-  games: string[];
+  games: IBracketGame[];
 }
 
 export interface IBracketColumn {
@@ -26,6 +43,9 @@ export interface IBracketColumn {
 }
 
 export interface IBracketLayout {
+  // Fases que não se ligam à chave por "vencedor da série X" (ex.: 3 séries que avançam pela campanha):
+  // aparecem em faixas acima dela, da primeira para a última.
+  rounds: IBracketColumn[];
   // Colunas de fora para dentro (a última encosta na final).
   left: IBracketColumn[];
   right: IBracketColumn[];
@@ -41,7 +61,7 @@ const isThirdPlace = (series: BracketSeries) => originOf(series.origem_a)?.tipo 
 
 const seriesNumber = (code: string) => Number(code.replace(/\D/g, '')) || 0;
 
-function toMatch(series: BracketSeries): IBracketMatch {
+function toMatch(series: BracketSeries, phase: string): IBracketMatch {
   const finished = series.games.filter((game) => game.status === 'encerrado' || game.status === 'wo');
   const singleGame = series.melhor_de === 1 ? finished[0] : undefined;
   const pointsOf = (teamId: string | null) => {
@@ -49,8 +69,9 @@ function toMatch(series: BracketSeries): IBracketMatch {
     return singleGame.time_casa_id === teamId ? singleGame.placar_casa : singleGame.placar_fora;
   };
   const started = finished.length > 0;
-  const team = (id: string | null, name: string, wins: number): IBracketTeam => ({
+  const team = (id: string | null, name: string, logo: string | null, wins: number): IBracketTeam => ({
     name,
+    logo,
     score: series.melhor_de === 1 ? pointsOf(id) : started ? wins : null,
     winner: Boolean(series.vencedor_id) && series.vencedor_id === id,
     defined: Boolean(id),
@@ -58,19 +79,28 @@ function toMatch(series: BracketSeries): IBracketMatch {
   return {
     id: series.id,
     code: series.codigo,
+    phase,
     bestOf: series.melhor_de,
-    teamA: team(series.time_a_id, series.nameA, series.vitorias_a),
-    teamB: team(series.time_b_id, series.nameB, series.vitorias_b),
-    games: series.games.map(
-      (game) => `Jogo ${game.numero_na_serie}: ${game.home} ${game.placar_casa ?? '–'} × ${game.placar_fora ?? '–'} ${game.away}`,
-    ),
+    live: started && !series.vencedor_id,
+    teamA: team(series.time_a_id, series.nameA, series.logoA, series.vitorias_a),
+    teamB: team(series.time_b_id, series.nameB, series.logoB, series.vitorias_b),
+    games: series.games.map((game) => ({
+      id: game.id,
+      number: game.numero_na_serie,
+      home: game.home,
+      away: game.away,
+      homeScore: game.placar_casa,
+      awayScore: game.placar_fora,
+      status: game.status,
+      startsAt: game.inicio_previsto,
+    })),
   };
 }
 
 // Monta a chave em dois lados a partir da final: o lado A segue a origem do time A da final
 // e o lado B a do time B, rodada por rodada (cada fase de mata-mata é uma rodada).
 export function buildBracketLayout(phases: IBracketPhase[]): IBracketLayout {
-  const empty: IBracketLayout = { left: [], right: [], finalTitle: 'Final', final: null, third: null };
+  const empty: IBracketLayout = { rounds: [], left: [], right: [], finalTitle: 'Final', final: null, third: null };
   const lastPhase = phases.at(-1);
   const final = lastPhase?.series.find((series) => !isThirdPlace(series));
   if (!lastPhase || !final) return empty;
@@ -97,11 +127,18 @@ export function buildBracketLayout(phases: IBracketPhase[]): IBracketLayout {
   place('left', final.origem_a);
   place('right', final.origem_b);
 
-  // Séries sem ligação com a final (não deveria acontecer) vão para o lado com menos jogos na rodada.
+  // Fase sem nenhuma série ligada à final (avança pela campanha) vira uma faixa acima da chave.
+  // Numa fase ligada em parte, as séries soltas vão para o lado com menos jogos na rodada.
+  const rounds: IBracketColumn[] = [];
   phases.slice(0, -1).forEach((phase, index) => {
     const depth = lastIndex - index;
-    for (const series of [...phase.series].sort((a, b) => seriesNumber(a.codigo) - seriesNumber(b.codigo))) {
-      if (placed.has(series.id) || isThirdPlace(series)) continue;
+    const sorted = [...phase.series].sort((a, b) => seriesNumber(a.codigo) - seriesNumber(b.codigo));
+    const loose = sorted.filter((series) => !placed.has(series.id) && !isThirdPlace(series));
+    if (loose.length > 0 && !sorted.some((series) => placed.has(series.id))) {
+      rounds.push({ title: phase.nome, matches: loose.map((series) => toMatch(series, phase.nome)) });
+      return;
+    }
+    for (const series of loose) {
       const side = (sides.left.get(depth)?.length ?? 0) <= (sides.right.get(depth)?.length ?? 0) ? 'left' : 'right';
       sides[side].set(depth, [...(sides[side].get(depth) ?? []), series]);
     }
@@ -110,15 +147,19 @@ export function buildBracketLayout(phases: IBracketPhase[]): IBracketLayout {
   const columns = (side: 'left' | 'right') =>
     [...sides[side].entries()]
       .sort(([a], [b]) => b - a)
-      .map(([depth, series]) => ({ title: phases[lastIndex - depth].nome, matches: series.map(toMatch) }));
+      .map(([depth, series]) => {
+        const nome = phases[lastIndex - depth].nome;
+        return { title: nome, matches: series.map((item) => toMatch(item, nome)) };
+      });
 
   // 3º lugar: série com perdedores, na final (formato antigo) ou numa fase própria antes dela.
   const third = [...phases].reverse().flatMap((phase) => phase.series).find(isThirdPlace);
   return {
+    rounds,
     left: columns('left'),
     right: columns('right'),
     finalTitle: lastPhase.nome,
-    final: toMatch(final),
-    third: third ? toMatch(third) : null,
+    final: toMatch(final, lastPhase.nome),
+    third: third ? toMatch(third, phaseOf.get(third.id)?.nome ?? 'Disputa de 3º lugar') : null,
   };
 }

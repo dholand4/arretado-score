@@ -10,5 +10,6 @@ export interface IGameCardProps {
   statusLabel: string;
   statusTone: BadgeTone;
   description: string;
-  actionLabel: string;
+  // Sem texto de ação, o cartão continua clicável, só fica mais compacto.
+  actionLabel?: string;
 }

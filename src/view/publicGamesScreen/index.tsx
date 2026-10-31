@@ -9,7 +9,7 @@ import { usePublicCompetition, usePublicGames } from '@/hooks/usePublic';
 import { useRouteParams } from '@/hooks/useRouteParams';
 import { paths } from '@/routes/types';
 import { describeGame, filterGames, gameStatus } from '@/utils/games';
-import { groupGamesByDay } from '@/utils/publicView';
+import { groupGamesByDay, latestFirst } from '@/utils/publicView';
 import { Day, DayTitle, Filters, List } from './style';
 
 interface IGamesContentProps {
@@ -40,7 +40,8 @@ export function GamesContent({ slug, competicaoId, initialTimeId = '' }: IGamesC
   const renderContent = () => {
     if (isLoading) return <LoaderGlobal label="Carregando jogos" />;
     if (error) return <ErrorStateGlobal error={error} onRetry={() => void refetch()} />;
-    const dias = groupGamesByDay(filterGames(jogos, { faseId, timeId, status: '' }));
+    // O último jogo que aconteceu aparece primeiro.
+    const dias = groupGamesByDay(latestFirst(filterGames(jogos, { faseId, timeId, status: '' })));
     if (dias.length === 0) return <EmptyStateGlobal title="Nenhum jogo publicado ainda" />;
     return dias.map((dia) => (
       <Day key={dia.dia}>

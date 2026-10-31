@@ -5,4 +5,5 @@ export interface IKnockoutTableProps {
   // Ainda há série em andamento: a repescagem é provisória.
   provisional: boolean;
   caption?: string;
+  logos?: Record<string, string | null>;
 }

@@ -1,9 +1,31 @@
-import styled, { css } from 'styled-components';
+import styled, { css, keyframes } from 'styled-components';
+import { ARENA } from '@/constants/arena';
 import type { BracketSide } from './types';
 
-const COLUMN_WIDTH = 216;
-const GAP = 18;
+const COLUMN_WIDTH = 224;
+const GAP = 20;
 const LINE = 2;
+
+const ARENA_DEEP = ARENA.deep;
+const GLASS = ARENA.glass;
+const GLASS_STRONG = ARENA.glassStrong;
+const GLASS_BORDER = ARENA.glassBorder;
+const LINE_COLOR = ARENA.line;
+const MUTED = ARENA.muted;
+const GOLD = ARENA.gold;
+const BRONZE = ARENA.bronze;
+
+const arena = css`
+  border: ${({ theme }) => theme.sizes.borderWidth}px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radius.lg}px;
+  color: ${({ theme }) => theme.colors.text};
+  background:
+    radial-gradient(circle at 50% 50%, ${ARENA.glow}, transparent 42%),
+    radial-gradient(circle at 50% 50%, transparent 118px, ${GLASS} 119px, ${GLASS} 121px, transparent 122px),
+    linear-gradient(90deg, transparent calc(50% - 1px), ${GLASS} calc(50% - 1px), ${GLASS} calc(50% + 1px), transparent calc(50% + 1px)),
+    linear-gradient(160deg, ${({ theme }) => theme.colors.surface}, ${({ theme }) => theme.colors.background});
+  box-shadow: ${({ theme }) => theme.shadows.sm};
+`;
 
 export const Hint = styled.p`
   font-size: ${({ theme }) => theme.fontSize.xs}px;
@@ -14,14 +36,50 @@ export const Hint = styled.p`
   }
 `;
 
+// Faixa de uma fase que avança pela campanha: os jogos lado a lado, sem linhas.
+export const Round = styled.section`
+  ${arena}
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: ${({ theme }) => theme.spacing.md}px;
+  padding: ${({ theme }) => theme.spacing.lg}px ${({ theme }) => theme.spacing.md}px;
+`;
+
+export const RoundNote = styled.p`
+  margin-bottom: ${({ theme }) => theme.spacing.md}px;
+  font-size: ${({ theme }) => theme.fontSize.xs}px;
+  text-align: center;
+  color: ${MUTED};
+`;
+
+export const RoundMatches = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: ${({ theme }) => theme.spacing.md}px;
+  width: 100%;
+`;
+
+export const RoundItem = styled.div`
+  width: ${COLUMN_WIDTH}px;
+  max-width: 100%;
+`;
+
 export const Board = styled.div`
+  ${arena}
   overflow-x: auto;
-  padding: ${({ theme }) => theme.spacing.md}px 0;
-  border: ${({ theme }) => theme.sizes.borderWidth}px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.radius.lg}px;
-  background:
-    radial-gradient(circle at 50% 45%, ${({ theme }) => theme.colors.primarySoft}, transparent 60%),
-    ${({ theme }) => theme.colors.surface};
+  padding: ${({ theme }) => theme.spacing.lg}px 0;
+`;
+
+// Conteúdo rolável da chave: campeão, colunas e 3º lugar centralizados na mesma largura.
+export const Track = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: max-content;
+  min-width: 100%;
+  margin: 0 auto;
 `;
 
 export const Grid = styled.div`
@@ -30,7 +88,6 @@ export const Grid = styled.div`
   justify-content: center;
   width: max-content;
   min-width: 100%;
-  min-height: 380px;
   margin: 0 auto;
 `;
 
@@ -41,14 +98,35 @@ export const Column = styled.div`
   padding: 0 ${GAP}px;
 `;
 
-export const ColumnTitle = styled.h3`
-  margin-bottom: ${({ theme }) => theme.spacing.sm}px;
-  font-size: ${({ theme }) => theme.fontSize.xs}px;
-  font-weight: ${({ theme }) => theme.fontWeight.semibold};
-  letter-spacing: 0.06em;
+// Título da rodada em forma de etiqueta; a final e o 3º lugar ganham cor própria.
+export const ColumnTitle = styled.h3<{ $tone?: 'final' | 'third' }>`
+  align-self: center;
+  margin-bottom: ${({ theme }) => theme.spacing.sm + theme.spacing.xs}px;
+  padding: ${({ theme }) => theme.spacing.xxs + 1}px ${({ theme }) => theme.spacing.sm + theme.spacing.xs}px;
+  border: ${({ theme }) => theme.sizes.borderWidth}px solid ${GLASS_BORDER};
+  border-radius: ${({ theme }) => theme.radius.pill}px;
+  background-color: ${GLASS};
+  font-size: 11px;
+  font-weight: ${({ theme }) => theme.fontWeight.bold};
+  letter-spacing: 0.1em;
   text-align: center;
   text-transform: uppercase;
-  color: ${({ theme }) => theme.colors.textMuted};
+  color: ${MUTED};
+
+  ${({ $tone, theme }) =>
+    $tone === 'final' &&
+    css`
+      border-color: transparent;
+      background: linear-gradient(135deg, ${theme.colors.primary}, ${GOLD});
+      color: ${theme.colors.textInverse};
+    `}
+
+  ${({ $tone }) =>
+    $tone === 'third' &&
+    css`
+      border-color: ${BRONZE};
+      color: ${BRONZE};
+    `}
 `;
 
 export const Matches = styled.div`
@@ -60,7 +138,7 @@ export const Matches = styled.div`
 
 const edge = (side: BracketSide) => (side === 'left' ? 'right' : 'left');
 
-// Dois confrontos que levam ao mesmo jogo da rodada seguinte, unidos por uma linha vertical.
+// Dois confrontos que levam ao mesmo jogo da rodada seguinte, unidos por um colchete arredondado.
 export const Pair = styled.div<{ $side: BracketSide; $joined: boolean }>`
   position: relative;
   display: flex;
@@ -76,7 +154,10 @@ export const Pair = styled.div<{ $side: BracketSide; $joined: boolean }>`
         top: 25%;
         bottom: 25%;
         ${edge($side)}: -${GAP}px;
-        border-${edge($side)}: ${LINE}px solid ${theme.colors.borderStrong};
+        width: ${GAP / 2}px;
+        border: ${LINE}px solid ${LINE_COLOR};
+        border-${$side === 'left' ? 'left' : 'right'}: none;
+        border-radius: ${$side === 'left' ? `0 ${theme.radius.sm}px ${theme.radius.sm}px 0` : `${theme.radius.sm}px 0 0 ${theme.radius.sm}px`};
       }
     `}
 `;
@@ -87,9 +168,9 @@ export const Slot = styled.div<{ $side: BracketSide; $incoming: boolean; $outgoi
   display: flex;
   flex: 1;
   align-items: center;
-  padding: ${({ theme }) => theme.spacing.xs}px 0;
+  padding: ${({ theme }) => theme.spacing.sm}px 0;
 
-  ${({ $outgoing, $side, theme }) =>
+  ${({ $outgoing, $side }) =>
     $outgoing &&
     $side !== 'center' &&
     css`
@@ -99,11 +180,11 @@ export const Slot = styled.div<{ $side: BracketSide; $incoming: boolean; $outgoi
         top: 50%;
         ${edge($side)}: -${GAP}px;
         width: ${GAP}px;
-        border-top: ${LINE}px solid ${theme.colors.borderStrong};
+        border-top: ${LINE}px solid ${LINE_COLOR};
       }
     `}
 
-  ${({ $incoming, $side, theme }) =>
+  ${({ $incoming, $side }) =>
     $incoming &&
     css`
       &::before {
@@ -112,11 +193,11 @@ export const Slot = styled.div<{ $side: BracketSide; $incoming: boolean; $outgoi
         top: 50%;
         ${$side === 'right' ? 'right' : 'left'}: -${GAP}px;
         width: ${GAP}px;
-        border-top: ${LINE}px solid ${theme.colors.borderStrong};
+        border-top: ${LINE}px solid ${LINE_COLOR};
       }
     `}
 
-  ${({ $incoming, $side, theme }) =>
+  ${({ $incoming, $side }) =>
     $incoming &&
     $side === 'center' &&
     css`
@@ -126,72 +207,215 @@ export const Slot = styled.div<{ $side: BracketSide; $incoming: boolean; $outgoi
         top: 50%;
         right: -${GAP}px;
         width: ${GAP}px;
-        border-top: ${LINE}px solid ${theme.colors.borderStrong};
+        border-top: ${LINE}px solid ${LINE_COLOR};
       }
     `}
 `;
 
-export const Card = styled.article<{ $highlight?: boolean }>`
+// O confronto é um botão: abre a lista de jogos da série.
+export const Card = styled.button<{ $highlight?: boolean }>`
+  display: block;
   width: 100%;
   overflow: hidden;
-  border: ${({ $highlight }) => ($highlight ? 2 : 1)}px solid
-    ${({ theme, $highlight }) => ($highlight ? theme.colors.primary : theme.colors.border)};
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+  border: ${({ theme }) => theme.sizes.borderWidth}px solid ${GLASS_BORDER};
   border-radius: ${({ theme }) => theme.radius.md}px;
   background-color: ${({ theme }) => theme.colors.surface};
-  box-shadow: ${({ theme, $highlight }) => ($highlight ? theme.shadows.md : theme.shadows.sm)};
+  box-shadow: ${({ theme }) => theme.shadows.sm};
+  transition: transform ${({ theme }) => theme.transition.fast}, border-color ${({ theme }) => theme.transition.fast};
+
+  &:hover {
+    transform: translateY(-1px);
+    border-color: ${LINE_COLOR};
+  }
+
+  ${({ $highlight, theme }) =>
+    $highlight &&
+    css`
+      border: 2px solid transparent;
+      background:
+        linear-gradient(${ARENA_DEEP}, ${ARENA_DEEP}) padding-box,
+        linear-gradient(135deg, ${theme.colors.primary}, ${GOLD}) border-box;
+      box-shadow: 0 6px 28px rgba(232, 89, 12, 0.22);
+
+      &:hover {
+        border-color: transparent;
+      }
+    `}
 `;
 
 export const CardHeader = styled.div`
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  padding: ${({ theme }) => theme.spacing.xs}px ${({ theme }) => theme.spacing.sm}px;
-  background-color: ${({ theme }) => theme.colors.surfaceMuted};
+  gap: ${({ theme }) => theme.spacing.sm}px;
+  padding: ${({ theme }) => theme.spacing.xs + 2}px ${({ theme }) => theme.spacing.sm + theme.spacing.xs}px
+    ${({ theme }) => theme.spacing.xxs}px;
   font-size: 11px;
-  color: ${({ theme }) => theme.colors.textMuted};
+  font-weight: ${({ theme }) => theme.fontWeight.semibold};
+  letter-spacing: 0.04em;
+  color: ${MUTED};
+`;
+
+const pulse = keyframes`
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+`;
+
+export const Live = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xs}px;
+  color: ${({ theme }) => theme.colors.primary};
+
+  &::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: ${({ theme }) => theme.colors.primary};
+    animation: ${pulse} 1.6s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &::before {
+      animation: none;
+    }
+  }
 `;
 
 export const TeamRow = styled.div<{ $winner: boolean; $loser: boolean; $defined: boolean }>`
   display: flex;
-  align-items: stretch;
-  justify-content: space-between;
-  min-height: 34px;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm}px;
+  min-height: 40px;
+  padding: 0 ${({ theme }) => theme.spacing.sm}px 0 ${({ theme }) => theme.spacing.sm + theme.spacing.xs}px;
   font-size: ${({ theme }) => theme.fontSize.sm}px;
+  opacity: ${({ $loser }) => ($loser ? 0.5 : 1)};
+  box-shadow: ${({ $winner, theme }) => ($winner ? `inset 3px 0 0 ${theme.colors.primary}` : 'none')};
 
   & + & {
-    border-top: ${({ theme }) => theme.sizes.borderWidth}px solid ${({ theme }) => theme.colors.border};
+    border-top: ${({ theme }) => theme.sizes.borderWidth}px solid ${GLASS};
   }
 
-  span {
-    display: flex;
+  & > span {
     flex: 1;
-    align-items: center;
     min-width: 0;
-    padding: 0 ${({ theme }) => theme.spacing.sm}px;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
     font-weight: ${({ theme, $winner }) => ($winner ? theme.fontWeight.bold : theme.fontWeight.medium)};
     font-style: ${({ $defined }) => ($defined ? 'normal' : 'italic')};
-    color: ${({ theme, $loser, $defined }) => ($loser || !$defined ? theme.colors.textMuted : theme.colors.text)};
+    color: ${({ theme, $defined }) => ($defined ? theme.colors.text : MUTED)};
     ${({ $defined, theme }) => !$defined && `font-size: ${theme.fontSize.xs}px;`}
   }
 
-  strong {
+  & > strong {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-width: 36px;
+    min-width: 30px;
+    height: 26px;
+    padding: 0 ${({ theme }) => theme.spacing.xs + 2}px;
+    border-radius: ${({ theme }) => theme.radius.sm}px;
     font-variant-numeric: tabular-nums;
-    background-color: ${({ theme, $winner }) => ($winner ? theme.colors.primary : theme.colors.surfaceMuted)};
-    color: ${({ theme, $winner, $loser }) =>
-      $winner ? theme.colors.textInverse : $loser ? theme.colors.textMuted : theme.colors.text};
+    background: ${({ theme, $winner }) =>
+      $winner ? `linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.primaryHover})` : GLASS_STRONG};
+    color: ${({ theme, $winner }) => ($winner ? theme.colors.textInverse : theme.colors.text)};
   }
+`;
+
+// Escudo do time: a logo ou as iniciais.
+export const Crest = styled.div<{ $empty: boolean }>`
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  overflow: hidden;
+  border-radius: 50%;
+  background-color: ${({ $empty }) => ($empty ? 'transparent' : GLASS_STRONG)};
+  border: ${({ $empty }) => ($empty ? `1px dashed ${LINE_COLOR}` : 'none')};
+  font-size: 10px;
+  font-weight: ${({ theme }) => theme.fontWeight.bold};
+  color: ${MUTED};
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+`;
+
+// Lista de jogos da série (dentro do modal, no tema claro).
+export const SeriesSummary = styled.p`
+  margin-bottom: ${({ theme }) => theme.spacing.md}px;
+  font-size: ${({ theme }) => theme.fontSize.sm}px;
+  color: ${({ theme }) => theme.colors.textMuted};
+
+  strong {
+    color: ${({ theme }) => theme.colors.text};
+  }
+`;
+
+export const GameList = styled.ul`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.sm}px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+`;
+
+export const GameItem = styled.li`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xs}px;
+  padding: ${({ theme }) => theme.spacing.sm + theme.spacing.xs}px;
+  border: ${({ theme }) => theme.sizes.borderWidth}px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radius.md}px;
+`;
+
+export const GameTop = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.spacing.sm}px;
+  font-size: ${({ theme }) => theme.fontSize.xs}px;
+  color: ${({ theme }) => theme.colors.textMuted};
+`;
+
+export const GameScore = styled.div`
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm}px;
+  font-weight: ${({ theme }) => theme.fontWeight.semibold};
+
+  span:first-child {
+    text-align: right;
+  }
+
+  strong {
+    font-size: ${({ theme }) => theme.fontSize.lg}px;
+    font-variant-numeric: tabular-nums;
+  }
+`;
+
+export const GameAction = styled.div`
+  display: flex;
+  justify-content: flex-end;
 `;
 
 export const Center = styled.div`
   display: flex;
   flex-direction: column;
-  width: ${COLUMN_WIDTH + 40 + GAP * 2}px;
+  width: ${COLUMN_WIDTH + 48 + GAP * 2}px;
   padding: 0 ${GAP}px;
 `;
 
@@ -203,41 +427,51 @@ export const CenterStack = styled.div`
 `;
 
 export const Champion = styled.div`
-  position: absolute;
-  bottom: calc(50% + 62px);
-  left: 0;
-  right: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.xxs}px;
+  margin-bottom: ${({ theme }) => theme.spacing.lg}px;
   text-align: center;
 
   span {
-    font-size: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    margin-bottom: ${({ theme }) => theme.spacing.xs}px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, ${GOLD}, ${({ theme }) => theme.colors.primary});
+    box-shadow: 0 4px 22px rgba(245, 184, 65, 0.45);
+    font-size: 26px;
     line-height: 1;
   }
 
   small {
-    font-size: ${({ theme }) => theme.fontSize.xs}px;
-    font-weight: ${({ theme }) => theme.fontWeight.semibold};
-    letter-spacing: 0.06em;
+    font-size: 11px;
+    font-weight: ${({ theme }) => theme.fontWeight.bold};
+    letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: ${({ theme }) => theme.colors.textMuted};
+    color: ${MUTED};
   }
 
   strong {
     font-size: ${({ theme }) => theme.fontSize.lg}px;
-    color: ${({ theme }) => theme.colors.primary};
+    color: ${GOLD};
   }
 `;
 
+// 3º lugar logo abaixo da chave, centralizado (não reserva espaço em volta da final).
 export const Third = styled.div`
-  position: absolute;
-  top: calc(50% + 64px);
-  left: ${({ theme }) => theme.spacing.lg}px;
-  right: ${({ theme }) => theme.spacing.lg}px;
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xs}px;
+  align-items: center;
+  width: ${COLUMN_WIDTH}px;
+  max-width: calc(100% - ${GAP * 2}px);
+  margin: ${({ theme }) => theme.spacing.lg}px auto 0;
+
+  & > article {
+    align-self: stretch;
+  }
 `;

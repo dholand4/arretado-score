@@ -1,6 +1,7 @@
 import type { SituacaoMataMata } from '@/@types/game';
+import { AvatarGlobal } from '@/components/avatarGlobal';
 import { BadgeGlobal, type BadgeTone } from '@/components/badgeGlobal';
-import { Note, Row, Scroll, Table, TeamCell, Wrap } from './style';
+import { Balance, Dot, Note, Position, Row, Scroll, Table, TeamCell, Wrap } from './style';
 import type { IKnockoutTableProps } from './types';
 
 const SITUACAO: Record<SituacaoMataMata, { label: string; tone: BadgeTone }> = {
@@ -11,7 +12,9 @@ const SITUACAO: Record<SituacaoMataMata, { label: string; tone: BadgeTone }> = {
 };
 
 // Tabela de uma fase de mata-mata com melhores perdedores: vencedores primeiro, depois a repescagem.
-export function KnockoutTableGlobal({ rows, provisional, caption }: IKnockoutTableProps) {
+const signed = (value: number) => (value > 0 ? `+${value}` : String(value));
+
+export function KnockoutTableGlobal({ rows, provisional, caption, logos = {} }: IKnockoutTableProps) {
   return (
     <Wrap>
       <Scroll>
@@ -33,17 +36,24 @@ export function KnockoutTableGlobal({ rows, provisional, caption }: IKnockoutTab
           <tbody>
             {rows.map((row) => (
               <Row key={row.time_id} $qualified={row.classificado}>
-                <td>{row.posicao}º</td>
+                <Position $qualified={row.classificado}>
+                  <span>{row.posicao}</span>
+                </Position>
                 <TeamCell>
-                  {row.nome}
-                  {row.perdeu_wo && ' (W.O.)'}
+                  <div>
+                    <AvatarGlobal name={row.nome} src={logos[row.time_id]} size="sm" />
+                    <span>
+                      {row.nome}
+                      {row.perdeu_wo && ' (W.O.)'}
+                    </span>
+                  </div>
                 </TeamCell>
                 <td>{row.serie}</td>
                 <td>{row.vitorias}</td>
                 <td>{row.derrotas}</td>
                 <td>{row.pf}</td>
                 <td>{row.pc}</td>
-                <td>{row.saldo}</td>
+                <Balance $value={row.saldo}>{signed(row.saldo)}</Balance>
                 <td>
                   <BadgeGlobal label={SITUACAO[row.situacao].label} tone={SITUACAO[row.situacao].tone} />
                 </td>
@@ -52,7 +62,10 @@ export function KnockoutTableGlobal({ rows, provisional, caption }: IKnockoutTab
           </tbody>
         </Table>
       </Scroll>
-      <Note>Linhas em verde: avançam para a próxima fase (vencedores das séries e melhores perdedores).</Note>
+      <Note>
+        <Dot aria-hidden="true" />
+        Avançam para a próxima fase: vencedores das séries e melhores perdedores.
+      </Note>
       <Note>
         Entre os perdedores: quem perdeu algum jogo por W.O. fica atrás; depois contam vitórias na série, saldo, pontos
         marcados e a campanha anterior.

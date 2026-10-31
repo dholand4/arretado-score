@@ -65,4 +65,6 @@ export interface ITabelaPublica {
   competicao: Pick<Tables<'competicoes'>, 'id' | 'nome' | 'slug' | 'permite_empate'>;
   fases: Pick<Tables<'fases'>, 'id' | 'nome' | 'ordem' | 'tipo' | 'classificam' | 'melhores_extras'>[];
   grupos: Pick<Tables<'grupos'>, 'id' | 'fase_id' | 'nome'>[];
+  // Logo de cada time, para o escudo na tabela.
+  logos: Record<string, string | null>;
 }

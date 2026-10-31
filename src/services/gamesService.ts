@@ -183,7 +183,13 @@ export const gamesService = {
       .or('tipo.neq.mata_mata,melhores_extras.gt.0')
       .order('ordem');
     if (fasesError) throw fasesError;
-    return { competicao, fases, grupos: await groupsOf(fases.map((f) => f.id)) };
+    const [grupos, times] = await Promise.all([
+      groupsOf(fases.map((f) => f.id)),
+      supabase.from('times').select('id, logo_url').eq('competicao_id', competicao.id),
+    ]);
+    if (times.error) throw times.error;
+    const logos = Object.fromEntries(times.data.map((t) => [t.id, t.logo_url]));
+    return { competicao, fases, grupos, logos };
   },
 
   async getClassification(faseId: string, grupoId: string | null): Promise<IClassificacaoLinha[]> {

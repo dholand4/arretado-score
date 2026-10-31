@@ -34,7 +34,7 @@ describe('StandingsTableGlobal', () => {
     const rows = screen.getAllByRole('row');
     expect(within(rows[1]).getByText('Falcões')).toBeInTheDocument();
     expect(within(rows[1]).getByText('100%')).toBeInTheDocument();
-    expect(screen.getByText(/classificados para a próxima fase/)).toBeInTheDocument();
+    expect(screen.getByText(/Classificados para a próxima fase/)).toBeInTheDocument();
   });
 
   it('marks technical ties only after games are played', () => {

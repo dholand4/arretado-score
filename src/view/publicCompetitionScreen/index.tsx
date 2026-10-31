@@ -1,5 +1,4 @@
 import type { IJogoLista } from '@/@types/game';
-import { EmptyStateGlobal } from '@/components/emptyStateGlobal';
 import { ErrorStateGlobal } from '@/components/errorStateGlobal';
 import { GameCardGlobal } from '@/components/gameCardGlobal';
 import { LinkButtonGlobal } from '@/components/linkButtonGlobal';
@@ -7,13 +6,13 @@ import { LoaderGlobal } from '@/components/loaderGlobal';
 import { RankingTableGlobal } from '@/components/rankingTableGlobal';
 import { usePublicCompetition, usePublicGames, useRanking } from '@/hooks/usePublic';
 import { useRouteParams } from '@/hooks/useRouteParams';
-import { paths } from '@/routes/types';
+import { paths, type RoutePath } from '@/routes/types';
 import { describeGame, gameStatus } from '@/utils/games';
 import { latestResults, sortRanking, upcomingGames } from '@/utils/publicView';
-import { List, Muted, Section, SectionTitle, Shortcuts, Stack } from './style';
+import { Empty, List, Muted, Rankings, Section, SectionHeader, SectionTitle, Stack } from './style';
 
 function GameList({ slug, jogos, empty }: { slug: string; jogos: IJogoLista[]; empty: string }) {
-  if (jogos.length === 0) return <Muted>{empty}</Muted>;
+  if (jogos.length === 0) return <Empty>{empty}</Empty>;
   return (
     <List>
       {jogos.map((jogo) => {
@@ -29,12 +28,21 @@ function GameList({ slug, jogos, empty }: { slug: string; jogos: IJogoLista[]; e
               statusLabel={status.label}
               statusTone={status.tone}
               description={describeGame(jogo)}
-              actionLabel="Ver jogo"
             />
           </li>
         );
       })}
     </List>
+  );
+}
+
+// Título da seção com o atalho "Ver todos" (as abas acima já levam às páginas completas).
+function Header({ title, to }: { title: string; to?: RoutePath }) {
+  return (
+    <SectionHeader>
+      <SectionTitle>{title}</SectionTitle>
+      {to && <LinkButtonGlobal to={to} label="Ver todos →" size="sm" variant="ghost" />}
+    </SectionHeader>
   );
 }
 
@@ -48,39 +56,37 @@ export function PublicCompetitionScreen() {
   if (isLoading) return <LoaderGlobal label="Carregando competição" />;
   if (error) return <ErrorStateGlobal error={error} onRetry={() => void refetch()} />;
 
+  const proximos = upcomingGames(jogos);
+  const resultados = latestResults(jogos);
+  const temRanking = Boolean(ranking && ranking.linhas.length > 0);
+
   return (
     <Stack>
       {competicao?.descricao && <Muted>{competicao.descricao}</Muted>}
-      <Shortcuts>
-        <LinkButtonGlobal to={paths.publicStandings(slug)} label="Tabela" variant="primary" size="sm" />
-        <LinkButtonGlobal to={paths.publicPlayoffs(slug)} label="Playoffs" size="sm" />
-        <LinkButtonGlobal to={paths.publicGames(slug)} label="Todos os jogos" size="sm" />
-      </Shortcuts>
       <Section>
-        <SectionTitle>Próximos jogos</SectionTitle>
-        <GameList slug={slug} jogos={upcomingGames(jogos)} empty="Nenhum jogo marcado nos próximos dias." />
+        <Header title="Próximos jogos" to={proximos.length > 0 ? paths.publicGames(slug) : undefined} />
+        <GameList slug={slug} jogos={proximos} empty="Nenhum jogo marcado nos próximos dias." />
       </Section>
       <Section>
-        <SectionTitle>Últimos resultados</SectionTitle>
-        <GameList slug={slug} jogos={latestResults(jogos)} empty="Ainda não há resultados." />
+        <Header title="Últimos resultados" to={resultados.length > 0 ? paths.publicGames(slug) : undefined} />
+        <GameList slug={slug} jogos={resultados} empty="Ainda não há resultados." />
       </Section>
       <Section>
-        <SectionTitle>Destaques</SectionTitle>
-        {!ranking || ranking.linhas.length === 0 ? (
-          <EmptyStateGlobal title="Rankings aparecem depois das primeiras súmulas" />
+        <Header title="Destaques" to={temRanking ? paths.publicRankings(slug) : undefined} />
+        {!ranking || !temRanking ? (
+          <Empty>Os rankings aparecem depois das primeiras súmulas.</Empty>
         ) : (
-          ranking.categorias.map((categoria) => (
-            <RankingTableGlobal
-              key={categoria.id}
-              caption={categoria.titulo_ranking}
-              rows={sortRanking(ranking.linhas.filter((l) => l.categoria_id === categoria.id), 'total')}
-              limit={3}
-            />
-          ))
+          <Rankings>
+            {ranking.categorias.map((categoria) => (
+              <RankingTableGlobal
+                key={categoria.id}
+                caption={categoria.titulo_ranking}
+                rows={sortRanking(ranking.linhas.filter((l) => l.categoria_id === categoria.id), 'total')}
+                limit={3}
+              />
+            ))}
+          </Rankings>
         )}
-        <Shortcuts>
-          <LinkButtonGlobal to={paths.publicRankings(slug)} label="Ver todos os rankings" size="sm" variant="ghost" />
-        </Shortcuts>
       </Section>
     </Stack>
   );

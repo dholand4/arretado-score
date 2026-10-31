@@ -26,7 +26,7 @@ export function GameCardGlobal({
         <span>{description}</span>
         <BadgeGlobal label={statusLabel} tone={statusTone} />
       </Footer>
-      <Action>{actionLabel} →</Action>
+      {actionLabel && <Action>{actionLabel} →</Action>}
     </Card>
   );
 }

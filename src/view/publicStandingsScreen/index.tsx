@@ -13,7 +13,19 @@ import { Stack } from './style';
 
 type Fase = ITabelaPublica['fases'][number];
 
-function GroupStandings({ fase, grupoId, caption, showDraws }: { fase: Fase; grupoId: string | null; caption?: string; showDraws: boolean }) {
+function GroupStandings({
+  fase,
+  grupoId,
+  caption,
+  showDraws,
+  logos,
+}: {
+  fase: Fase;
+  grupoId: string | null;
+  caption?: string;
+  showDraws: boolean;
+  logos: Record<string, string | null>;
+}) {
   const { linhas, extrasClassificados, isLoading, error, refetch } = useClassification(fase, grupoId);
   if (isLoading) return <LoaderGlobal label="Carregando classificação" />;
   if (error) return <ErrorStateGlobal error={error} onRetry={refetch} />;
@@ -25,17 +37,18 @@ function GroupStandings({ fase, grupoId, caption, showDraws }: { fase: Fase; gru
       qualifiedCount={fase.classificam ?? 0}
       extraQualified={extrasClassificados}
       caption={caption}
+      logos={logos}
     />
   );
 }
 
 // Mata-mata com melhores perdedores: tabela da fase (vencedores das séries + repescagem).
-function KnockoutStandings({ fase }: { fase: Fase }) {
+function KnockoutStandings({ fase, logos }: { fase: Fase; logos: Record<string, string | null> }) {
   const { linhas, provisoria, isLoading, error, refetch } = useKnockoutTable(fase.id);
   if (isLoading) return <LoaderGlobal label="Carregando tabela da fase" />;
   if (error) return <ErrorStateGlobal error={error} onRetry={refetch} />;
   if (linhas.length === 0) return <EmptyStateGlobal title="Os confrontos desta fase ainda não foram definidos" />;
-  return <KnockoutTableGlobal rows={linhas} provisional={provisoria} />;
+  return <KnockoutTableGlobal rows={linhas} provisional={provisoria} logos={logos} />;
 }
 
 function Standings({ tabela }: { tabela: ITabelaPublica }) {
@@ -57,13 +70,20 @@ function Standings({ tabela }: { tabela: ITabelaPublica }) {
         />
       )}
       {fase.tipo === 'mata_mata' ? (
-        <KnockoutStandings fase={fase} />
+        <KnockoutStandings fase={fase} logos={tabela.logos} />
       ) : fase.tipo === 'grupos' ? (
         grupos.map((grupo) => (
-          <GroupStandings key={grupo.id} fase={fase} grupoId={grupo.id} caption={`Grupo ${grupo.nome}`} showDraws={showDraws} />
+          <GroupStandings
+            key={grupo.id}
+            fase={fase}
+            grupoId={grupo.id}
+            caption={`Grupo ${grupo.nome}`}
+            showDraws={showDraws}
+            logos={tabela.logos}
+          />
         ))
       ) : (
-        <GroupStandings fase={fase} grupoId={null} showDraws={showDraws} />
+        <GroupStandings fase={fase} grupoId={null} showDraws={showDraws} logos={tabela.logos} />
       )}
     </Stack>
   );
