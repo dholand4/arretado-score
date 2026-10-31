@@ -8,6 +8,7 @@ import { LoaderGlobal } from '@/components/loaderGlobal';
 import { usePublicCompetition, usePublicGames, usePublicTeam } from '@/hooks/usePublic';
 import { useRouteParams } from '@/hooks/useRouteParams';
 import { paths } from '@/routes/types';
+import { dependentGames, gameSides } from '@/utils/eventSchedule';
 import { describeGame, filterGames, gameStatus } from '@/utils/games';
 import {
   List,
@@ -35,6 +36,8 @@ export function PublicTeamScreen() {
   if (error || !equipe) return <ErrorStateGlobal error={error} onRetry={() => void refetch()} />;
 
   const jogosDoTime = filterGames(jogos, { faseId: '', timeId: teamId, status: '' });
+  // Calculado com todos os jogos: o confronto do dia depende de jogos de outros times.
+  const dependentes = dependentGames(jogos);
 
   return (
     <Stack>
@@ -82,13 +85,12 @@ export function PublicTeamScreen() {
                 <li key={jogo.id}>
                   <GameCardGlobal
                     to={paths.publicGame(slug, jogo.id)}
-                    home={jogo.casa?.nome ?? 'A definir'}
-                    away={jogo.fora?.nome ?? 'A definir'}
+                    {...gameSides(jogo, dependentes)}
                     homeScore={jogo.placar_casa}
                     awayScore={jogo.placar_fora}
                     statusLabel={status.label}
                     statusTone={status.tone}
-                    description={describeGame(jogo)}
+                    description={describeGame(jogo, dependentes.has(jogo.id))}
                     actionLabel="Ver jogo"
                   />
                 </li>

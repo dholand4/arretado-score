@@ -313,6 +313,8 @@ O admin cria um evento informando **data, local (preenchido com o padrão), hora
 4. **Ordem e horários**: ordena aleatoriamente e define `inicio_previsto = data + hora_inicio + (i × intervalo)`. Um time com jogo duplo deve ter seus jogos não consecutivos, se possível.
 5. **Rascunho**: o evento nasce `rascunho`. O admin pode reordenar (arrastar), trocar um jogo por outro candidato, remover um jogo (volta a `pendente`), sortear de novo, e então **publicar**. Só eventos publicados aparecem para o público.
 6. Jogos de um evento ficam `agendado`. Excluir um evento devolve os jogos sem súmula para `pendente`.
+7. **Ordem conforme os resultados**: quando um jogo do dia termina, o próximo passa a ser, entre os que faltam, o que menos repete os times dele (vencedor pesa 2, perdedor 1): quem perdeu joga em seguida e quem venceu descansa, a não ser que não haja outra opção. Ex. com 3 times: A x B; depois C x perdedor; por último C x vencedor.
+8. **Como os confrontos aparecem** (painel e área pública): enquanto o jogo anterior não tem resultado, os jogos que dependem dele aparecem como "Perdedor entre A e B x C" e "Vencedor entre A e B x C" (sem a rodada, que só se define depois). Só quando os dois candidatos têm o mesmo adversário; nos outros casos aparecem os nomes.
 
 ### 6.3 Classificação
 Colunas: **J** (jogos), **V**, **E** (só se `permite_empate`), **D**, **WO** (derrotas por W.O.), **PTS**, **PF** (pontos/gols a favor), **PC** (contra), **SALDO**, **%** (aproveitamento = V / J).

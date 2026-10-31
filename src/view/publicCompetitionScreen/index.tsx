@@ -7,11 +7,22 @@ import { RankingTableGlobal } from '@/components/rankingTableGlobal';
 import { usePublicCompetition, usePublicGames, useRanking } from '@/hooks/usePublic';
 import { useRouteParams } from '@/hooks/useRouteParams';
 import { paths, type RoutePath } from '@/routes/types';
+import { dependentGames, gameSides, type IGameSides } from '@/utils/eventSchedule';
 import { describeGame, gameStatus } from '@/utils/games';
 import { latestResults, sortRanking, upcomingGames } from '@/utils/publicView';
 import { Empty, List, Muted, Rankings, Section, SectionHeader, SectionTitle, Stack } from './style';
 
-function GameList({ slug, jogos, empty }: { slug: string; jogos: IJogoLista[]; empty: string }) {
+function GameList({
+  slug,
+  jogos,
+  empty,
+  dependentes,
+}: {
+  slug: string;
+  jogos: IJogoLista[];
+  empty: string;
+  dependentes: Map<string, IGameSides>;
+}) {
   if (jogos.length === 0) return <Empty>{empty}</Empty>;
   return (
     <List>
@@ -21,13 +32,12 @@ function GameList({ slug, jogos, empty }: { slug: string; jogos: IJogoLista[]; e
           <li key={jogo.id}>
             <GameCardGlobal
               to={paths.publicGame(slug, jogo.id)}
-              home={jogo.casa?.nome ?? 'A definir'}
-              away={jogo.fora?.nome ?? 'A definir'}
+              {...gameSides(jogo, dependentes)}
               homeScore={jogo.placar_casa}
               awayScore={jogo.placar_fora}
               statusLabel={status.label}
               statusTone={status.tone}
-              description={describeGame(jogo)}
+              description={describeGame(jogo, dependentes.has(jogo.id))}
             />
           </li>
         );
@@ -56,6 +66,8 @@ export function PublicCompetitionScreen() {
   if (isLoading) return <LoaderGlobal label="Carregando competição" />;
   if (error) return <ErrorStateGlobal error={error} onRetry={() => void refetch()} />;
 
+  // Confrontos que dependem do resultado anterior do dia, calculados com todos os jogos.
+  const dependentes = dependentGames(jogos);
   const proximos = upcomingGames(jogos);
   const resultados = latestResults(jogos);
   const temRanking = Boolean(ranking && ranking.linhas.length > 0);
@@ -65,11 +77,11 @@ export function PublicCompetitionScreen() {
       {competicao?.descricao && <Muted>{competicao.descricao}</Muted>}
       <Section>
         <Header title="Próximos jogos" to={proximos.length > 0 ? paths.publicGames(slug) : undefined} />
-        <GameList slug={slug} jogos={proximos} empty="Nenhum jogo marcado nos próximos dias." />
+        <GameList slug={slug} dependentes={dependentes} jogos={proximos} empty="Nenhum jogo marcado nos próximos dias." />
       </Section>
       <Section>
         <Header title="Últimos resultados" to={resultados.length > 0 ? paths.publicGames(slug) : undefined} />
-        <GameList slug={slug} jogos={resultados} empty="Ainda não há resultados." />
+        <GameList slug={slug} dependentes={dependentes} jogos={resultados} empty="Ainda não há resultados." />
       </Section>
       <Section>
         <Header title="Destaques" to={temRanking ? paths.publicRankings(slug) : undefined} />

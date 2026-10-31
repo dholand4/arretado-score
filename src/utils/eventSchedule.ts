@@ -48,6 +48,67 @@ export function gameDetails(jogo: IJogoResumo): string {
   return partes.filter(Boolean).join(' · ');
 }
 
+// Ordem do dia conforme os resultados (mesma regra de reordenar_dia_apos_resultado): quando um jogo
+// termina, o próximo é o que menos repete os times dele — vencedor pesa 2, perdedor 1 —, então quem
+// perdeu joga em seguida e quem venceu descansa. Antes do resultado, simula as duas saídas do primeiro
+// jogo sem placar de cada dia: se o jogo seguinte depende de quem vencer e os dois candidatos têm o
+// mesmo adversário, as duas posições viram "Perdedor entre A e B" x C e "Vencedor entre A e B" x C.
+export interface IGameSides {
+  home: string;
+  away: string;
+}
+
+type IJogoDoDia = Pick<IJogoResumo, 'id' | 'status' | 'evento_id' | 'ordem_no_evento' | 'time_casa_id' | 'time_fora_id' | 'casa' | 'fora'>;
+
+function dependentInDay(dia: IJogoDoDia[], out: Map<string, IGameSides>) {
+  const atual = dia.findIndex((j) => j.status === 'agendado');
+  if (atual < 0) return;
+  const jogo = dia[atual];
+  const restantes = dia.map((j, posicao) => ({ j, posicao })).filter(({ j, posicao }) => posicao > atual && j.status === 'agendado');
+  if (restantes.length === 0) return;
+
+  const proximo = (vencedor: string) => {
+    const peso = (j: IJogoDoDia) =>
+      [j.time_casa_id, j.time_fora_id]
+        .filter((t) => t === jogo.time_casa_id || t === jogo.time_fora_id)
+        .reduce((soma, t) => soma + (t === vencedor ? 2 : 1), 0);
+    return restantes.reduce((melhor, item) => (peso(item.j) < peso(melhor.j) ? item : melhor));
+  };
+  const seCasaVence = proximo(jogo.time_casa_id);
+  const seForaVence = proximo(jogo.time_fora_id);
+  if (seCasaVence.j.id === seForaVence.j.id) return;
+
+  // Cada candidato tem o perdedor da sua hipótese; o adversário dele precisa ser o mesmo nos dois.
+  const adversario = (j: IJogoDoDia, perdedor: string) =>
+    j.time_casa_id === perdedor ? j.fora : j.time_fora_id === perdedor ? j.casa : null;
+  const advCasaVence = adversario(seCasaVence.j, jogo.time_fora_id);
+  const advForaVence = adversario(seForaVence.j, jogo.time_casa_id);
+  const proximaPosicao = restantes[0].posicao;
+  const posicoes = [seCasaVence.posicao, seForaVence.posicao];
+  if (!advCasaVence || advCasaVence.nome !== advForaVence?.nome || !posicoes.includes(proximaPosicao)) return;
+
+  const outraPosicao = posicoes.find((p) => p !== proximaPosicao) as number;
+  const entre = `entre ${jogo.casa?.nome ?? '?'} e ${jogo.fora?.nome ?? '?'}`;
+  out.set(dia[proximaPosicao].id, { home: `Perdedor ${entre}`, away: advCasaVence.nome });
+  out.set(dia[outraPosicao].id, { home: `Vencedor ${entre}`, away: advCasaVence.nome });
+}
+
+// Jogos (de um ou de vários dias) cujo confronto depende do resultado anterior.
+export function dependentGames(jogos: IJogoDoDia[]): Map<string, IGameSides> {
+  const out = new Map<string, IGameSides>();
+  const dias = new Map<string, IJogoDoDia[]>();
+  jogos.forEach((j) => {
+    if (j.evento_id) dias.set(j.evento_id, [...(dias.get(j.evento_id) ?? []), j]);
+  });
+  dias.forEach((dia) => dependentInDay([...dia].sort((a, b) => (a.ordem_no_evento ?? 0) - (b.ordem_no_evento ?? 0)), out));
+  return out;
+}
+
+// Os dois lados de um jogo para mostrar: o confronto condicional, se houver, senão os nomes.
+export function gameSides(jogo: Pick<IJogoResumo, 'id' | 'casa' | 'fora'>, dependentes?: Map<string, IGameSides>): IGameSides {
+  return dependentes?.get(jogo.id) ?? { home: jogo.casa?.nome ?? 'A definir', away: jogo.fora?.nome ?? 'A definir' };
+}
+
 // Times que aparecem mais de uma vez no dia (jogo duplo).
 export function doubledTeams(jogos: IJogoResumo[]): Set<string> {
   const vezes = new Map<string, number>();

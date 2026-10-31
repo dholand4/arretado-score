@@ -3,7 +3,15 @@ import { ButtonGlobal } from '@/components/buttonGlobal';
 import { CardGlobal } from '@/components/cardGlobal';
 import { OrderListGlobal } from '@/components/orderListGlobal';
 import { STATUS_EVENTO, STATUS_JOGO } from '@/constants/phase';
-import { doubledTeams, formatEventDate, formatTime, gameDetails, gameLabel, shortTime } from '@/utils/eventSchedule';
+import {
+  dependentGames,
+  doubledTeams,
+  formatEventDate,
+  formatTime,
+  gameDetails,
+  gameSides,
+  shortTime,
+} from '@/utils/eventSchedule';
 import { pluralize } from '@/utils/text';
 import { Actions, Details, Game, Games, Meta, Texts, Time } from './style';
 import type { IEventCardProps } from './types';
@@ -13,8 +21,16 @@ export function EventCardGlobal({ event, busy = false, onReorder, onRemoveGame, 
   const status = STATUS_EVENTO[event.status];
   const draft = event.status === 'rascunho';
   const duplos = doubledTeams(event.jogos);
+  // Confrontos que dependem do resultado anterior ("Perdedor do 1º jogo x C"): a rodada de cada um
+  // só se define depois do resultado, então mostram só a fase.
+  const dependentes = dependentGames(event.jogos);
+  const label = (j: (typeof event.jogos)[number]) => {
+    const lados = gameSides(j, dependentes);
+    return `${lados.home} x ${lados.away}`;
+  };
+  const details = (j: (typeof event.jogos)[number]) => (dependentes.has(j.id) ? (j.fase?.nome ?? '') : gameDetails(j));
   const describe = (j: (typeof event.jogos)[number]) => {
-    const extras = [formatTime(j.inicio_previsto), gameDetails(j)];
+    const extras = [formatTime(j.inicio_previsto), details(j)];
     if (duplos.has(j.time_casa_id) || duplos.has(j.time_fora_id)) extras.push('jogo duplo');
     if (j.status !== 'agendado') extras.push(STATUS_JOGO[j.status]);
     return extras.join(' · ');
@@ -41,7 +57,7 @@ export function EventCardGlobal({ event, busy = false, onReorder, onRemoveGame, 
       {draft && event.jogos.length > 0 && (
         <OrderListGlobal
           ariaLabel={`Jogos de ${formatEventDate(event.data)}`}
-          items={event.jogos.map((j) => ({ id: j.id, label: gameLabel(j), description: describe(j) }))}
+          items={event.jogos.map((j) => ({ id: j.id, label: label(j), description: describe(j) }))}
           onChange={onReorder}
           onRemove={onRemoveGame}
           disabled={busy}
@@ -53,8 +69,8 @@ export function EventCardGlobal({ event, busy = false, onReorder, onRemoveGame, 
             <Game key={j.id}>
               <Time>{formatTime(j.inicio_previsto)}</Time>
               <Texts>
-                <span>{gameLabel(j)}</span>
-                <Details>{gameDetails(j)}</Details>
+                <span>{label(j)}</span>
+                <Details>{details(j)}</Details>
               </Texts>
             </Game>
           ))}

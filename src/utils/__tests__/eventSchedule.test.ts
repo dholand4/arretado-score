@@ -2,12 +2,14 @@ import type { IJogoResumo, IMontagemEvento } from '@/@types/event';
 import {
   assemblyNotice,
   defaultEventInput,
+  dependentGames,
   doubleGameMessage,
   doubledTeams,
   formatEventDate,
   formatTime,
   gameDetails,
   gameLabel,
+  gameSides,
   shortTime,
   todayInFortaleza,
   validateEvent,
@@ -52,6 +54,55 @@ describe('event schedule', () => {
     expect(gameDetails(jogo({ grupo: { nome: 'A' } }))).toBe('Fase 1 · Grupo A · Rodada 2');
     expect(gameDetails(jogo({ rodada: null, serie: { codigo: 'S1' }, numero_na_serie: 2 }))).toBe('Fase 1 · S1, jogo 2');
     expect([...doubledTeams([jogo({}), jogo({ time_casa_id: 'c' })])]).toEqual(['b']);
+  });
+
+  describe('games that depend on the previous result', () => {
+    const time = (id: string) => ({ nome: id, sigla: null });
+    const confronto = (id: string, casa: string, fora: string, patch: Partial<IJogoResumo> = {}) =>
+      jogo({
+        id,
+        evento_id: 'dia1',
+        ordem_no_evento: Number(id.slice(1)),
+        time_casa_id: casa,
+        time_fora_id: fora,
+        casa: time(casa),
+        fora: time(fora),
+        status: 'agendado',
+        ...patch,
+      });
+
+    it('shows loser and winner of the first game against the third team', () => {
+      // Dia de 3 times como no app: Estadual x QuixaRocks, Okami x QuixaRocks, Estadual x Okami.
+      const dia = [
+        confronto('j1', 'Estadual', 'QuixaRocks'),
+        confronto('j2', 'Okami BC', 'QuixaRocks'),
+        confronto('j3', 'Estadual', 'Okami BC'),
+      ];
+      expect(Object.fromEntries(dependentGames(dia))).toEqual({
+        j2: { home: 'Perdedor entre Estadual e QuixaRocks', away: 'Okami BC' },
+        j3: { home: 'Vencedor entre Estadual e QuixaRocks', away: 'Okami BC' },
+      });
+      // A ordem vem de ordem_no_evento, não da posição na lista; outros dias não se misturam.
+      const embaralhado = [dia[2], dia[0], confronto('j9', 'X', 'Y', { evento_id: 'dia2' }), dia[1]];
+      expect([...dependentGames(embaralhado).keys()].sort()).toEqual(['j2', 'j3']);
+      expect(gameSides(dia[0], dependentGames(dia))).toEqual({ home: 'Estadual', away: 'QuixaRocks' });
+    });
+
+    it('stops once the order no longer depends on a result', () => {
+      const dia = [
+        confronto('j1', 'A', 'B', { status: 'encerrado', vencedor_id: 'A' }),
+        confronto('j2', 'B', 'C'),
+        confronto('j3', 'A', 'C'),
+      ];
+      expect(dependentGames(dia).size).toBe(0);
+    });
+
+    it('keeps the names when nobody repeats or the opponents differ', () => {
+      expect(dependentGames([confronto('j1', 'A', 'B'), confronto('j2', 'C', 'D')]).size).toBe(0);
+      expect(
+        dependentGames([confronto('j1', 'A', 'B'), confronto('j2', 'A', 'C'), confronto('j3', 'B', 'D')]).size,
+      ).toBe(0);
+    });
   });
 
   it('prefills and validates the event form', () => {

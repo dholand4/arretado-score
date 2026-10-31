@@ -40,13 +40,14 @@ export function gameStatus(status: StatusJogo) {
   return { label: STATUS_JOGO[status], tone: STATUS_TONE[status] };
 }
 
-// "Fase de classificação · Rodada 2 · 25/10/2026 19:00 · Ginásio"
-export function describeGame(jogo: IJogoLista): string {
+// "Fase de classificação · Rodada 2 · 25/10/2026 19:00 · Ginásio". Num confronto que depende do resultado
+// anterior do dia (dependentGames), a rodada só se define depois, então não aparece.
+export function describeGame(jogo: IJogoLista, dependente = false): string {
   const partes = [
     jogo.fase?.nome,
     jogo.grupo && `Grupo ${jogo.grupo.nome}`,
     jogo.serie && `${jogo.serie.codigo} · Jogo ${jogo.numero_na_serie}`,
-    !jogo.serie && jogo.rodada && `Rodada ${jogo.rodada}`,
+    !jogo.serie && !dependente && jogo.rodada && `Rodada ${jogo.rodada}`,
     jogo.inicio_previsto ? formatDateTime(jogo.inicio_previsto) : 'Sem data',
     jogo.evento?.local,
   ];
