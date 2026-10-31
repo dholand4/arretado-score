@@ -15,6 +15,8 @@ export interface IEventMissingGame {
 
 export interface IEventFormModalProps {
   open: boolean;
+  // Editar um dia já montado: só data, hora, local, intervalo e observações (sem quantidade nem times).
+  mode?: 'create' | 'edit';
   initialValues: IEventoInput;
   teams?: IEventTeam[];
   missingGames?: IEventMissingGame[];

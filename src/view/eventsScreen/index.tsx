@@ -25,6 +25,7 @@ import {
   assemblyNotice,
   defaultEventInput,
   doubleGameMessage,
+  eventToInput,
   formatEventDate,
   remainingGames,
 } from '@/utils/eventSchedule';
@@ -73,6 +74,7 @@ export function EventsScreen() {
     reorderEvent,
     swapGame,
     removeGame,
+    updateEvent,
     publishEvent,
     deleteEvent,
   } = useEvents(competitionId);
@@ -80,6 +82,8 @@ export function EventsScreen() {
   const [pending, setPending] = useState<PendingAssembly | null>(null);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [swapEvent, setSwapEvent] = useState<IEvento | null>(null);
+  // Dia em edição (data, hora, local, intervalo e observações).
+  const [editingEvent, setEditingEvent] = useState<IEvento | null>(null);
   const [feedback, setFeedback] = useState<{ variant: AlertVariant; message: string } | null>(null);
   const askConfirm = useConfirmAction();
   const { candidates, isLoading: loadingCandidates } = useEventCandidates(
@@ -230,6 +234,10 @@ export function EventsScreen() {
               publishEvent.reset();
               setConfirmation({ kind: 'publish', event });
             }}
+            onEdit={() => {
+              updateEvent.reset();
+              setEditingEvent(event);
+            }}
             onDelete={() => {
               deleteEvent.reset();
               setConfirmation({ kind: 'delete', event });
@@ -277,6 +285,28 @@ export function EventsScreen() {
           error={createEvent.error ? getErrorMessage(createEvent.error) : null}
           onSubmit={(input) => create(input, false)}
           onClose={() => setFormOpen(false)}
+        />
+      )}
+
+      {editingEvent && (
+        <EventFormModalGlobal
+          open
+          mode="edit"
+          initialValues={eventToInput(editingEvent)}
+          saving={updateEvent.isPending}
+          error={updateEvent.error ? getErrorMessage(updateEvent.error) : null}
+          onSubmit={(input) =>
+            updateEvent.mutate(
+              { eventoId: editingEvent.id, input },
+              {
+                onSuccess: () => {
+                  setEditingEvent(null);
+                  setFeedback({ variant: 'success', message: `Dia de jogos atualizado: ${formatEventDate(input.data)}.` });
+                },
+              },
+            )
+          }
+          onClose={() => setEditingEvent(null)}
         />
       )}
 

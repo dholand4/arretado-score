@@ -8,5 +8,7 @@ export interface IEventCardProps {
   onSwap: () => void;
   onRedraw: () => void;
   onPublish: () => void;
+  // Mudar data, hora, local, intervalo e observações (rascunho ou publicado).
+  onEdit: () => void;
   onDelete: () => void;
 }

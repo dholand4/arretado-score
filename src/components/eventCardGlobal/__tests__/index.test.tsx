@@ -44,6 +44,7 @@ const handlers = () => ({
   onSwap: vi.fn(),
   onRedraw: vi.fn(),
   onPublish: vi.fn(),
+  onEdit: vi.fn(),
   onDelete: vi.fn(),
 });
 
@@ -73,5 +74,8 @@ describe('EventCardGlobal', () => {
     expect(screen.queryByRole('button', { name: /Subir/ })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Excluir' }));
     expect(h.onDelete).toHaveBeenCalled();
+    // Data, hora e local continuam editáveis depois de publicar.
+    fireEvent.click(screen.getByRole('button', { name: 'Editar dia' }));
+    expect(h.onEdit).toHaveBeenCalled();
   });
 });

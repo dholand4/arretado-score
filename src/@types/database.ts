@@ -615,6 +615,9 @@ isOneToOne: false
 "ajustar_classificacao":
 { Args: { "p_fase_id": string,"p_grupo_id"?: string,"p_prioridade"?: number,"p_time_id"?: string }; Returns: undefined
                            },
+"atualizar_evento":
+{ Args: { "p_data": string,"p_evento_id": string,"p_hora_inicio": string,"p_intervalo_min": number,"p_local": string,"p_observacoes"?: string }; Returns: undefined
+                           },
 "campanha_do_time":
 { Args: { "p_antes": number,"p_competicao": string,"p_time": string }; Returns: {
               "aproveitamento": number,"nome": string,"ordem_fase": number,"pf": number,"posicao": number,"pts": number,"saldo": number,"time_id": string

@@ -1,9 +1,10 @@
-import type { IJogoResumo, IMontagemEvento } from '@/@types/event';
+import type { IEvento, IJogoResumo, IMontagemEvento } from '@/@types/event';
 import {
   assemblyNotice,
   defaultEventInput,
   dayGameNumbers,
   dependentGames,
+  eventToInput,
   doubleGameMessage,
   doubledTeams,
   formatEventDate,
@@ -109,6 +110,19 @@ describe('event schedule', () => {
       expect(
         dependentGames([confronto('j1', 'A', 'B'), confronto('j2', 'A', 'C'), confronto('j3', 'B', 'D')]).size,
       ).toBe(0);
+    });
+  });
+
+  it('turns a saved day into the edit form values', () => {
+    const dia = { data: '2026-11-07', local: 'Ginásio', hora_inicio: '19:30:00', intervalo_min: 60, observacoes: null, jogos: [jogo({}), jogo({})] };
+    expect(eventToInput(dia as unknown as IEvento)).toEqual({
+      data: '2026-11-07',
+      local: 'Ginásio',
+      hora_inicio: '19:30',
+      qtd_jogos: 2,
+      intervalo_min: 60,
+      observacoes: '',
+      times: null,
     });
   });
 

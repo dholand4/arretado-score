@@ -1,4 +1,4 @@
-import type { IEventoInput, IJogoResumo, IMontagemEvento } from '@/@types/event';
+import type { IEvento, IEventoInput, IJogoResumo, IMontagemEvento } from '@/@types/event';
 import { HORA_INICIO_PADRAO, QTD_JOGOS_PADRAO } from '@/constants/phase';
 import type { FormErrors } from './competitionValidators';
 import { TIME_ZONE } from './date';
@@ -152,6 +152,19 @@ export function defaultEventInput(localPadrao: string | null, intervalo: number,
     qtd_jogos: QTD_JOGOS_PADRAO,
     intervalo_min: intervalo,
     observacoes: '',
+    times: null,
+  };
+}
+
+// Valores do formulário para editar um dia já montado (a quantidade e os times não mudam na edição).
+export function eventToInput(event: IEvento): IEventoInput {
+  return {
+    data: event.data,
+    local: event.local,
+    hora_inicio: shortTime(event.hora_inicio),
+    qtd_jogos: Math.max(event.jogos.length, 1),
+    intervalo_min: event.intervalo_min,
+    observacoes: event.observacoes ?? '',
     times: null,
   };
 }

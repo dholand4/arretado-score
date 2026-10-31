@@ -39,6 +39,10 @@ export function useEvents(competicaoId: string) {
     onSuccess: invalidate,
   });
   const removeGame = useMutation({ mutationFn: eventsService.removeGame, onSuccess: invalidate });
+  const updateEvent = useMutation({
+    mutationFn: ({ eventoId, input }: { eventoId: string; input: IEventoInput }) => eventsService.update(eventoId, input),
+    onSuccess: invalidate,
+  });
   const publishEvent = useMutation({ mutationFn: eventsService.publish, onSuccess: invalidate });
   const deleteEvent = useMutation({ mutationFn: eventsService.remove, onSuccess: invalidate });
 
@@ -52,6 +56,7 @@ export function useEvents(competicaoId: string) {
     reorderEvent,
     swapGame,
     removeGame,
+    updateEvent,
     publishEvent,
     deleteEvent,
   };

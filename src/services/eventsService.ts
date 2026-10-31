@@ -69,6 +69,19 @@ export const eventsService = {
     if (error) throw error;
   },
 
+  // Muda data, hora, local, intervalo e observações; os jogos e a ordem continuam, os horários são recalculados.
+  async update(eventoId: string, input: IEventoInput): Promise<void> {
+    const { error } = await supabase.rpc('atualizar_evento', {
+      p_evento_id: eventoId,
+      p_data: input.data,
+      p_local: input.local,
+      p_hora_inicio: input.hora_inicio,
+      p_intervalo_min: input.intervalo_min,
+      p_observacoes: input.observacoes,
+    });
+    if (error) throw error;
+  },
+
   async publish(eventoId: string): Promise<void> {
     const { error } = await supabase.rpc('publicar_evento', { p_evento_id: eventoId });
     if (error) throw error;

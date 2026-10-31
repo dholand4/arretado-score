@@ -60,3 +60,8 @@ export const ErrorText = styled.span`
   font-size: ${({ theme }) => theme.fontSize.xs}px;
   color: ${({ theme }) => theme.colors.danger};
 `;
+
+export const Hint = styled.p`
+  font-size: ${({ theme }) => theme.fontSize.sm}px;
+  color: ${({ theme }) => theme.colors.textMuted};
+`;

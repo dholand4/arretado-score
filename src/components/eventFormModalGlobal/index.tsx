@@ -9,14 +9,16 @@ import { TextareaGlobal } from '@/components/textareaGlobal';
 import { hasErrors, parseIntField, type FormErrors } from '@/utils/competitionValidators';
 import { validateEvent } from '@/utils/eventSchedule';
 import { pluralize } from '@/utils/text';
-import { ErrorText, Fieldset, Form, Legend, Missing, MissingList, QuickActions, Row, TeamsGrid } from './style';
+import { ErrorText, Fieldset, Form, Hint, Legend, Missing, MissingList, QuickActions, Row, TeamsGrid } from './style';
 import type { IEventFormModalProps } from './types';
 
 type NumberField = 'qtd_jogos' | 'intervalo_min';
 
 // Novo dia de jogos (seção 6.2): local e intervalo vêm preenchidos com os padrões da competição.
+// Em modo edição, muda só data, hora, local, intervalo e observações de um dia já montado.
 export function EventFormModalGlobal({
   open,
+  mode = 'create',
   initialValues,
   teams = [],
   missingGames = [],
@@ -26,6 +28,7 @@ export function EventFormModalGlobal({
   onClose,
 }: IEventFormModalProps) {
   const formId = useId();
+  const editing = mode === 'edit';
   const [values, setValues] = useState(initialValues);
   const [numbers, setNumbers] = useState<Record<NumberField, string>>({
     qtd_jogos: String(initialValues.qtd_jogos),
@@ -58,7 +61,7 @@ export function EventFormModalGlobal({
       observacoes: values.observacoes.trim(),
       qtd_jogos: parseIntField(qtdJogos),
       intervalo_min: parseIntField(numbers.intervalo_min),
-      times: teams.length > 0 && selected.length < teams.length ? selected : null,
+      times: !editing && teams.length > 0 && selected.length < teams.length ? selected : null,
     };
     const found = validateEvent(payload);
     setErrors(found);
@@ -69,12 +72,12 @@ export function EventFormModalGlobal({
   return (
     <ModalGlobal
       open={open}
-      title="Lançar jogos"
+      title={editing ? 'Editar dia de jogos' : 'Lançar jogos'}
       onClose={onClose}
       footer={
         <>
           <ButtonGlobal label="Cancelar" variant="ghost" onClick={onClose} disabled={saving} />
-          <ButtonGlobal label="Lançar" type="submit" form={formId} loading={saving} />
+          <ButtonGlobal label={editing ? 'Salvar' : 'Lançar'} type="submit" form={formId} loading={saving} />
         </>
       }
     >
@@ -91,19 +94,21 @@ export function EventFormModalGlobal({
         </Row>
         <InputGlobal label="Local" value={values.local} error={errors.local} onChange={(e) => set('local', e.target.value)} />
         <Row>
-          <InputGlobal
-            label="Quantidade de jogos"
-            type="number"
-            inputMode="numeric"
-            min={1}
-            value={qtdJogos}
-            error={errors.qtd_jogos}
-            hint={autoQtd ? 'Preenchida com os jogos que faltam entre os times marcados.' : undefined}
-            onChange={(e) => {
-              setQtdEditada(true);
-              setNumbers((n) => ({ ...n, qtd_jogos: e.target.value }));
-            }}
-          />
+          {!editing && (
+            <InputGlobal
+              label="Quantidade de jogos"
+              type="number"
+              inputMode="numeric"
+              min={1}
+              value={qtdJogos}
+              error={errors.qtd_jogos}
+              hint={autoQtd ? 'Preenchida com os jogos que faltam entre os times marcados.' : undefined}
+              onChange={(e) => {
+                setQtdEditada(true);
+                setNumbers((n) => ({ ...n, qtd_jogos: e.target.value }));
+              }}
+            />
+          )}
           <InputGlobal
             label="Intervalo (min)"
             type="number"
@@ -115,7 +120,8 @@ export function EventFormModalGlobal({
             onChange={(e) => setNumbers((n) => ({ ...n, intervalo_min: e.target.value }))}
           />
         </Row>
-        {teams.length > 0 && (
+        {editing && <Hint>Os jogos e a ordem continuam os mesmos; os horários são recalculados a partir do novo início.</Hint>}
+        {!editing && teams.length > 0 && (
           <Fieldset>
             <Legend>Times que vão jogar no dia</Legend>
             <QuickActions>

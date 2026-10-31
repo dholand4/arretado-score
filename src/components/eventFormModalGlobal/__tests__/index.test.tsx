@@ -23,6 +23,28 @@ describe('EventFormModalGlobal', () => {
     expect(onSubmit).toHaveBeenCalledWith({ ...initial, qtd_jogos: 3 });
   });
 
+  it('edits only date, time, place, interval and notes of a day', () => {
+    const onSubmit = vi.fn();
+    renderWithTheme(
+      <EventFormModalGlobal
+        open
+        mode="edit"
+        initialValues={initial}
+        teams={[{ id: 't1', nome: 'Falcões' }]}
+        onSubmit={onSubmit}
+        onClose={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole('dialog', { name: 'Editar dia de jogos' })).toBeInTheDocument();
+    expect(screen.queryByLabelText('Quantidade de jogos')).not.toBeInTheDocument();
+    expect(screen.queryByText('Times que vão jogar no dia')).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Data'), { target: { value: '2026-11-14' } });
+    fireEvent.change(screen.getByLabelText('Hora de início'), { target: { value: '18:30' } });
+    fireEvent.change(screen.getByLabelText('Local'), { target: { value: ' Ginásio B ' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+    expect(onSubmit).toHaveBeenCalledWith({ ...initial, data: '2026-11-14', hora_inicio: '18:30', local: 'Ginásio B' });
+  });
+
   it('validates required fields', () => {
     const onSubmit = vi.fn();
     renderWithTheme(<EventFormModalGlobal open initialValues={initial} onSubmit={onSubmit} onClose={vi.fn()} />);

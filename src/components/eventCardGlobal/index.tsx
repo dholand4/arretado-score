@@ -17,7 +17,17 @@ import { Actions, Details, Game, Games, Meta, Texts, Time } from './style';
 import type { IEventCardProps } from './types';
 
 // Um dia de jogos: em rascunho pode ser reordenado (arrastar ou ↑/↓), trocado, sorteado de novo e publicado.
-export function EventCardGlobal({ event, busy = false, onReorder, onRemoveGame, onSwap, onRedraw, onPublish, onDelete }: IEventCardProps) {
+export function EventCardGlobal({
+  event,
+  busy = false,
+  onReorder,
+  onRemoveGame,
+  onSwap,
+  onRedraw,
+  onPublish,
+  onEdit,
+  onDelete,
+}: IEventCardProps) {
   const status = STATUS_EVENTO[event.status];
   const draft = event.status === 'rascunho';
   const duplos = doubledTeams(event.jogos);
@@ -85,6 +95,7 @@ export function EventCardGlobal({ event, busy = false, onReorder, onRemoveGame, 
             <ButtonGlobal label="Publicar" size="sm" disabled={busy || event.jogos.length === 0} onClick={onPublish} />
           </>
         )}
+        <ButtonGlobal label="Editar dia" size="sm" variant="outline" disabled={busy} onClick={onEdit} />
         <ButtonGlobal label="Excluir" size="sm" variant="ghost" disabled={busy} onClick={onDelete} />
       </Actions>
     </CardGlobal>
