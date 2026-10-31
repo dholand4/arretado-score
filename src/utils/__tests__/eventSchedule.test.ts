@@ -80,8 +80,8 @@ describe('event schedule', () => {
         confronto('j3', 'Estadual', 'Okami BC'),
       ];
       expect(Object.fromEntries(dependentGames(dia))).toEqual({
-        j2: { home: 'Perdedor do Jogo 1', away: 'Okami BC' },
-        j3: { home: 'Vencedor do Jogo 1', away: 'Okami BC' },
+        j2: { home: 'Perdedor Jogo\u00a01', away: 'Okami BC' },
+        j3: { home: 'Vencedor Jogo\u00a01', away: 'Okami BC' },
       });
       // A ordem vem de ordem_no_evento, não da posição na lista; outros dias não se misturam.
       const embaralhado = [dia[2], dia[0], confronto('j9', 'X', 'Y', { evento_id: 'dia2' }), dia[1]];

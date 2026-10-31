@@ -52,8 +52,8 @@ export function gameDetails(jogo: IJogoResumo): string {
 // termina, o próximo é o que menos repete os times dele — vencedor pesa 2, perdedor 1 —, então quem
 // perdeu joga em seguida e quem venceu descansa. Antes do resultado, simula as duas saídas do primeiro
 // jogo sem placar de cada dia: se o jogo seguinte depende de quem vencer e os dois candidatos têm o
-// mesmo adversário, as duas posições viram "Perdedor do Jogo N" x C e "Vencedor do Jogo N" x C
-// (N = número do jogo no dia, o mesmo de dayGameNumbers).
+// mesmo adversário, as duas posições viram "Perdedor Jogo N" x C e "Vencedor Jogo N" x C
+// (N = número do jogo no dia, o mesmo de dayGameNumbers; espaço inseparável para o N não ficar sozinho na linha).
 export interface IGameSides {
   home: string;
   away: string;
@@ -89,7 +89,7 @@ function dependentInDay(dia: IJogoDoDia[], out: Map<string, IGameSides>) {
   if (!advCasaVence || advCasaVence.nome !== advForaVence?.nome || !posicoes.includes(proximaPosicao)) return;
 
   const outraPosicao = posicoes.find((p) => p !== proximaPosicao) as number;
-  const doJogo = `do Jogo ${atual + 1}`;
+  const doJogo = `Jogo\u00a0${atual + 1}`;
   out.set(dia[proximaPosicao].id, { home: `Perdedor ${doJogo}`, away: advCasaVence.nome });
   out.set(dia[outraPosicao].id, { home: `Vencedor ${doJogo}`, away: advCasaVence.nome });
 }
