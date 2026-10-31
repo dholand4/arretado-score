@@ -110,3 +110,8 @@ export function isRoutePath(value: unknown): value is RoutePath {
 export interface IGamesRouteState {
   notice?: string;
 }
+
+// Estado enviado ao abrir um time: aberto pela etapa Times da configuração, o voltar leva de volta para lá.
+export interface ITeamRouteState {
+  origem?: 'configuracao';
+}

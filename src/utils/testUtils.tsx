@@ -1,7 +1,7 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { render } from '@testing-library/react';
 import type { ReactElement, ReactNode } from 'react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, type InitialEntry } from 'react-router-dom';
 import { ThemeProvider } from 'styled-components';
 import { theme } from '@/constants/theme';
 import { ConfirmProvider } from '@/providers/ConfirmProvider';
@@ -34,7 +34,8 @@ export function createQueryWrapper() {
   };
 }
 
-export function renderScreen(ui: ReactElement, initialPath = '/') {
+// initialPath aceita também { pathname, state } para simular o estado da navegação.
+export function renderScreen(ui: ReactElement, initialPath: InitialEntry = '/') {
   const QueryWrapper = createQueryWrapper();
   return render(
     <QueryWrapper>

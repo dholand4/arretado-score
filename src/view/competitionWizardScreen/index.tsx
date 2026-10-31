@@ -291,7 +291,7 @@ function EditCompetitionWizard({ competitionId }: { competitionId: string }) {
 
       {step === 'times' && (
         <>
-          <TeamsScreen />
+          <TeamsScreen fromSettings />
           <FormActionsGlobal note="Os times são salvos na hora. Também dá para gerenciá-los pela aba Times.">
             <ButtonGlobal label="Continuar" onClick={() => goTo(nextWizardStep(step))} />
           </FormActionsGlobal>

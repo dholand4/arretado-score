@@ -56,4 +56,21 @@ describe('TeamDetailScreen', () => {
     fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Excluir' }));
     expect(removeTeam.mutate).toHaveBeenCalledWith('t1', expect.any(Object));
   });
+
+  it('goes back to the settings when opened from there', () => {
+    const routes = (
+      <Routes>
+        <Route path="/painel/competicoes/:competitionId/times/:teamId" element={<TeamDetailScreen />} />
+      </Routes>
+    );
+    const { unmount } = renderScreen(routes, '/painel/competicoes/c1/times/t1');
+    expect(screen.getByRole('link', { name: '← Times' })).toHaveAttribute('href', '/painel/competicoes/c1/times');
+    unmount();
+
+    renderScreen(routes, { pathname: '/painel/competicoes/c1/times/t1', state: { origem: 'configuracao' } });
+    expect(screen.getByRole('link', { name: '← Configuração' })).toHaveAttribute(
+      'href',
+      '/painel/competicoes/c1/configuracao?etapa=times',
+    );
+  });
 });

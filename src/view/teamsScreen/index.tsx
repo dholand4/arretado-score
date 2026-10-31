@@ -13,13 +13,14 @@ import { useDonos } from '@/hooks/useCompetitionAdmins';
 import { useRouteParams } from '@/hooks/useRouteParams';
 import { useTeams } from '@/hooks/useTeams';
 import { useConfirmAction } from '@/hooks/useConfirm';
-import { paths } from '@/routes/types';
+import { paths, type ITeamRouteState } from '@/routes/types';
 import { getErrorMessage } from '@/utils/appError';
 import { matchesSearch, pluralize } from '@/utils/text';
 import { phoneDigits } from '@/utils/phone';
 import { Feedback, Found, Item, List, Meta, Name, Search, TeamLink, Texts } from './style';
 
-export function TeamsScreen() {
+// Também aparece dentro da configuração (etapa Times): aí o time aberto volta para a configuração.
+export function TeamsScreen({ fromSettings = false }: { fromSettings?: boolean }) {
   const { competitionId } = useRouteParams('competitionId');
   const { teams, isLoading, error, refetch, createTeam } = useTeams(competitionId);
   const [creating, setCreating] = useState(false);
@@ -78,7 +79,10 @@ export function TeamsScreen() {
           <List aria-label="Times">
             {resultados.map(({ team, jogadores, porNome, porTelefone }) => (
               <Item key={team.id}>
-                <TeamLink to={paths.competitionTeam(competitionId, team.id)}>
+                <TeamLink
+                  to={paths.competitionTeam(competitionId, team.id)}
+                  state={fromSettings ? ({ origem: 'configuracao' } satisfies ITeamRouteState) : undefined}
+                >
                   <AvatarGlobal name={team.nome} src={team.logo_url} shape="square" />
                   <Texts>
                     <Name>

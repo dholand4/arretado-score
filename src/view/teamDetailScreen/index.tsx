@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { AlertGlobal } from '@/components/alertGlobal';
 import { BadgeGlobal } from '@/components/badgeGlobal';
 import { ButtonGlobal } from '@/components/buttonGlobal';
@@ -17,7 +18,7 @@ import { useRouteParams } from '@/hooks/useRouteParams';
 import { useTeamRoster } from '@/hooks/useTeamRoster';
 import { useTeam, useTeams } from '@/hooks/useTeams';
 import { useConfirmAction } from '@/hooks/useConfirm';
-import { paths } from '@/routes/types';
+import { paths, type ITeamRouteState } from '@/routes/types';
 import type { ITimeDetalhe } from '@/@types/competition';
 import { getErrorMessage } from '@/utils/appError';
 import { Feedback } from './style';
@@ -43,7 +44,12 @@ function TeamRoster({ team }: { team: ITimeDetalhe }) {
 
 export function TeamDetailScreen() {
   const { competitionId, teamId } = useRouteParams('competitionId', 'teamId');
-  useBackNavigation({ to: paths.competitionTeams(competitionId), label: 'Times' });
+  // Aberto pela etapa Times da configuração: voltar (e excluir) leva de volta para lá.
+  const fromSettings = (useLocation().state as ITeamRouteState | null)?.origem === 'configuracao';
+  const back = fromSettings
+    ? { to: paths.competitionSettings(competitionId, 'times'), label: 'Configuração' }
+    : { to: paths.competitionTeams(competitionId), label: 'Times' };
+  useBackNavigation(back);
   const navigate = useAppNavigate();
   const { team, isLoading, error, refetch, updateTeam } = useTeam(teamId);
   const { removeTeam } = useTeams(competitionId);
@@ -69,7 +75,7 @@ export function TeamDetailScreen() {
         badges={team.sigla ? <BadgeGlobal label={team.sigla} /> : undefined}
         actions={
           <>
-            <LinkButtonGlobal to={paths.competitionTeams(competitionId)} label="← Times" size="sm" variant="ghost" hideOnMobile />
+            <LinkButtonGlobal to={back.to} label={`← ${back.label}`} size="sm" variant="ghost" hideOnMobile />
             <ButtonGlobal label="Editar time" size="sm" variant="outline" onClick={() => open('edit')} />
             <ButtonGlobal label="Excluir time" size="sm" variant="ghost" onClick={() => open('delete')} />
           </>
@@ -108,7 +114,7 @@ export function TeamDetailScreen() {
           error={removeTeam.error ? getErrorMessage(removeTeam.error) : null}
           onConfirm={() =>
             removeTeam.mutate(team.id, {
-              onSuccess: () => navigate(paths.competitionTeams(competitionId), { replace: true }),
+              onSuccess: () => navigate(back.to, { replace: true }),
             })
           }
           onClose={() => setModal(null)}
