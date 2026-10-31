@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { AlertGlobal } from '@/components/alertGlobal';
-import { BackLinkGlobal } from '@/components/backLinkGlobal';
 import { BadgeGlobal } from '@/components/badgeGlobal';
 import { ButtonGlobal } from '@/components/buttonGlobal';
 import { ConfirmDialogGlobal } from '@/components/confirmDialogGlobal';
@@ -12,6 +11,7 @@ import { PlayerFormModalGlobal } from '@/components/playerFormModalGlobal';
 import { RosterGlobal } from '@/components/rosterGlobal';
 import { TeamFormModalGlobal } from '@/components/teamFormModalGlobal';
 import { useAppNavigate } from '@/hooks/useAppNavigate';
+import { useBackNavigation } from '@/hooks/useBackNavigation';
 import { useDonos } from '@/hooks/useCompetitionAdmins';
 import { useRouteParams } from '@/hooks/useRouteParams';
 import { useTeamRoster } from '@/hooks/useTeamRoster';
@@ -43,6 +43,7 @@ function TeamRoster({ team }: { team: ITimeDetalhe }) {
 
 export function TeamDetailScreen() {
   const { competitionId, teamId } = useRouteParams('competitionId', 'teamId');
+  useBackNavigation({ to: paths.competitionTeams(competitionId), label: 'Times' });
   const navigate = useAppNavigate();
   const { team, isLoading, error, refetch, updateTeam } = useTeam(teamId);
   const { removeTeam } = useTeams(competitionId);
@@ -61,7 +62,6 @@ export function TeamDetailScreen() {
 
   return (
     <>
-      <BackLinkGlobal to={paths.competitionTeams(competitionId)} label="Times" />
       <EntityHeaderGlobal
         title={team.nome}
         subtitle={team.dono ? `Equipe: ${team.dono.nome}${team.dono.telefone ? ` · ${formatPhone(team.dono.telefone)}` : ''}` : 'Sem acesso de equipe'}

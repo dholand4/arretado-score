@@ -29,6 +29,33 @@ export const TopBar = styled.header`
   }
 `;
 
+export const TopBarStart = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xs}px;
+  min-width: 0;
+`;
+
+// "‹" de voltar, como num aplicativo.
+export const BackButton = styled(Link)`
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  min-width: ${({ theme }) => theme.sizes.controlHeight}px;
+  min-height: ${({ theme }) => theme.sizes.controlHeight}px;
+  margin-left: -${({ theme }) => theme.spacing.sm + theme.spacing.xs}px;
+  border-radius: ${({ theme }) => theme.radius.md}px;
+  color: ${({ theme }) => theme.colors.textInverse};
+  font-size: ${({ theme }) => theme.fontSize.xl * 1.5}px;
+  line-height: 1;
+  text-decoration: none;
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.secondaryHover};
+  }
+`;
+
 export const TopBarTitle = styled.span`
   overflow: hidden;
   color: ${({ theme }) => theme.colors.textInverse};

@@ -1,4 +1,5 @@
 import { fireEvent, screen } from '@testing-library/react';
+import { useBackNavigation } from '@/hooks/useBackNavigation';
 import { renderWithRouter } from '@/utils/testUtils';
 import { PanelLayoutGlobal } from '..';
 
@@ -15,7 +16,28 @@ const props = {
   ],
 };
 
+function TeamPage() {
+  useBackNavigation({ to: '/painel/competicoes/c1/times', label: 'Times' });
+  return <p>Time</p>;
+}
+
 describe('PanelLayoutGlobal', () => {
+  it('shows the back arrow only when the screen asks for it', () => {
+    const { unmount } = renderWithRouter(
+      <PanelLayoutGlobal {...props} onSignOut={() => {}}>
+        <p>Lista</p>
+      </PanelLayoutGlobal>,
+    );
+    expect(screen.queryByRole('link', { name: 'Voltar para Times' })).not.toBeInTheDocument();
+    unmount();
+    renderWithRouter(
+      <PanelLayoutGlobal {...props} onSignOut={() => {}}>
+        <TeamPage />
+      </PanelLayoutGlobal>,
+    );
+    expect(screen.getByRole('link', { name: 'Voltar para Times' })).toHaveAttribute('href', '/painel/competicoes/c1/times');
+  });
+
   it('welcomes the user and renders sections and content', () => {
     renderWithRouter(
       <PanelLayoutGlobal {...props} onSignOut={() => {}}>

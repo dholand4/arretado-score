@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import { ButtonGlobal } from '@/components/buttonGlobal';
+import { useBackTarget } from '@/hooks/useBackNavigation';
+import { BackNavigationProvider } from '@/providers/BackNavigationProvider';
 import {
   BackLink,
   Backdrop,
+  BackButton,
   Footer,
   Item,
   Main,
@@ -14,6 +17,7 @@ import {
   Shell,
   Sidebar,
   TopBar,
+  TopBarStart,
   TopBarTitle,
   Welcome,
   WelcomeText,
@@ -21,8 +25,17 @@ import {
 import type { IPanelLayoutProps } from './types';
 
 // Painel com menu lateral: boas-vindas no topo, seções no meio e Sair embaixo.
-// No celular o menu vira gaveta, aberta pelo botão da barra superior.
-export function PanelLayoutGlobal({
+// No celular o menu vira gaveta, aberta pelo botão da barra superior, que também
+// mostra o "‹" de voltar quando a tela aberta define um destino (useBackNavigation).
+export function PanelLayoutGlobal(props: IPanelLayoutProps) {
+  return (
+    <BackNavigationProvider>
+      <PanelLayout {...props} />
+    </BackNavigationProvider>
+  );
+}
+
+function PanelLayout({
   children,
   userName,
   roleLabel,
@@ -33,11 +46,19 @@ export function PanelLayoutGlobal({
   const [menuOpen, setMenuOpen] = useState(false);
   const closeMenu = () => setMenuOpen(false);
   const firstName = userName.split(' ')[0];
+  const back = useBackTarget();
 
   return (
     <Shell>
       <TopBar>
-        <TopBarTitle>Bem-vindo, {firstName}!</TopBarTitle>
+        <TopBarStart>
+          {back && (
+            <BackButton to={back.to} aria-label={`Voltar para ${back.label}`}>
+              ‹
+            </BackButton>
+          )}
+          <TopBarTitle>Bem-vindo, {firstName}!</TopBarTitle>
+        </TopBarStart>
         <MenuButton
           type="button"
           aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'}

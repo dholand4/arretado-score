@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import type { ITimeDetalhe } from '@/@types/competition';
 import { AlertGlobal } from '@/components/alertGlobal';
-import { BackLinkGlobal } from '@/components/backLinkGlobal';
 import { BadgeGlobal } from '@/components/badgeGlobal';
 import { CardGlobal } from '@/components/cardGlobal';
 import { ButtonGlobal } from '@/components/buttonGlobal';
@@ -13,6 +12,7 @@ import { PlayerFormModalGlobal } from '@/components/playerFormModalGlobal';
 import { RosterGlobal } from '@/components/rosterGlobal';
 import { TeamFormModalGlobal } from '@/components/teamFormModalGlobal';
 import { TeamPaymentsGlobal } from '@/components/teamPaymentsGlobal';
+import { useBackNavigation } from '@/hooks/useBackNavigation';
 import { useTeamPayments } from '@/hooks/useFinance';
 import { useRouteParams } from '@/hooks/useRouteParams';
 import { useTeamRoster } from '@/hooks/useTeamRoster';
@@ -76,6 +76,7 @@ function TeamPayments({ team }: { team: ITimeDetalhe }) {
 
 export function MyTeamDetailScreen() {
   const { teamId } = useRouteParams('teamId');
+  useBackNavigation({ to: ROUTES.myTeams, label: 'Meus times' });
   const { team, isLoading, error, refetch, updateTeam } = useTeam(teamId);
   const [editing, setEditing] = useState(false);
   const confirmAction = useConfirmAction();
@@ -85,7 +86,6 @@ export function MyTeamDetailScreen() {
 
   return (
     <>
-      <BackLinkGlobal to={ROUTES.myTeams} label="Meus times" />
       <EntityHeaderGlobal
         title={team.nome}
         subtitle={team.competicao.nome}

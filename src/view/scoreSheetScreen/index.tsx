@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import type { ISumula, ModoResultado, WoAusente } from '@/@types/game';
 import { AlertGlobal } from '@/components/alertGlobal';
-import { BackLinkGlobal } from '@/components/backLinkGlobal';
 import { ButtonGlobal } from '@/components/buttonGlobal';
 import { CheckboxGlobal } from '@/components/checkboxGlobal';
 import { ErrorStateGlobal } from '@/components/errorStateGlobal';
@@ -16,6 +15,7 @@ import { SegmentedGlobal } from '@/components/segmentedGlobal';
 import { SelectGlobal } from '@/components/selectGlobal';
 import { useAppNavigate } from '@/hooks/useAppNavigate';
 import { useAuth } from '@/hooks/useAuth';
+import { useBackNavigation } from '@/hooks/useBackNavigation';
 import { useRouteParams } from '@/hooks/useRouteParams';
 import { useScoreSheet } from '@/hooks/useScoreSheet';
 import { useConfirm } from '@/hooks/useConfirm';
@@ -243,6 +243,7 @@ function SheetForm({ sumula, isMaster, saving, saveError, onSave }: ISheetFormPr
 
 export function ScoreSheetScreen() {
   const { competitionId, gameId } = useRouteParams('competitionId', 'gameId');
+  useBackNavigation({ to: paths.competitionGames(competitionId), label: 'Jogos' });
   const { profile } = useAuth();
   const { sumula, isLoading, error, refetch, saveResult } = useScoreSheet(competitionId, gameId);
   const navigate = useAppNavigate();
@@ -279,7 +280,6 @@ export function ScoreSheetScreen() {
 
   return (
     <>
-      <BackLinkGlobal to={paths.competitionGames(competitionId)} label="Jogos" />
       <PageHeaderGlobal
         title="Súmula"
         actions={
