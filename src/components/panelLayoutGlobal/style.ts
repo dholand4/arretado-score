@@ -47,13 +47,22 @@ export const BackButton = styled(Link)`
   margin-left: -${({ theme }) => theme.spacing.sm + theme.spacing.xs}px;
   border-radius: ${({ theme }) => theme.radius.md}px;
   color: ${({ theme }) => theme.colors.textInverse};
-  font-size: ${({ theme }) => theme.fontSize.xl * 1.5}px;
-  line-height: 1;
-  text-decoration: none;
 
   &:hover {
     background-color: ${({ theme }) => theme.colors.secondaryHover};
   }
+`;
+
+// Ícones da barra (voltar, menu, fechar) desenhados, e não caracteres, para ficarem no centro exato.
+export const BarIcon = styled.svg`
+  display: block;
+  width: ${({ theme }) => theme.spacing.lg}px;
+  height: ${({ theme }) => theme.spacing.lg}px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 `;
 
 export const TopBarTitle = styled.span`
@@ -74,7 +83,6 @@ export const MenuButton = styled.button`
   border-radius: ${({ theme }) => theme.radius.md}px;
   background: transparent;
   color: ${({ theme }) => theme.colors.textInverse};
-  font-size: ${({ theme }) => theme.fontSize.xl}px;
   cursor: pointer;
 `;
 

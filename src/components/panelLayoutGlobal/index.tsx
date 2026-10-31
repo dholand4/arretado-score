@@ -6,6 +6,7 @@ import {
   BackLink,
   Backdrop,
   BackButton,
+  BarIcon,
   Footer,
   Item,
   Main,
@@ -54,7 +55,9 @@ function PanelLayout({
         <TopBarStart>
           {back && (
             <BackButton to={back.to} aria-label={`Voltar para ${back.label}`}>
-              ‹
+              <BarIcon viewBox="0 0 24 24" aria-hidden>
+                <path d="M15 5l-7 7 7 7" />
+              </BarIcon>
             </BackButton>
           )}
           <TopBarTitle>Bem-vindo, {firstName}!</TopBarTitle>
@@ -66,7 +69,9 @@ function PanelLayout({
           aria-controls="painel-menu"
           onClick={() => setMenuOpen((open) => !open)}
         >
-          {menuOpen ? '×' : '☰'}
+          <BarIcon viewBox="0 0 24 24" aria-hidden>
+            <path d={menuOpen ? 'M6 6l12 12M18 6L6 18' : 'M4 7h16M4 12h16M4 17h16'} />
+          </BarIcon>
         </MenuButton>
       </TopBar>
       <Backdrop $open={menuOpen} onClick={closeMenu} />
