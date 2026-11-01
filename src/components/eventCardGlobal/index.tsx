@@ -96,7 +96,7 @@ export function EventCardGlobal({
           </>
         )}
         {!draft && event.jogos.length > 0 && onGenerateArt && (
-          <ButtonGlobal label="Gerar Arte" size="sm" onClick={onGenerateArt} />
+          <ButtonGlobal label="Gerar arte" size="sm" onClick={onGenerateArt} />
         )}
         <ButtonGlobal label="Editar dia" size="sm" variant="outline" disabled={busy} onClick={onEdit} />
         <ButtonGlobal label="Excluir" size="sm" variant="ghost" disabled={busy} onClick={onDelete} />

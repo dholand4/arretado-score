@@ -84,12 +84,12 @@ describe('EventCardGlobal', () => {
     const { rerender } = renderWithTheme(
       <EventCardGlobal event={event({ status: 'publicado' })} {...handlers()} onGenerateArt={onGenerateArt} />,
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Gerar Arte' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Gerar arte' }));
     expect(onGenerateArt).toHaveBeenCalled();
 
     rerender(<EventCardGlobal event={event()} {...handlers()} onGenerateArt={onGenerateArt} />);
-    expect(screen.queryByRole('button', { name: 'Gerar Arte' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Gerar arte' })).not.toBeInTheDocument();
     rerender(<EventCardGlobal event={event({ status: 'publicado', jogos: [] })} {...handlers()} onGenerateArt={onGenerateArt} />);
-    expect(screen.queryByRole('button', { name: 'Gerar Arte' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Gerar arte' })).not.toBeInTheDocument();
   });
 });

@@ -4,6 +4,7 @@ import {
   EVENT_ART_FONT,
   EVENT_ART_FORMATS,
   EVENT_ART_MIME,
+  EVENT_ART_RENDER_SCALE,
   type EventArtFormat,
   type EventArtLayout,
   type IEventArtFormat,
@@ -670,10 +671,13 @@ export async function renderEventArt(
   try {
     const f = EVENT_ART_FORMATS[format];
     const canvas = document.createElement('canvas');
-    canvas.width = f.width;
-    canvas.height = f.height;
+    canvas.width = f.width * EVENT_ART_RENDER_SCALE;
+    canvas.height = f.height * EVENT_ART_RENDER_SCALE;
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new AppError('Não foi possível gerar a arte neste navegador.');
+    // O desenho usa as medidas do formato; a escala só aumenta a resolução.
+    ctx.scale(EVENT_ART_RENDER_SCALE, EVENT_ART_RENDER_SCALE);
+    ctx.imageSmoothingQuality = 'high';
     drawEventArt(ctx, content, images, format, layout, gameId);
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, EVENT_ART_MIME));
     if (!blob) throw new AppError('Não foi possível gerar a arte neste navegador.');

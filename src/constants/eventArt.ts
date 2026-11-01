@@ -51,3 +51,7 @@ export const EVENT_ART_COLORS = {
 export const EVENT_ART_FONT = "system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
 
 export const EVENT_ART_MIME = 'image/png';
+
+// A arte é desenhada no dobro do tamanho do formato (post 2160×2700, story 2160×3840): WhatsApp e
+// Instagram recomprimem a imagem ao enviar, e partindo de mais pixels o texto chega nítido.
+export const EVENT_ART_RENDER_SCALE = 2;
