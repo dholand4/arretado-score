@@ -7,6 +7,7 @@ import type {
   IPessoaOpcao,
 } from '@/@types/competition';
 import type { ICompeticaoCobranca } from '@/@types/finance';
+import type { IRegrasPartida } from '@/@types/liveSheet';
 import { BUCKETS, storagePaths } from '@/constants/storage';
 import { storageService } from './storageService';
 import { supabase } from './supabaseService';
@@ -62,7 +63,9 @@ export const competitionsService = {
 
   async update(
     id: string,
-    patch: Partial<ICompeticaoBasicos & ICompeticaoPontuacao & ICompeticaoCobranca & { logo_url: string | null }>,
+    patch: Partial<
+      ICompeticaoBasicos & ICompeticaoPontuacao & ICompeticaoCobranca & IRegrasPartida & { logo_url: string | null }
+    >,
   ): Promise<ICompeticao> {
     const { data, error } = await supabase.from('competicoes').update(patch).eq('id', id).select().single();
     if (error) throw error;

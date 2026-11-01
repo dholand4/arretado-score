@@ -11,4 +11,6 @@ export interface IEventCardProps {
   // Mudar data, hora, local, intervalo e observações (rascunho ou publicado).
   onEdit: () => void;
   onDelete: () => void;
+  // Arte de divulgação (só em dia publicado com jogos).
+  onGenerateArt?: () => void;
 }

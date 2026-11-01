@@ -286,6 +286,9 @@ export function ScoreSheetScreen() {
           <>
             <LinkButtonGlobal to={paths.competitionGames(competitionId)} label="← Jogos" size="sm" variant="ghost" hideOnMobile />
             <LinkButtonGlobal to={paths.gamePrintSheet(competitionId, gameId)} label="Imprimir súmula" size="sm" />
+            {sumula && ['pendente', 'agendado'].includes(sumula.jogo.status) && (
+              <LinkButtonGlobal to={paths.gameLiveSheet(competitionId, gameId)} label="Súmula ao vivo" size="sm" variant="secondary" />
+            )}
           </>
         }
       />

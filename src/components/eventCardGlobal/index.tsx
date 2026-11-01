@@ -27,6 +27,7 @@ export function EventCardGlobal({
   onPublish,
   onEdit,
   onDelete,
+  onGenerateArt,
 }: IEventCardProps) {
   const status = STATUS_EVENTO[event.status];
   const draft = event.status === 'rascunho';
@@ -94,6 +95,9 @@ export function EventCardGlobal({
             <ButtonGlobal label="Sortear de novo" size="sm" variant="outline" disabled={busy} onClick={onRedraw} />
             <ButtonGlobal label="Publicar" size="sm" disabled={busy || event.jogos.length === 0} onClick={onPublish} />
           </>
+        )}
+        {!draft && event.jogos.length > 0 && onGenerateArt && (
+          <ButtonGlobal label="Gerar Arte" size="sm" onClick={onGenerateArt} />
         )}
         <ButtonGlobal label="Editar dia" size="sm" variant="outline" disabled={busy} onClick={onEdit} />
         <ButtonGlobal label="Excluir" size="sm" variant="ghost" disabled={busy} onClick={onDelete} />

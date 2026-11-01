@@ -78,4 +78,18 @@ describe('EventCardGlobal', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Editar dia' }));
     expect(h.onEdit).toHaveBeenCalled();
   });
+
+  it('offers the promo art only on a published day with games', () => {
+    const onGenerateArt = vi.fn();
+    const { rerender } = renderWithTheme(
+      <EventCardGlobal event={event({ status: 'publicado' })} {...handlers()} onGenerateArt={onGenerateArt} />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Gerar Arte' }));
+    expect(onGenerateArt).toHaveBeenCalled();
+
+    rerender(<EventCardGlobal event={event()} {...handlers()} onGenerateArt={onGenerateArt} />);
+    expect(screen.queryByRole('button', { name: 'Gerar Arte' })).not.toBeInTheDocument();
+    rerender(<EventCardGlobal event={event({ status: 'publicado', jogos: [] })} {...handlers()} onGenerateArt={onGenerateArt} />);
+    expect(screen.queryByRole('button', { name: 'Gerar Arte' })).not.toBeInTheDocument();
+  });
 });

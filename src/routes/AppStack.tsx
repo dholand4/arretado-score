@@ -11,6 +11,7 @@ import { PAPEL_LABEL } from '@/constants/roles';
 import { useAppNavigate } from '@/hooks/useAppNavigate';
 import { useAuth } from '@/hooks/useAuth';
 import { useCompetition, useCompetitions } from '@/hooks/useCompetitions';
+import { useRealtimeCompetitionGames } from '@/hooks/useGames';
 import { useConfirmAction } from '@/hooks/useConfirm';
 import { useRouteParams } from '@/hooks/useRouteParams';
 import { useMyTeams, useTeamSummary } from '@/hooks/useTeams';
@@ -27,6 +28,7 @@ import {
   EventsScreen,
   FinanceScreen,
   GamesScreen,
+  LiveScoreSheetScreen,
   MyTeamDetailScreen,
   MyTeamLeagueScreen,
   MyTeamsScreen,
@@ -187,6 +189,7 @@ function CompetitionLayoutRoute() {
   const { competitionId } = useRouteParams('competitionId');
   const { competition, setActive } = useCompetition(competitionId);
   const confirmAction = useConfirmAction();
+  useRealtimeCompetitionGames(competitionId);
   return (
     <>
       {competition && (
@@ -226,6 +229,15 @@ export const appStack: RouteObject = {
       element: (
         <RequireRole roles={ADMIN_ROLES}>
           <PrintScoreSheetScreen />
+        </RequireRole>
+      ),
+    },
+    // Súmula ao vivo: tela inteira para o mesário (celular, tablet ou computador).
+    {
+      path: ROUTE_PATTERNS.gameLiveSheet,
+      element: (
+        <RequireRole roles={ADMIN_ROLES}>
+          <LiveScoreSheetScreen />
         </RequireRole>
       ),
     },

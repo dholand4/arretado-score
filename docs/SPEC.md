@@ -87,6 +87,14 @@ Nomes de tabelas e colunas em português, `snake_case`. Todas as tabelas têm `i
   - `wo_placar_vencedor int default 20`
   - `wo_placar_perdedor int default 0`
 - `criterios_desempate jsonb default '["confronto_direto","saldo","pontos_pro"]'` — ordem aplicada após os pontos
+- **Regras da partida** (usadas pela súmula ao vivo, 6.5.1; padrão FIBA, editáveis por liga na etapa "Pontuação e W.O." do assistente):
+  - `qtd_periodos int default 4`
+  - `duracao_periodo_min int default 10`
+  - `duracao_prorrogacao_min int default 5`
+  - `faltas_bonus_equipe int default 4` — a partir da falta seguinte a esta, no mesmo período, a equipe está em bônus (lances livres)
+  - `faltas_exclusao_jogador int default 5` — com esta falta o jogador é excluído do jogo
+  - `tempos_primeira_metade int default 2`, `tempos_segunda_metade int default 3`, `tempos_prorrogacao int default 1` — tempos debitados por equipe
+  - `relogio_posse boolean default true`, `posse_segundos int default 24`, `posse_reset_curto int default 14` — relógio de posse
 - **Cobrança** (seção 8):
   - `cobranca_modelo text default 'nenhuma'` — `'nenhuma' | 'por_time' | 'por_jogador'`
   - `cobranca_valor numeric(10,2)`
@@ -237,6 +245,30 @@ O admin pode adicionar quantas categorias quiser (ex.: no basquete, Rebotes, Ass
 - `valor int not null default 0`
 - `unique (jogo_id, jogador_id, categoria_id)`
 
+**`jogo_mesa`** (estado da súmula ao vivo de um jogo, 6.5.1; uma linha por jogo)
+- `jogo_id uuid primary key references jogos on delete cascade`
+- `status text default 'em_andamento'` — `'em_andamento' | 'encerrada'`
+- `escalados uuid[]` — jogadores marcados para o jogo
+- `periodo int not null default 1` — períodos depois de `qtd_periodos` são prorrogações
+- `relogio_restante_ms int not null`, `posse_restante_ms int` (nulo sem relógio de posse) — quanto faltava em `relogio_referencia_em`
+- `relogio_rodando boolean`, `relogio_referencia_em timestamptz` — com o relógio rodando, o restante é o valor guardado menos o que passou desde a referência (na hora do servidor)
+- `apontador text`, `cronometrista text`, `operador_24 text`, `arbitro text`, `fiscal text` — nomes para a súmula impressa
+- `aberta_por uuid references profiles`, `created_at`, `encerrada_em timestamptz`
+
+**`jogo_lances`** (cada registro da mesa, na ordem em que aconteceu)
+- `id uuid primary key` — gerado no aparelho, para que reenviar o mesmo lance não o duplique
+- `jogo_id uuid references jogos on delete cascade`
+- `seq bigint generated always as identity` — ordem de chegada
+- `periodo int not null`
+- `tempo_restante_ms int not null` — relógio no momento do lance
+- `tipo text not null` — `'ponto' | 'falta' | 'tempo'`
+- `time_id uuid references times not null`
+- `jogador_id uuid references jogadores` — nulo em `tempo`
+- `valor int` — em `ponto`: 1, 2 ou 3
+- `tipo_falta text` — em `falta`: `'pessoal' | 'tecnica' | 'antidesportiva' | 'desqualificante'`
+- `anulado boolean default false` — "desfazer" anula em vez de apagar
+- `criado_por uuid references profiles`, `created_at`
+
 ### 4.6 Financeiro
 
 **`cobrancas`** (time ou jogador → competição; visível só para admins da competição e master)
@@ -276,7 +308,7 @@ Os números da tabela e dos rankings **não são armazenados**; são calculados 
 Tela em etapas, com botão "Salvar rascunho" em todas:
 
 1. **Dados básicos** — nome, logo (upload), modalidade, descrição, local padrão, intervalo padrão entre jogos. O `slug` é gerado do nome e pode ser editado.
-2. **Pontuação e W.O.** — vem preenchido com o padrão (vitória 1, derrota 0, W.O. 20 x 0, derrota por W.O. 0). Botão "Usar padrão FIBA" troca para vitória 2, derrota 1, derrota por W.O. 0. Futsal liga empate por padrão (vitória 3, empate 1, derrota 0). Ordem dos critérios de desempate arrastável.
+2. **Pontuação e W.O.** — vem preenchido com o padrão (vitória 1, derrota 0, W.O. 20 x 0, derrota por W.O. 0). Botão "Usar padrão FIBA" troca para vitória 2, derrota 1, derrota por W.O. 0. Futsal liga empate por padrão (vitória 3, empate 1, derrota 0). Ordem dos critérios de desempate arrastável. Num bloco "Regras da partida", os campos da súmula ao vivo (4.2): períodos, duração, prorrogação, bônus de faltas da equipe, faltas para exclusão e tempos debitados, já com o padrão FIBA. Não entram na trava de estrutura.
 3. **Estatísticas** — lista com a categoria de placar (fixa, só renomeável) e botão para adicionar outras (nome, sigla, título do ranking).
 4. **Fases** — o admin adiciona fases em ordem. Para cada uma: nome, tipo e os campos do tipo (seção 4.4). Mostra um **resumo visual** do formato (ex.: "Fase 1: 5 times, todos contra todos, 10 jogos → 4 avançam → Semifinal melhor de 3: 1º x 4º, 2º x 3º → Final melhor de 3"). Valida a coerência (ex.: classificados precisam caber no mata-mata seguinte, que precisa de número par de times).
 5. **Cobrança** — nenhuma, por time ou por jogador; valor, dia de vencimento, mês de início, quantidade de meses.
@@ -348,6 +380,34 @@ Colunas: **J** (jogos), **V**, **E** (só se `permite_empate`), **D**, **WO** (d
 - Ao salvar: `status = 'encerrado'`, grava placar e `vencedor_id`, atualiza a série (se houver) e dispara a verificação de avanço (6.6).
 - Súmula pode ser editada depois. Se a fase do jogo já estiver concluída e a fase seguinte já tiver jogos encerrados, só o master pode editar, com aviso.
 - Ações sensíveis (salvar súmula, W.O., edição de súmula encerrada) devem ser executadas numa função SQL/RPC transacional, para manter placar, série e avanço consistentes.
+
+#### 6.5.1 Súmula ao vivo (mesa)
+O mesário preenche a súmula durante o jogo, no celular ou tablet, do mesmo jeito que a súmula de papel: cronômetro, pontos e faltas de cada jogador, faltas da equipe e tempos debitados. No fim, o jogo é encerrado e vira uma súmula normal (6.5).
+
+- **Quem opera**: admin da competição e master (o login do coordenador basta).
+- **Onde**: rota própria, sem o menu do painel, aberta pelo botão "Súmula ao vivo" da súmula do jogo. A tela se adapta: no celular, um time por vez (abas "Casa", "Fora" e "Lances"); no tablet, os dois times lado a lado; no computador, os dois times e os lances. No computador, **espaço** liga e pausa o relógio e **Ctrl/Cmd+Z** desfaz. A tela fica acesa enquanto a mesa está aberta.
+- **Abrir a mesa**: em jogo `pendente` ou `agendado`, com os dois times definidos e ainda sem resultado. Abrir cria a linha em `jogo_mesa` (período 1, relógio parado com a duração do período). Jogo com mesa aberta não aceita súmula normal nem W.O. até a mesa ser encerrada ou descartada.
+- **Antes de começar**: o mesário marca, em cada time, os jogadores que vão jogar (entre os ativos do elenco, com o número). Só eles aparecem para lançar. Dá para incluir alguém depois. Os nomes de apontador, cronometrista, árbitro e fiscal são opcionais.
+- **Cronômetro** (regressivo):
+  - Iniciar e pausar; corrigir o tempo (digitar ou ajustar segundos) com o relógio parado.
+  - Ao chegar a zero, para sozinho e oferece **encerrar o período**.
+  - Depois do último período regulamentar: se o placar estiver empatado e o empate não for permitido (6.5), começa uma prorrogação com `duracao_prorrogacao_min`, quantas forem necessárias; senão, oferece **encerrar o jogo**.
+  - O estado fica em `jogo_mesa`: recarregar a página ou trocar de aparelho continua de onde parou, com o relógio no ponto certo.
+- **Relógio de posse** (se `relogio_posse`): corre e para junto com o cronômetro. Botões para reiniciar com `posse_segundos` (24) ou `posse_reset_curto` (14) e para corrigir ±1 s. Cesta de 2 ou 3 reinicia a posse cheia sozinha. No zero, os dois relógios param, toca a sirene e aparece "Estouro do relógio de posse" com o botão de nova posse. Quando falta menos tempo de jogo do que de posse, o relógio de posse fica apagado (não vale). Ao trocar de período, volta cheio.
+- **Lances**: escolher o time, o jogador e a ação: **+1**, **+2**, **+3** ou **Falta** (pessoal por padrão; técnica, antidesportiva ou desqualificante numa opção). Cada lance grava o período e o tempo do relógio. Dá para lançar com o relógio parado (lances livres). Falta e tempo debitado param o relógio.
+- **Faltas do jogador**: a tela mostra as faltas de cada um (todas contam). O jogador fica **excluído** com `faltas_exclusao_jogador` faltas, com uma desqualificante ou com duas entre técnicas e antidesportivas: aviso na hora e ele não recebe mais lances.
+- **Faltas da equipe**: contam todas as faltas dos jogadores, por período; as prorrogações contam junto com o último período. Ao passar de `faltas_bonus_equipe`, a tela avisa que a equipe está **em bônus**.
+- **Tempos debitados**: botão por equipe. Limite por metade: `tempos_primeira_metade` nos primeiros `qtd_periodos / 2` períodos, `tempos_segunda_metade` nos demais e `tempos_prorrogacao` em cada prorrogação. Tempo não usado não passa para a metade seguinte.
+- **Placar**: sempre a soma dos pontos dos lances não anulados. O placar por período e a "contagem de pontos" corrida saem dos lances.
+- **Desfazer**: anula o último lance; a lista de lances do jogo permite anular qualquer um (com confirmação). Lance anulado não conta em nada, mas continua no histórico.
+- **Encerrar o jogo** (RPC transacional, com confirmação mostrando o placar): aplica as mesmas validações e efeitos da súmula normal (6.5). Grava a presença (`jogo_jogadores`) dos jogadores marcados e os pontos de cada um na categoria `soma_no_placar` (`sumula_estatisticas`); `so_placar = false`. A mesa fica `encerrada` e só para leitura.
+- **Depois de encerrado**: as outras categorias (rebotes, assistências…) e qualquer correção são feitas na súmula normal. A súmula normal manda; os lances ficam como histórico.
+- **Descartar a mesa**: enquanto não encerrada, o admin pode descartá-la (apaga `jogo_mesa` e os lances, com confirmação) e voltar à súmula normal.
+- **Conexão**: cada lance e cada mudança do relógio vão para o servidor na hora. Sem conexão, o lance entra numa fila no aparelho, aparece como "pendente" e é reenviado quando a internet volta; como o `id` vem do aparelho, reenviar não duplica. Um aviso fixo mostra quando há lances pendentes, e o jogo não pode ser encerrado com fila pendente.
+- **Um aparelho por jogo**: pensado para uma mesa só. Se outro aparelho abrir a mesma mesa, ele vê o mesmo estado e pode continuar (ex.: o celular descarregou).
+- Todas as escritas (abrir, lance, anular, relógio, período, encerrar, descartar) são RPCs que conferem se o jogo é da competição do usuário e se a mesa está `em_andamento`.
+
+**Decisões**: regras FIBA como padrão, editáveis por liga; o coordenador opera a mesa; relógio de posse incluído; placar ao vivo para o público e súmula impressa preenchida ficam para a etapa 10.
 
 ### 6.6 Séries e avanço de fase
 - **Série melhor de N**: vence quem chegar a ⌈N/2⌉ vitórias. O jogo 1 é criado (`pendente`) assim que os dois times da série estão definidos. Cada jogo seguinte só é criado quando o anterior termina e a série ainda não foi decidida. Mando nominal: time de melhor campanha é mandante nos jogos ímpares.
@@ -449,13 +509,25 @@ Atualização ao vivo via Supabase Realtime nas páginas de jogos, tabela e deta
 | `/painel/competicoes/:id` | master, admin | Visão geral: status, fase atual, próximos passos ("Faltam 3 súmulas para fechar a Fase 1") |
 | `.../:id/configuracao` | master, admin | Etapas do assistente para editar (respeitando a trava) |
 | `.../:id/times` | master, admin | Times, dono vinculado, jogadores |
-| `.../:id/eventos` | master, admin | Dias de jogos: criar, montar, reordenar, publicar |
+| `.../:id/eventos` | master, admin | Dias de jogos: criar, montar, reordenar, publicar e gerar a arte de divulgação de um dia publicado (abaixo) |
 | `.../:id/jogos` | master, admin | Todos os jogos com filtros; acesso à súmula e ao W.O. |
 | `.../:id/jogos/:jogoId/sumula` | master, admin | Súmula (seção 6.5) |
+| `.../:id/jogos/:jogoId/mesa` | master, admin | Súmula ao vivo (seção 6.5.1): cronômetro, relógio de posse, lances, faltas e tempos. Tela para celular, tablet ou computador, sem o menu do painel |
 | `.../:id/financeiro` | master, admin | Seção 8.1 |
 | `.../:id/admins` | master | Quem administra a competição |
 | `/painel/meus-times` | dono_time | Times vinculados ao dono |
 | `/painel/meus-times/:timeId` | dono_time | Elenco (cadastro com foto) e pagamentos do elenco (8.2) |
+
+**Arte de divulgação do dia** (botão "Gerar Arte" no cartão de um dia publicado com jogos)
+- Imagem PNG para o Instagram, em dois formatos: **post** 1080 × 1350 (4:5) e **story** 1080 × 1920 (9:16, com margens livres em cima e embaixo para os botões do Instagram).
+- Cabeçalho: logo da liga (ou o nome, se não houver logo), "Jogos do dia", a data por extenso, o horário de início e o local; no rodapé, a marca Arretado Score. As observações do dia não entram.
+- Três opções de conteúdo:
+  - **Com horários** (padrão): os jogos na ordem do dia, cada um com "Jogo N", o horário, os dois times com os logos e a fase.
+  - **Só os times**: os times que jogam no dia, um abaixo do outro (duas colunas a partir de 7 times), cada um uma vez, na ordem em que entram em quadra, sem confrontos nem horários.
+  - **Agora em quadra**: um confronto só, em destaque, para postar durante o dia. Vem escolhido o jogo da vez (o primeiro do dia ainda sem resultado; com todos encerrados, o último) e dá para trocar por outro. O título vira "Agora em quadra" e o cartão mostra "Jogo N", os dois times com logos grandes, "VS", o horário e a fase. Se o jogo já terminou, o título vira "Resultado" e o cartão mostra o placar final. Confronto que depende do anterior continua como "Perdedor Jogo 1" / "Vencedor Jogo 1" até sair o resultado.
+- Logo do time num círculo: o fundo do círculo (e a placa do logo da liga) usa a cor da borda do próprio logo, para um logo quadrado preto não ficar dentro de um círculo branco; logo com fundo transparente fica sobre branco. Time sem logo mostra um círculo com as iniciais.
+- Os confrontos aparecem como no app (6.2, item 8): os que dependem do resultado anterior saem como "Perdedor Jogo 1 x C" e "Vencedor Jogo 1 x C". Jogo já encerrado mostra o placar no lugar do horário; W.O. e cancelado mostram o status.
+- Gerada no navegador (canvas), nada é gravado no banco nem no Storage. A prévia abre num modal com a escolha do formato e os botões **Compartilhar** (menu do celular com o arquivo, pela Web Share API) e **Baixar PNG**. Sem suporte a compartilhar arquivo, "Compartilhar" baixa a imagem.
 
 ---
 
@@ -475,6 +547,7 @@ Atualização ao vivo via Supabase Realtime nas páginas de jogos, tabela e deta
 | `times`, `jogadores` | pública (anon) se a competição não está em rascunho | admin da competição; dono do time (`jogadores` do seu time e `times.logo_url`/`nome` do seu time) |
 | `eventos`, `jogos` | pública só de eventos publicados / jogos de eventos publicados ou encerrados | admin da competição |
 | `jogo_jogadores`, `sumula_estatisticas` | pública para jogos encerrados | admin da competição (via RPC) |
+| `jogo_mesa`, `jogo_lances` | admin da competição (pública na etapa 10) | admin da competição (via RPC, 6.5.1) |
 | `cobrancas` | admin da competição | admin da competição |
 | `pagamentos_internos` | dono do time, master | dono do time, master |
 
@@ -529,11 +602,35 @@ Implemente uma etapa por vez. Ao final de cada uma, rode o projeto, confira os c
 **Etapa 8 — Acabamento**
 - Estados vazios, carregamento e erro em todas as telas; revisão mobile; revisão das policies com os 4 perfis; README com instalação, variáveis, primeiro master e deploy.
 
+**Etapa 9 — Súmula ao vivo (mesa)**
+- Regras da partida em `competicoes` (e no assistente), tabelas `jogo_mesa` e `jogo_lances`, RPCs da seção 6.5.1, tela `.../jogos/:jogoId/mesa` e o atalho "Súmula ao vivo" na súmula do jogo.
+- ✅ Abrir a mesa, marcar os jogadores, iniciar o relógio, lançar +2 e +3 e ver o placar mudar; pausar, recarregar a página e o relógio continuar no tempo certo.
+- ✅ O relógio de posse corre com o cronômetro, reinicia em 24 ou 14, volta a 24 depois de uma cesta e para tudo no estouro.
+- ✅ 5ª falta exclui o jogador; a 5ª falta da equipe no período avisa o bônus; o 3º tempo na primeira metade é recusado.
+- ✅ Desfazer anula o último lance e o placar volta.
+- ✅ Empate no fim do 4º período abre prorrogação; encerrar grava placar, pontos por jogador, tabela e cestinha como a súmula normal.
+- ✅ Sem internet, os lances ficam pendentes e sobem quando a conexão volta, sem duplicar; não dá para encerrar com fila pendente.
+- ✅ Dono do time e visitante não leem nem escrevem `jogo_mesa`/`jogo_lances`.
+
+**Etapa 10 — Placar ao vivo e súmula preenchida**
+- Página pública do jogo com placar, período e relógio ao vivo (Realtime) enquanto a mesa está aberta.
+- Súmula para imprimir já preenchida com os lances: faltas por jogador, faltas da equipe, tempos, contagem de pontos e placar por período, para as assinaturas.
+
+**Etapa 11 — Arte de divulgação do dia**
+- Botão "Gerar Arte" nos dias publicados, prévia em modal e arte em canvas (9.3), sem mudança no banco.
+- ✅ A arte tem o logo da liga, a data, o horário, o local e os jogos na ordem, com horário e logos dos times.
+- ✅ Confrontos que dependem do resultado anterior aparecem como "Perdedor Jogo 1 x C" / "Vencedor Jogo 1 x C".
+- ✅ Post (1080 × 1350) e story (1080 × 1920), com horários ou só os times; nomes longos diminuem a fonte sem sair do cartão.
+- ✅ "Agora em quadra" traz o primeiro jogo sem resultado; trocar o confronto gera a arte dele; jogo encerrado sai como "Resultado" com o placar.
+- ✅ Logo com fundo preto fica num círculo preto; logo transparente, num círculo branco.
+- ✅ No celular, "Compartilhar" abre o menu com a imagem; no computador, "Baixar PNG" salva o arquivo.
+
 ---
 
 ## 12. Fora do escopo desta versão
 - Pagamento online (Pix/cartão).
-- Súmula lance a lance e cronômetro.
+- Substituições e controle de quem está em quadra na súmula ao vivo.
+- Estatísticas além dos pontos lançadas ao vivo (rebotes, assistências…): completadas na súmula normal.
 - Vários jogos simultâneos / mais de uma quadra por dia.
 - Notificações (e-mail, WhatsApp, push).
 - App nativo (a versão web deve funcionar bem no celular).
@@ -547,3 +644,6 @@ Implemente uma etapa por vez. Ao final de cada uma, rode o projeto, confira os c
 - **Origem**: regra que diz de onde vem um time de uma série ("1º da Fase 1", "vencedor da S1").
 - **Súmula**: registro do jogo com as estatísticas de cada jogador.
 - **W.O.**: vitória por ausência do adversário.
+- **Mesa / mesário**: quem registra a súmula durante o jogo (pontos, faltas, tempos e cronômetro).
+- **Lance**: cada registro da mesa (ponto, falta ou tempo debitado), com período e tempo do relógio.
+- **Bônus**: situação da equipe que passou do limite de faltas no período; as faltas seguintes dão lances livres ao adversário.

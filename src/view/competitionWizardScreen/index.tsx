@@ -15,6 +15,7 @@ import { FormatSummaryGlobal } from '@/components/formatSummaryGlobal';
 import { LoaderGlobal } from '@/components/loaderGlobal';
 import { PageHeaderGlobal } from '@/components/pageHeaderGlobal';
 import { PhasesEditorGlobal } from '@/components/phasesEditorGlobal';
+import { MatchRulesFormGlobal } from '@/components/matchRulesFormGlobal';
 import { ScoringFormGlobal } from '@/components/scoringFormGlobal';
 import { SelectGlobal } from '@/components/selectGlobal';
 import { StepperGlobal } from '@/components/stepperGlobal';
@@ -119,7 +120,7 @@ function EditCompetitionWizard({ competitionId }: { competitionId: string }) {
   const [saved, setSaved] = useState(false);
   const [categoryError, setCategoryError] = useState<string | null>(null);
 
-  const { competition, isLoading, error, refetch, saveBasics, saveScoring, saveBilling, setActive } =
+  const { competition, isLoading, error, refetch, saveBasics, saveScoring, saveMatchRules, saveBilling, setActive } =
     useCompetition(competitionId);
   const [confirmDeactivate, setConfirmDeactivate] = useState(false);
   const confirmAction = useConfirmAction();
@@ -203,19 +204,29 @@ function EditCompetitionWizard({ competitionId }: { competitionId: string }) {
       )}
 
       {step === 'pontuacao' && (
-        <ScoringFormGlobal
-          key={`pontuacao-${competition.id}`}
-          initialValues={competition}
-          locked={locked}
-          warnRecalculation={competition.estrutura_travada && profile?.papel === 'master'}
-          saving={saveScoring.isPending}
-          error={saveScoring.error ? getErrorMessage(saveScoring.error) : null}
-          onSave={(input, advance) =>
-            confirmAction('Salvar a pontuação da liga?', () =>
-              saveScoring.mutate(input, { onSuccess: () => afterSave(advance) }),
-            )
-          }
-        />
+        <>
+          <ScoringFormGlobal
+            key={`pontuacao-${competition.id}`}
+            initialValues={competition}
+            locked={locked}
+            warnRecalculation={competition.estrutura_travada && profile?.papel === 'master'}
+            saving={saveScoring.isPending}
+            error={saveScoring.error ? getErrorMessage(saveScoring.error) : null}
+            onSave={(input, advance) =>
+              confirmAction('Salvar a pontuação da liga?', () =>
+                saveScoring.mutate(input, { onSuccess: () => afterSave(advance) }),
+              )
+            }
+          />
+          <MatchRulesFormGlobal
+            key={`regras-${competition.id}`}
+            initialValues={competition}
+            saving={saveMatchRules.isPending}
+            saved={saveMatchRules.isSuccess}
+            error={saveMatchRules.error ? getErrorMessage(saveMatchRules.error) : null}
+            onSave={(input) => confirmAction('Salvar as regras da partida?', () => saveMatchRules.mutate(input))}
+          />
+        </>
       )}
 
       {step === 'estatisticas' && (

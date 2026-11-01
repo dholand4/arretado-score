@@ -21,6 +21,7 @@ export const QUERY_KEYS = {
   // Jogos, súmula e classificação
   games: (competicaoId: string) => ['competitions', competicaoId, 'games'] as const,
   scoreSheet: (jogoId: string) => ['games', jogoId, 'score-sheet'] as const,
+  liveSheet: (jogoId: string) => ['games', jogoId, 'live-sheet'] as const,
   printableSheet: (jogoId: string) => ['games', jogoId, 'printable-sheet'] as const,
   classificationAll: ['classification'] as const,
   roundRobinPreview: (qtdTimes: number, turnos: number) => ['round-robin-preview', qtdTimes, turnos] as const,

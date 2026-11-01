@@ -90,6 +90,7 @@ describe('CompetitionWizardScreen', () => {
       error: null,
       saveBasics: mutation(),
       saveScoring: mutation(),
+      saveMatchRules: mutation(),
     } as unknown as ReturnType<typeof useCompetition>);
     renderAt('/painel/competicoes/c1/configuracao?etapa=pontuacao');
     expect(screen.getByRole('button', { name: /Pontuação/ })).toHaveAttribute('aria-current', 'step');
@@ -104,6 +105,7 @@ describe('CompetitionWizardScreen', () => {
       error: null,
       saveBasics: mutation(),
       saveScoring: mutation(),
+      saveMatchRules: mutation(),
     } as unknown as ReturnType<typeof useCompetition>);
     renderAt('/painel/competicoes/c1/configuracao');
     fireEvent.click(screen.getByRole('button', { name: /Revisão/ }));
@@ -117,6 +119,7 @@ describe('CompetitionWizardScreen', () => {
       error: null,
       saveBasics: mutation(),
       saveScoring: mutation(),
+      saveMatchRules: mutation(),
     } as unknown as ReturnType<typeof useCompetition>);
     vi.mocked(useTeams).mockReturnValue({
       teams: [1, 2, 3, 4, 5].map((n) => ({ id: `t${n}` })),
@@ -155,6 +158,7 @@ describe('CompetitionWizardScreen', () => {
       error: null,
       saveBasics: mutation(),
       saveScoring: mutation(),
+      saveMatchRules: mutation(),
     } as unknown as ReturnType<typeof useCompetition>);
     renderAt('/painel/competicoes/c1/configuracao?etapa=fases');
     expect(screen.getByText(/Só o admin master pode alterar as fases/)).toBeInTheDocument();

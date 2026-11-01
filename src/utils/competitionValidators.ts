@@ -7,6 +7,7 @@ import type {
   ITimeInput,
 } from '@/@types/competition';
 import type { ICompeticaoCobranca } from '@/@types/finance';
+import type { IRegrasPartida } from '@/@types/liveSheet';
 import { isValidSlug } from './slugify';
 import { phoneError } from './phone';
 
@@ -20,6 +21,32 @@ export function validateBasics(values: ICompeticaoBasicos): FormErrors<ICompetic
   if (!isValidSlug(values.slug)) errors.slug = 'Use só letras minúsculas, números e hífens (ex.: liga-2026).';
   if (!Number.isInteger(values.intervalo_jogos_min) || values.intervalo_jogos_min <= 0) {
     errors.intervalo_jogos_min = 'Informe um intervalo em minutos maior que zero.';
+  }
+  return errors;
+}
+
+// Regras da partida (súmula ao vivo, seção 6.5.1): mesmos limites do banco.
+export const MATCH_RULE_LIMITS = {
+  qtd_periodos: [1, 8],
+  duracao_periodo_min: [1, 60],
+  duracao_prorrogacao_min: [1, 30],
+  faltas_bonus_equipe: [1, 20],
+  faltas_exclusao_jogador: [1, 20],
+  tempos_primeira_metade: [0, 10],
+  tempos_segunda_metade: [0, 10],
+  tempos_prorrogacao: [0, 10],
+  posse_segundos: [5, 60],
+  posse_reset_curto: [1, 60],
+} as const satisfies Partial<Record<keyof IRegrasPartida, readonly [number, number]>>;
+
+export function validateMatchRules(values: IRegrasPartida): FormErrors<IRegrasPartida> {
+  const errors: FormErrors<IRegrasPartida> = {};
+  for (const [field, [min, max]] of Object.entries(MATCH_RULE_LIMITS) as [keyof typeof MATCH_RULE_LIMITS, readonly [number, number]][]) {
+    const value = values[field];
+    if (!Number.isInteger(value) || value < min || value > max) errors[field] = `Use um número de ${min} a ${max}.`;
+  }
+  if (!errors.posse_reset_curto && !errors.posse_segundos && values.posse_reset_curto >= values.posse_segundos) {
+    errors.posse_reset_curto = 'A posse curta precisa ser menor que a posse cheia.';
   }
   return errors;
 }

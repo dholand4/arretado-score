@@ -6,6 +6,7 @@ import { ConfirmDialogGlobal } from '@/components/confirmDialogGlobal';
 import { DoubleGameDialogGlobal } from '@/components/doubleGameDialogGlobal';
 import { EmptyStateGlobal } from '@/components/emptyStateGlobal';
 import { ErrorStateGlobal } from '@/components/errorStateGlobal';
+import { EventArtModalGlobal } from '@/components/eventArtModalGlobal';
 import { EventCardGlobal } from '@/components/eventCardGlobal';
 import { EventFormModalGlobal } from '@/components/eventFormModalGlobal';
 import { LinkButtonGlobal } from '@/components/linkButtonGlobal';
@@ -84,6 +85,9 @@ export function EventsScreen() {
   const [swapEvent, setSwapEvent] = useState<IEvento | null>(null);
   // Dia em edição (data, hora, local, intervalo e observações).
   const [editingEvent, setEditingEvent] = useState<IEvento | null>(null);
+  // Dia publicado com a arte de divulgação aberta (guarda o id para acompanhar a lista atualizada).
+  const [artEventId, setArtEventId] = useState<string | null>(null);
+  const artEvent = events.find((event) => event.id === artEventId);
   const [feedback, setFeedback] = useState<{ variant: AlertVariant; message: string } | null>(null);
   const askConfirm = useConfirmAction();
   const { candidates, isLoading: loadingCandidates } = useEventCandidates(
@@ -242,6 +246,7 @@ export function EventsScreen() {
               deleteEvent.reset();
               setConfirmation({ kind: 'delete', event });
             }}
+            onGenerateArt={() => setArtEventId(event.id)}
           />
         ))}
       </List>
@@ -333,6 +338,10 @@ export function EventsScreen() {
           onConfirm={confirmAction}
           onClose={() => setConfirmation(null)}
         />
+      )}
+
+      {artEvent && competition && (
+        <EventArtModalGlobal open event={artEvent} league={competition} onClose={() => setArtEventId(null)} />
       )}
 
       {swapEvent && (

@@ -31,6 +31,8 @@ export const ROUTE_PATTERNS = {
   competitionGames: '/painel/competicoes/:competitionId/jogos',
   gameScoreSheet: '/painel/competicoes/:competitionId/jogos/:gameId/sumula',
   gamePrintSheet: '/painel/competicoes/:competitionId/jogos/:gameId/sumula/imprimir',
+  // Etapa 9
+  gameLiveSheet: '/painel/competicoes/:competitionId/jogos/:gameId/mesa',
   publicStandings: '/c/:slug/tabela',
   publicPlayoffs: '/c/:slug/playoffs',
   // Etapa 6
@@ -68,6 +70,8 @@ export const paths = {
     `/painel/competicoes/${competitionId}/jogos/${gameId}/sumula` as const,
   gamePrintSheet: (competitionId: string, gameId: string) =>
     `/painel/competicoes/${competitionId}/jogos/${gameId}/sumula/imprimir` as const,
+  gameLiveSheet: (competitionId: string, gameId: string) =>
+    `/painel/competicoes/${competitionId}/jogos/${gameId}/mesa` as const,
   publicStandings: (slug: string) => `/c/${slug}/tabela` as const,
   publicPlayoffs: (slug: string) => `/c/${slug}/playoffs` as const,
   publicCompetition: (slug: string) => `/c/${slug}` as const,

@@ -2,7 +2,7 @@ import type { IEvento, IEventoInput, IJogoResumo, IMontagemEvento } from '@/@typ
 import { supabase } from './supabaseService';
 
 const GAME_SELECT =
-  '*, casa:times!jogos_time_casa_id_fkey(nome, sigla), fora:times!jogos_time_fora_id_fkey(nome, sigla), fase:fases(nome), grupo:grupos(nome), serie:series(codigo)';
+  '*, casa:times!jogos_time_casa_id_fkey(nome, sigla, logo_url), fora:times!jogos_time_fora_id_fkey(nome, sigla, logo_url), fase:fases(nome), grupo:grupos(nome), serie:series(codigo)';
 
 export const eventsService = {
   async list(competicaoId: string): Promise<IEvento[]> {

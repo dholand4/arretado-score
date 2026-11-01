@@ -6,6 +6,8 @@ export type StatusJogo = 'pendente' | 'agendado' | 'encerrado' | 'wo' | 'cancela
 interface ITimeNoJogo {
   nome: string;
   sigla: string | null;
+  // Só vem nos dias de jogos (arte de divulgação).
+  logo_url?: string | null;
 }
 
 // Jogo com os nomes dos times, da fase e do grupo (listas do painel).

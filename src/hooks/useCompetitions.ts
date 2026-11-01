@@ -5,6 +5,7 @@ import type {
   ImageChange,
 } from '@/@types/competition';
 import type { ICompeticaoCobranca } from '@/@types/finance';
+import type { IRegrasPartida } from '@/@types/liveSheet';
 import { QUERY_KEYS } from '@/constants/queryKeys';
 import { competitionsService } from '@/services/competitionsService';
 
@@ -68,6 +69,12 @@ export function useCompetition(competicaoId: string) {
     onSuccess: onSaved,
   });
 
+  // Regras da partida (súmula ao vivo): fora da trava de estrutura.
+  const saveMatchRules = useMutation({
+    mutationFn: (input: IRegrasPartida) => competitionsService.update(competicaoId, input),
+    onSuccess: onSaved,
+  });
+
   const saveBilling = useMutation({
     mutationFn: (input: ICompeticaoCobranca) => competitionsService.update(competicaoId, input),
     onSuccess: onSaved,
@@ -88,6 +95,7 @@ export function useCompetition(competicaoId: string) {
     refetch: query.refetch,
     saveBasics,
     saveScoring,
+    saveMatchRules,
     saveBilling,
     setActive,
   };

@@ -32,3 +32,14 @@ export async function resizeImage(file: File): Promise<Blob> {
   if (blob.size > MAX_UPLOAD_BYTES) throw new AppError('A imagem continua maior que 5 MB depois de reduzida.');
   return blob;
 }
+
+// Baixa uma imagem para desenhar em canvas sem "sujá-lo" (o Storage libera CORS); nulo se falhar.
+export async function loadImageBitmap(url: string): Promise<ImageBitmap | null> {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    return await createImageBitmap(await response.blob());
+  } catch {
+    return null;
+  }
+}

@@ -19,6 +19,9 @@ export const CompetitionStandingsScreen = lazy(() =>
 export const FinanceScreen = lazy(() => import('@/view/financeScreen').then((m) => ({ default: m.FinanceScreen })));
 export const GamesScreen = lazy(() => import('@/view/gamesScreen').then((m) => ({ default: m.GamesScreen })));
 export const HomeScreen = lazy(() => import('@/view/homeScreen').then((m) => ({ default: m.HomeScreen })));
+export const LiveScoreSheetScreen = lazy(() =>
+  import('@/view/liveScoreSheetScreen').then((m) => ({ default: m.LiveScoreSheetScreen })),
+);
 export const LoginScreen = lazy(() => import('@/view/loginScreen').then((m) => ({ default: m.LoginScreen })));
 export const MyTeamDetailScreen = lazy(() => import('@/view/myTeamDetailScreen').then((m) => ({ default: m.MyTeamDetailScreen })));
 export const MyTeamLeagueScreen = lazy(() =>

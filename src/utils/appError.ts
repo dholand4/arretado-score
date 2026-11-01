@@ -52,3 +52,10 @@ export function getErrorMessage(error: unknown, fallback = 'Algo deu errado. Ten
   }
   return fallback;
 }
+
+// Falha de rede (sem internet ou servidor fora do ar), e não um erro de regra do banco.
+export function isNetworkError(error: unknown): boolean {
+  if (typeof navigator !== 'undefined' && !navigator.onLine) return true;
+  const message = error instanceof Error ? error.message : (error as { message?: unknown } | null)?.message;
+  return typeof message === 'string' && /failed to fetch|networkerror|load failed|network request failed/i.test(message);
+}
