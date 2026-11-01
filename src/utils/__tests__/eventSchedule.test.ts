@@ -53,7 +53,7 @@ describe('event schedule', () => {
 
   it('describes games and finds doubled teams', () => {
     expect(gameLabel(jogo({}))).toBe('Tubarões x Falcões');
-    expect(gameDetails(jogo({ grupo: { nome: 'A' } }))).toBe('Fase 1 · Grupo A · Rodada 2');
+    expect(gameDetails(jogo({ grupo: { nome: 'A' } }))).toBe('Fase 1 · Grupo A');
     expect(gameDetails(jogo({ rodada: null, serie: { codigo: 'S1' }, numero_na_serie: 2 }))).toBe('Fase 1 · S1, jogo 2');
     expect([...doubledTeams([jogo({}), jogo({ time_casa_id: 'c' })])]).toEqual(['b']);
   });

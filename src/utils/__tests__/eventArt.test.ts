@@ -84,7 +84,7 @@ describe('eventArtContent', () => {
     ]);
     expect(content.games[0].home).toEqual({ name: 'Time A', logo: 'https://logos/A.webp', placeholder: false });
     expect(content.games[0].away).toEqual({ name: 'Time B', logo: null, placeholder: false });
-    expect(content.games[0].details).toBe('Fase 1 · Rodada 2');
+    expect(content.games[0].details).toBe('Fase 1');
   });
 
   it('shows games that depend on the first result as in the app', () => {
@@ -97,7 +97,6 @@ describe('eventArtContent', () => {
     expect([terceiro.home.name, terceiro.away.name]).toEqual(['Vencedor Jogo 1', 'Time C']);
     expect(segundo.home).toMatchObject({ logo: null, placeholder: true });
     expect(segundo.away).toMatchObject({ logo: 'https://logos/C.webp', placeholder: false });
-    // A rodada só se define depois do resultado.
     expect(segundo.details).toBe('Fase 1');
     // "Só os times": cada time uma vez, na ordem em que entra em quadra.
     expect(content.teams).toEqual([

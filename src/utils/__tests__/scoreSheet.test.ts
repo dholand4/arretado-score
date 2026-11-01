@@ -119,7 +119,7 @@ describe('games utils', () => {
   });
 
   it('describes and labels games', () => {
-    expect(describeGame(jogo({}))).toBe('Fase 1 · Rodada 1 · Sem data');
+    expect(describeGame(jogo({}))).toBe('Fase 1 · Sem data');
     expect(describeGame(jogo({ serie: { codigo: 'S1' }, numero_na_serie: 2, evento: { data: '2026-10-25', local: 'Ginásio', status: 'publicado' } })))
       .toBe('Fase 1 · S1 · Jogo 2 · Sem data · Ginásio');
     expect(gameStatus('wo')).toEqual({ label: 'W.O.', tone: 'neutral' });

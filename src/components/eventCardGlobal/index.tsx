@@ -32,8 +32,7 @@ export function EventCardGlobal({
   const status = STATUS_EVENTO[event.status];
   const draft = event.status === 'rascunho';
   const duplos = doubledTeams(event.jogos);
-  // Confrontos que dependem do resultado anterior ("Perdedor do 1º jogo x C"): a rodada de cada um
-  // só se define depois do resultado, então mostram só a fase.
+  // Confrontos que dependem do resultado anterior ("Perdedor do 1º jogo x C") mostram só a fase.
   const dependentes = dependentGames(event.jogos);
   const label = (j: (typeof event.jogos)[number]) => {
     const lados = gameSides(j, dependentes);

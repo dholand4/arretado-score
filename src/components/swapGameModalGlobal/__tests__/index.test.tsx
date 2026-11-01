@@ -30,7 +30,7 @@ describe('SwapGameModalGlobal', () => {
       />,
     );
     expect(screen.getByRole('option', { name: /Time C x Time E .*\(time já joga neste dia\)/ })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'Time A x Time E — Fase 1 · Rodada 2' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Time A x Time E — Fase 1' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Trocar' })).toBeDisabled();
     fireEvent.change(screen.getByLabelText('Jogo que entra'), { target: { value: 'j4' } });
     fireEvent.click(screen.getByRole('button', { name: 'Trocar' }));

@@ -46,19 +46,18 @@ export function gameCardTexts(jogo: IJogoLista, dia: IDayContext) {
   const numero = dia.numeros.get(jogo.id);
   return {
     ...gameSides(jogo, dia.dependentes),
-    description: describeGame(jogo, dia.dependentes.has(jogo.id)),
+    description: describeGame(jogo),
     order: numero ? `Jogo ${numero}` : undefined,
   };
 }
 
-// "Fase de classificação · Rodada 2 · 25/10/2026 19:00 · Ginásio". Num confronto que depende do resultado
-// anterior do dia (dependentGames), a rodada só se define depois, então não aparece.
-export function describeGame(jogo: IJogoLista, dependente = false): string {
+// "Fase de classificação · 25/10/2026 19:00 · Ginásio". A rodada não aparece: jogos são mostrados pela
+// fase (e grupo ou série), não pelo número da rodada.
+export function describeGame(jogo: IJogoLista): string {
   const partes = [
     jogo.fase?.nome,
     jogo.grupo && `Grupo ${jogo.grupo.nome}`,
     jogo.serie && `${jogo.serie.codigo} · Jogo ${jogo.numero_na_serie}`,
-    !jogo.serie && !dependente && jogo.rodada && `Rodada ${jogo.rodada}`,
     jogo.inicio_previsto ? formatDateTime(jogo.inicio_previsto) : 'Sem data',
     jogo.evento?.local,
   ];

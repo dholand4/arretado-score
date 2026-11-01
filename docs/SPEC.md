@@ -330,7 +330,7 @@ Tela em etapas, com botão "Salvar rascunho" em todas:
 ### 6.1 Geração de jogos (todos contra todos e grupos)
 - Algoritmo de rodízio (método do círculo). Com número ímpar de times, adiciona um "folga": em cada rodada um time descansa, e todos folgam o mesmo número de vezes.
 - `turnos = 2`: o segundo turno repete os confrontos invertendo casa e fora.
-- Cada jogo gerado recebe `rodada`. A rodada serve para priorizar a ordem, mas os jogos são distribuídos nos dias pelo admin (6.2).
+- Cada jogo gerado recebe `rodada`. A rodada é só interna (prioriza a ordem no sorteio); os jogos são distribuídos nos dias pelo admin (6.2) e a rodada não aparece em nenhuma tela nem na arte.
 
 ### 6.2 Criação de dia de jogos (evento) e sorteio
 O admin cria um evento informando **data, local (preenchido com o padrão), hora de início, quantidade de jogos e intervalo** (preenchido com o padrão). O sistema então seleciona os jogos:
@@ -347,7 +347,7 @@ O admin cria um evento informando **data, local (preenchido com o padrão), hora
 6. Jogos de um evento ficam `agendado`. Excluir um evento devolve os jogos sem súmula para `pendente`.
    - **Editar o dia** (rascunho ou publicado, RPC `atualizar_evento`): muda data, hora de início, local, intervalo e observações sem mexer nos jogos nem na ordem; os horários são recalculados a partir do novo início. Se algum jogo do dia já tem resultado, só local e observações mudam.
 7. **Ordem conforme os resultados**: quando um jogo do dia termina, o próximo passa a ser, entre os que faltam, o que menos repete os times dele (vencedor pesa 2, perdedor 1): quem perdeu joga em seguida e quem venceu descansa, a não ser que não haja outra opção. Ex. com 3 times: A x B; depois C x perdedor; por último C x vencedor.
-8. **Como os confrontos aparecem** (painel e área pública): cada jogo mostra seu número no dia ("Jogo 1", "Jogo 2"…). Enquanto um jogo não tem resultado, os que dependem dele aparecem como "Perdedor Jogo 1 x C" e "Vencedor Jogo 1 x C" (sem a rodada, que só se define depois). Só quando os dois candidatos têm o mesmo adversário; nos outros casos aparecem os nomes.
+8. **Como os confrontos aparecem** (painel e área pública): cada jogo mostra seu número no dia ("Jogo 1", "Jogo 2"…) e a fase (com grupo ou série, quando houver), nunca a rodada. Enquanto um jogo não tem resultado, os que dependem dele aparecem como "Perdedor Jogo 1 x C" e "Vencedor Jogo 1 x C". Só quando os dois candidatos têm o mesmo adversário; nos outros casos aparecem os nomes.
 
 ### 6.3 Classificação
 Colunas: **J** (jogos), **V**, **E** (só se `permite_empate`), **D**, **WO** (derrotas por W.O.), **PTS**, **PF** (pontos/gols a favor), **PC** (contra), **SALDO**, **%** (aproveitamento = V / J).

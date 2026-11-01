@@ -53,7 +53,7 @@ describe('EventCardGlobal', () => {
     const h = handlers();
     renderWithTheme(<EventCardGlobal event={event()} {...h} />);
     expect(screen.getByText('Rascunho')).toBeInTheDocument();
-    expect(screen.getByText(/^19:00 · Fase 1 · Rodada 1 · jogo duplo$/)).toBeInTheDocument();
+    expect(screen.getByText(/^19:00 · Fase 1 · jogo duplo$/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Descer Time A x Time B' }));
     expect(h.onReorder).toHaveBeenCalledWith(['j2', 'j1', 'j3']);
     fireEvent.click(screen.getByRole('button', { name: 'Remover Time C x Time D' }));

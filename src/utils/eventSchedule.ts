@@ -43,7 +43,6 @@ export function gameLabel(jogo: IJogoResumo): string {
 export function gameDetails(jogo: IJogoResumo): string {
   const partes = [jogo.fase?.nome];
   if (jogo.grupo) partes.push(`Grupo ${jogo.grupo.nome}`);
-  if (jogo.rodada) partes.push(`Rodada ${jogo.rodada}`);
   if (jogo.serie) partes.push(`${jogo.serie.codigo}, jogo ${jogo.numero_na_serie ?? 1}`);
   return partes.filter(Boolean).join(' · ');
 }
@@ -216,7 +215,6 @@ interface IJogoParaFalta {
   id: string;
   fase_id: string;
   status: string;
-  rodada: number | null;
   numero_na_serie: number | null;
   casa: { nome: string } | null;
   fora: { nome: string } | null;
@@ -238,7 +236,7 @@ export function remainingGames(
         confronto: `${j.casa?.nome ?? 'A definir'} x ${j.fora?.nome ?? 'A definir'}`,
         detalhe: [
           j.grupo && `Grupo ${j.grupo.nome}`,
-          j.serie ? `${j.serie.codigo} · Jogo ${j.numero_na_serie}` : j.rodada && `Rodada ${j.rodada}`,
+          j.serie && `${j.serie.codigo} · Jogo ${j.numero_na_serie}`,
         ]
           .filter(Boolean)
           .join(' · '),
