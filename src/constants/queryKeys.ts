@@ -36,6 +36,7 @@ export const QUERY_KEYS = {
   rankingAll: ['ranking'] as const,
   publicTeams: (competicaoId: string) => ['public-teams', competicaoId] as const,
   publicTeam: (timeId: string) => ['public-team', timeId] as const,
+  publicPhases: (competicaoId: string) => ['public-phases', competicaoId] as const,
   // Financeiro
   charges: (competicaoId: string) => ['competitions', competicaoId, 'charges'] as const,
   teamPayments: (timeId: string) => ['teams', timeId, 'payments'] as const,

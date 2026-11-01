@@ -425,7 +425,7 @@ Para quando os vencedores de um mata-mata não fecham a fase seguinte. Ex.: 6 ti
 | Rota | Conteúdo |
 |---|---|
 | `/` | Lista de competições em andamento e encerradas recentes (logo, nome, modalidade) |
-| `/c/:slug` | Início da competição: próximos jogos (eventos publicados), últimos resultados, top 3 de cada ranking, atalho para tabela e playoffs |
+| `/c/:slug` | Início da competição: próximos jogos (eventos publicados), últimos resultados, top 3 de cada ranking, atalho para tabela e playoffs e o **formato**: fases em ordem com status, o resumo visual do caminho até a final (o mesmo do assistente) e os times de cada grupo já sorteado |
 | `/c/:slug/jogos` | Jogos agrupados por dia (eventos publicados), com placar quando encerrados; filtros por fase e time |
 | `/c/:slug/jogos/:jogoId` | Detalhe: placar, data/local, estatísticas por jogador (box score) |
 | `/c/:slug/tabela` | Classificação por fase (abas) e por grupo; linhas dos classificados destacadas. Fases de mata-mata com melhores perdedores também aparecem, com a tabela da fase (6.6.1) |

@@ -1,6 +1,7 @@
 import { ButtonGlobal } from '@/components/buttonGlobal';
 import { CardGlobal } from '@/components/cardGlobal';
-import { Group, GroupName, Groups, Muted } from './style';
+import { GroupsListGlobal } from '@/components/groupsListGlobal';
+import { Muted } from './style';
 import type { IGroupsCardProps } from './types';
 
 // Grupos da fase em andamento, com "sortear de novo" enquanto nenhum jogo tiver súmula.
@@ -20,17 +21,7 @@ export function GroupsCardGlobal({ phase, blockedReason, busy = false, onRedraw 
         />
       }
     >
-      <Groups>
-        {phase.grupos.map((g) => (
-          <Group key={g.id}>
-            <GroupName>Grupo {g.nome}</GroupName>
-            {g.grupo_times
-              .map((gt) => gt.time?.nome ?? '?')
-              .sort((a, b) => a.localeCompare(b, 'pt-BR'))
-              .join(', ') || 'Sem times'}
-          </Group>
-        ))}
-      </Groups>
+      <GroupsListGlobal grupos={phase.grupos} />
       {blockedReason && <Muted>{blockedReason}</Muted>}
     </CardGlobal>
   );

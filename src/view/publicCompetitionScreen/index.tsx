@@ -1,10 +1,11 @@
 import type { IJogoLista } from '@/@types/game';
 import { ErrorStateGlobal } from '@/components/errorStateGlobal';
+import { FormatOverviewGlobal } from '@/components/formatOverviewGlobal';
 import { GameCardGlobal } from '@/components/gameCardGlobal';
 import { LinkButtonGlobal } from '@/components/linkButtonGlobal';
 import { LoaderGlobal } from '@/components/loaderGlobal';
 import { RankingTableGlobal } from '@/components/rankingTableGlobal';
-import { usePublicCompetition, usePublicGames, useRanking } from '@/hooks/usePublic';
+import { usePublicCompetition, usePublicFormat, usePublicGames, useRanking } from '@/hooks/usePublic';
 import { useRouteParams } from '@/hooks/useRouteParams';
 import { paths, type RoutePath } from '@/routes/types';
 import { dayContext, type IDayContext } from '@/utils/eventSchedule';
@@ -55,12 +56,13 @@ function Header({ title, to }: { title: string; to?: RoutePath }) {
   );
 }
 
-// Início da competição (seção 9.1): próximos jogos, últimos resultados e top 3 dos rankings.
+// Início da competição (seção 9.1): próximos jogos, últimos resultados, top 3 dos rankings e formato.
 export function PublicCompetitionScreen() {
   const { slug } = useRouteParams('slug');
   const { competicao } = usePublicCompetition(slug);
   const { jogos, isLoading, error, refetch } = usePublicGames(competicao?.id);
   const { ranking } = useRanking(competicao?.id, null);
+  const { fases, resumo } = usePublicFormat(competicao?.id);
 
   if (isLoading) return <LoaderGlobal label="Carregando competição" />;
   if (error) return <ErrorStateGlobal error={error} onRetry={() => void refetch()} />;
@@ -99,6 +101,12 @@ export function PublicCompetitionScreen() {
           </Rankings>
         )}
       </Section>
+      {fases.length > 0 && (
+        <Section>
+          <Header title="Formato" />
+          <FormatOverviewGlobal fases={fases} resumo={resumo} />
+        </Section>
+      )}
     </Stack>
   );
 }

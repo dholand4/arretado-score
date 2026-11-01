@@ -1,8 +1,10 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { QUERY_KEYS } from '@/constants/queryKeys';
+import { phasesService } from '@/services/phasesService';
 import { publicService } from '@/services/publicService';
 import { supabase } from '@/services/supabaseService';
+import { analyzeFormat, buildFormatSummary, phaseFromDb } from '@/utils/phaseFormat';
 
 export function usePublicCompetition(slug: string) {
   const query = useQuery({ queryKey: QUERY_KEYS.publicCompetition(slug), queryFn: () => publicService.getCompetition(slug) });
@@ -46,8 +48,23 @@ export function usePublicTeam(timeId: string) {
   return { equipe: query.data, isLoading: query.isPending, error: query.error, refetch: query.refetch };
 }
 
+// Formato da competição para o visitante: fases com status e grupos, e o resumo em fluxo.
+export function usePublicFormat(competicaoId: string | undefined) {
+  const query = useQuery({
+    queryKey: QUERY_KEYS.publicPhases(competicaoId ?? ''),
+    queryFn: () => phasesService.list(competicaoId as string),
+    enabled: Boolean(competicaoId),
+  });
+  const { times } = usePublicTeams(competicaoId);
+  const resumo = useMemo(() => {
+    const forms = (query.data ?? []).map(phaseFromDb);
+    return buildFormatSummary(forms, analyzeFormat(forms, times.length));
+  }, [query.data, times.length]);
+  return { fases: query.data ?? [], resumo, isLoading: query.isPending, error: query.error };
+}
+
 // Atualização ao vivo (seção 9.1): qualquer mudança em jogos, séries ou súmula
-// da competição recarrega jogos, detalhe, tabela, playoffs e rankings.
+// da competição recarrega jogos, detalhe, fases, tabela, playoffs e rankings.
 export function useRealtimeCompetition(competicaoId: string | undefined, slug: string) {
   const queryClient = useQueryClient();
   useEffect(() => {
@@ -55,6 +72,7 @@ export function useRealtimeCompetition(competicaoId: string | undefined, slug: s
     const refresh = () => {
       for (const key of [
         QUERY_KEYS.publicGames(competicaoId),
+        QUERY_KEYS.publicPhases(competicaoId),
         ['public-game'],
         QUERY_KEYS.classificationAll,
         QUERY_KEYS.rankingAll,

@@ -1,7 +1,8 @@
 import { screen } from '@testing-library/react';
 import { Route, Routes } from 'react-router-dom';
 import type { IJogoLista } from '@/@types/game';
-import { usePublicCompetition, usePublicGames, useRanking } from '@/hooks/usePublic';
+import type { IFase } from '@/@types/phase';
+import { usePublicCompetition, usePublicFormat, usePublicGames, useRanking } from '@/hooks/usePublic';
 import { renderScreen } from '@/utils/testUtils';
 import { PublicCompetitionScreen } from '..';
 
@@ -31,6 +32,7 @@ beforeEach(() => {
   vi.mocked(usePublicCompetition).mockReturnValue({ competicao: { id: 'c1', descricao: null } } as unknown as ReturnType<
     typeof usePublicCompetition
   >);
+  vi.mocked(usePublicFormat).mockReturnValue({ fases: [], resumo: [] } as unknown as ReturnType<typeof usePublicFormat>);
   vi.mocked(useRanking).mockReturnValue({ ranking: undefined } as unknown as ReturnType<typeof useRanking>);
   vi.mocked(usePublicGames).mockReturnValue({
     jogos: [
@@ -61,5 +63,41 @@ describe('PublicCompetitionScreen', () => {
     // A rodada dos confrontos condicionais só se define depois do resultado.
     expect(screen.getByText(/Rodada 3/)).toBeInTheDocument();
     expect(screen.queryByText(/Rodada 2/)).not.toBeInTheDocument();
+  });
+
+  it('shows the competition format with the drawn groups', () => {
+    vi.mocked(usePublicFormat).mockReturnValue({
+      fases: [
+        {
+          id: 'f1',
+          ordem: 1,
+          nome: 'Fase de grupos',
+          tipo: 'grupos',
+          status: 'em_andamento',
+          series: [],
+          grupos: [{ id: 'g1', nome: 'A', grupo_times: [{ time_id: 't1', time: { nome: 'Estadual' } }] }],
+        } as unknown as IFase,
+      ],
+      resumo: [{ kind: 'fase', label: 'Fase de grupos: 6 times, 2 grupos' }],
+    } as unknown as ReturnType<typeof usePublicFormat>);
+    renderScreen(
+      <Routes>
+        <Route path="/c/:slug" element={<PublicCompetitionScreen />} />
+      </Routes>,
+      '/c/liga',
+    );
+    expect(screen.getByRole('heading', { name: 'Formato' })).toBeInTheDocument();
+    expect(screen.getByText('Fase de grupos: 6 times, 2 grupos')).toBeInTheDocument();
+    expect(screen.getByText('Grupos — Fase de grupos')).toBeInTheDocument();
+  });
+
+  it('hides the format section while there are no phases', () => {
+    renderScreen(
+      <Routes>
+        <Route path="/c/:slug" element={<PublicCompetitionScreen />} />
+      </Routes>,
+      '/c/liga',
+    );
+    expect(screen.queryByRole('heading', { name: 'Formato' })).not.toBeInTheDocument();
   });
 });
