@@ -1,7 +1,7 @@
 import { fireEvent, screen, within } from '@testing-library/react';
 import type { IUsuarioListado } from '@/@types/user';
 import { useAuth } from '@/hooks/useAuth';
-import { useUsers } from '@/hooks/useUsers';
+import { useUserLeagues, useUsers } from '@/hooks/useUsers';
 import { renderScreen } from '@/utils/testUtils';
 import { UsersScreen } from '..';
 
@@ -42,8 +42,20 @@ function mockUsers(overrides: Partial<ReturnType<typeof useUsers>> = {}) {
   return value;
 }
 
+const chooseLeague = (label: string) =>
+  fireEvent.change(screen.getByLabelText('Liga'), {
+    target: { value: within(screen.getByLabelText('Liga')).getByRole('option', { name: label }).getAttribute('value') },
+  });
+
 beforeEach(() => {
-  vi.mocked(useAuth).mockReturnValue({ profile: { id: 'm' } } as unknown as ReturnType<typeof useAuth>);
+  vi.mocked(useUserLeagues).mockReturnValue({
+    ligas: [
+      { id: 'l1', nome: 'Liga Quixadá', usuarios: ['d', 'm', 'a'] },
+      { id: 'l2', nome: 'Liga Vazia', usuarios: [] },
+    ],
+    isLoading: false,
+  });
+  vi.mocked(useAuth).mockReturnValue({ profile: { id: 'm', papel: 'master' } } as unknown as ReturnType<typeof useAuth>);
 });
 
 describe('UsersScreen', () => {
@@ -53,9 +65,35 @@ describe('UsersScreen', () => {
     expect(screen.getByRole('status', { name: 'Carregando usuários' })).toBeInTheDocument();
   });
 
+  it('shows only the masters until a league is chosen', () => {
+    mockUsers();
+    renderScreen(<UsersScreen />);
+    const list = screen.getByRole('list', { name: 'Usuários' });
+    expect(within(list).getAllByRole('listitem')).toHaveLength(1);
+    expect(within(list).getByText('Master (você)')).toBeInTheDocument();
+    expect(screen.getByText(/1 master\(s\), com acesso a todas as ligas/)).toBeInTheDocument();
+  });
+
+  it('shows only the users of the chosen league', () => {
+    mockUsers();
+    renderScreen(<UsersScreen />);
+    chooseLeague('Liga Quixadá');
+    const list = screen.getByRole('list', { name: 'Usuários' });
+    // O master que criou a liga fica de fora; coordenador antes do login do time.
+    const cards = within(list).getAllByRole('listitem');
+    expect(cards).toHaveLength(2);
+    expect(within(cards[0]).getByText('Ana Admin')).toBeInTheDocument();
+    expect(within(cards[1]).getByText('Davi Dono')).toBeInTheDocument();
+    expect(within(list).queryByText('Master (você)')).not.toBeInTheDocument();
+    expect(screen.getByText('2 de 2 usuário(s)')).toBeInTheDocument();
+    chooseLeague('Liga Vazia');
+    expect(screen.getByText('Nenhum coordenador ou responsável de time nesta liga.')).toBeInTheDocument();
+  });
+
   it('lists users with status badges and hides deactivate for self', () => {
     mockUsers();
     renderScreen(<UsersScreen />);
+    chooseLeague('Todas as ligas');
     const list = screen.getByRole('list', { name: 'Usuários' });
     expect(within(list).getAllByRole('listitem')).toHaveLength(3);
     expect(screen.getByText('Troca de senha pendente')).toBeInTheDocument();
@@ -67,6 +105,7 @@ describe('UsersScreen', () => {
   it('filters by search text', () => {
     mockUsers();
     renderScreen(<UsersScreen />);
+    chooseLeague('Todas as ligas');
     fireEvent.change(screen.getByLabelText('Buscar'), { target: { value: 'davi' } });
     expect(within(screen.getByRole('list', { name: 'Usuários' })).getAllByRole('listitem')).toHaveLength(1);
   });
@@ -89,9 +128,38 @@ describe('UsersScreen', () => {
   it('deactivates a user after confirmation', () => {
     const { updateUser } = mockUsers();
     renderScreen(<UsersScreen />);
+    chooseLeague('Todas as ligas');
     const card = screen.getByText('Ana Admin').closest('li') as HTMLElement;
     fireEvent.click(within(card).getByRole('button', { name: 'Desativar' }));
     fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Desativar' }));
     expect(updateUser.mutate).toHaveBeenCalledWith({ id: 'a', ativo: false }, expect.any(Object));
+  });
+
+  describe('as a coordinator', () => {
+    beforeEach(() => {
+      vi.mocked(useAuth).mockReturnValue({ profile: { id: 'a', papel: 'admin' } } as unknown as ReturnType<typeof useAuth>);
+    });
+
+    it('lists the team logins of its leagues right away', () => {
+      // listar_usuarios já devolve só as equipes que o coordenador enxerga.
+      mockUsers({ users: [user({ id: 'd', nome: 'Davi Dono', papel: 'dono_time' })] });
+      renderScreen(<UsersScreen />);
+      const list = screen.getByRole('list', { name: 'Usuários' });
+      expect(within(list).getAllByRole('listitem')).toHaveLength(1);
+      const options = within(screen.getByLabelText('Liga')).getAllByRole('option').map((o) => o.textContent);
+      expect(options).toEqual(['Todas as minhas ligas', 'Liga Quixadá']);
+      expect(screen.queryByLabelText('Papel')).not.toBeInTheDocument();
+    });
+
+    it('only resets passwords', () => {
+      const { resetPassword } = mockUsers({ users: [user({ id: 'd', nome: 'Davi Dono', papel: 'dono_time' })] });
+      renderScreen(<UsersScreen />);
+      expect(screen.queryByRole('button', { name: 'Novo usuário' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Editar' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Desativar' })).not.toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Redefinir senha' }));
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      expect(resetPassword.reset).toHaveBeenCalled();
+    });
   });
 });

@@ -41,7 +41,7 @@ A chave `service_role` **nunca** vai para o front-end; só é usada dentro de Ed
 | Perfil | Login | O que pode fazer |
 |---|---|---|
 | **Admin master** | Sim | Tudo em todas as competições. Único que cria, edita e desativa usuários (admins e donos de time). Pode alterar a estrutura de uma competição mesmo depois de iniciada. |
-| **Admin** | Sim | Cria competições e administra apenas as suas: configuração, times, jogadores, dias de jogos, súmulas, W.O., financeiro da competição. |
+| **Admin** | Sim | Cria competições e administra apenas as suas: configuração, times, jogadores, dias de jogos, súmulas, W.O., financeiro da competição. Na tela de usuários, vê só os logins das equipes que enxerga (cadastradas por ele ou de times das ligas dele) e pode redefinir a senha delas. |
 | **Dono do time** | Sim | Vê e edita o elenco do próprio time (nome, número, foto). Controla os pagamentos internos dos atletas do seu time (seção 8.2). Não vê o financeiro do time com a competição. |
 | **Visitante** | Não | Consulta a área pública: competições, próximos jogos, resultados, tabela, playoffs, rankings, times e elencos. |
 
@@ -390,7 +390,7 @@ Para quando os vencedores de um mata-mata não fecham a fase seguinte. Ex.: 6 ti
 - **Edge Function `admin-users`** (usa `service_role`, verifica que quem chama é `master`):
   - `create`: nome, e-mail, senha provisória, papel → cria em `auth.users` e em `profiles` com `precisa_trocar_senha = true`.
   - `update`: nome, papel, ativo.
-  - `reset_password`: define nova senha provisória e marca `precisa_trocar_senha = true`.
+  - `reset_password`: define nova senha provisória e marca `precisa_trocar_senha = true`. O admin também pode, mas só para as equipes que enxerga (`equipe_visivel_ao_coordenador`).
 - Usuário com `ativo = false` é bloqueado no login (checagem no front e nas policies).
 - Rota `/trocar-senha` obrigatória enquanto `precisa_trocar_senha = true`.
 - **Primeiro master**: criado manualmente (instrução no README: criar usuário no painel do Supabase e rodar um `update profiles set papel = 'master'`).
@@ -443,7 +443,7 @@ Atualização ao vivo via Supabase Realtime nas páginas de jogos, tabela e deta
 | Rota | Quem | Conteúdo |
 |---|---|---|
 | `/painel` | todos | Atalhos conforme o papel |
-| `/painel/usuarios` | master | Lista, criar, editar, desativar, redefinir senha |
+| `/painel/usuarios` | master, admin | Master: lista, criar, editar, desativar, redefinir senha. Ao abrir mostra só os masters; escolhendo uma liga, os coordenadores dela e depois os logins dos times; ou todas as ligas. Admin: só os logins das equipes que enxerga, filtrando pelas suas ligas, e redefinir senha |
 | `/painel/competicoes` | master, admin | Competições (master vê todas; admin vê as suas) |
 | `/painel/competicoes/nova` | master, admin | Assistente (seção 5) |
 | `/painel/competicoes/:id` | master, admin | Visão geral: status, fase atual, próximos passos ("Faltam 3 súmulas para fechar a Fase 1") |

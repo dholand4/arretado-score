@@ -11,6 +11,13 @@ export interface IUsuarioListado extends Omit<IProfile, 'created_at'> {
   ultimo_acesso: string | null;
 }
 
+// Liga (competição) com os usuários ligados a ela: coordenadores e responsáveis de time.
+export interface ILigaUsuarios {
+  id: string;
+  nome: string;
+  usuarios: string[];
+}
+
 export interface ICredentials {
   email: string;
   password: string;

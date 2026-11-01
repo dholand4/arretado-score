@@ -7,7 +7,8 @@ export const Filters = styled.div`
   margin-bottom: ${({ theme }) => theme.spacing.md}px;
 
   @media (min-width: ${({ theme }) => theme.breakpoints.md}px) {
-    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
   }
 `;
 

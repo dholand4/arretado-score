@@ -1,6 +1,7 @@
 export const QUERY_KEYS = {
   profile: (userId: string) => ['profile', userId] as const,
   users: ['users'] as const,
+  userLeagues: ['users', 'leagues'] as const,
   competitions: ['competitions'] as const,
   publicCompetitions: ['competitions', 'public'] as const,
   competition: (id: string) => ['competitions', id] as const,
@@ -35,8 +36,8 @@ export const QUERY_KEYS = {
   ranking: (competicaoId: string, faseId: string | null) => ['ranking', competicaoId, faseId ?? 'competicao'] as const,
   rankingAll: ['ranking'] as const,
   publicTeams: (competicaoId: string) => ['public-teams', competicaoId] as const,
-  publicTeam: (timeId: string) => ['public-team', timeId] as const,
   publicPhases: (competicaoId: string) => ['public-phases', competicaoId] as const,
+  publicTeam: (timeId: string) => ['public-team', timeId] as const,
   // Financeiro
   charges: (competicaoId: string) => ['competitions', competicaoId, 'charges'] as const,
   teamPayments: (timeId: string) => ['teams', timeId, 'payments'] as const,

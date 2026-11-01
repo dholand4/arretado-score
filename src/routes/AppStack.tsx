@@ -40,7 +40,7 @@ import {
 const NAV_ITEMS: (IPanelNavItem & { roles: Papel[] })[] = [
   { to: ROUTES.competitions, label: 'Competições', roles: ['master', 'admin'], end: true },
   { to: ROUTES.myTeams, label: 'Meus times', roles: ['dono_time'], end: true },
-  { to: ROUTES.users, label: 'Usuários', roles: ['master'] },
+  { to: ROUTES.users, label: 'Usuários', roles: ['master', 'admin'] },
 ];
 
 // Seções da competição aberta (a RLS garante que só admins dela chegam aos dados).
@@ -237,7 +237,7 @@ export const appStack: RouteObject = {
         {
           path: ROUTES.users,
           element: (
-            <RequireRole roles={['master']}>
+            <RequireRole roles={ADMIN_ROLES}>
               <UsersScreen />
             </RequireRole>
           ),

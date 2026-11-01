@@ -6,6 +6,7 @@
 // POST { action: 'update', id, nome?, papel?, ativo?, telefone? }
 // O coordenador só usa 'update' para trocar o telefone das equipes que ele enxerga.
 // POST { action: 'reset_password', id, senha }
+// O coordenador também redefine a senha das equipes que ele enxerga.
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
@@ -97,7 +98,8 @@ interface IChamador {
   papel: 'master' | 'admin';
 }
 
-// Master gerencia todos os usuários; o admin de liga só cadastra donos de time.
+// Master gerencia todos os usuários; o admin de liga só cadastra donos de time, troca o
+// telefone e redefine a senha das equipes que enxerga.
 async function exigirGestor(admin: SupabaseClient, req: Request): Promise<IChamador> {
   const token = req.headers.get('Authorization')?.replace(/^Bearer\s+/i, '');
   if (!token) throw new HttpError(401, 'Sessão não informada.');
@@ -115,10 +117,6 @@ async function exigirGestor(admin: SupabaseClient, req: Request): Promise<IChama
     throw new HttpError(403, 'Apenas o Admin pode gerenciar usuários.');
   }
   return { id: userData.user.id, papel: perfil.papel };
-}
-
-function exigirMaster(chamador: IChamador) {
-  if (chamador.papel !== 'master') throw new HttpError(403, 'Apenas o Admin pode gerenciar usuários.');
 }
 
 async function criarUsuario(admin: SupabaseClient, body: Record<string, unknown>, chamador: IChamador) {
@@ -202,15 +200,9 @@ async function atualizarUsuario(admin: SupabaseClient, body: Record<string, unkn
   return perfil;
 }
 
-// Coordenador: só o telefone de uma equipe que ele cadastrou ou que é de um time das ligas dele.
-async function atualizarTelefoneEquipe(admin: SupabaseClient, body: Record<string, unknown>, coordenadorId: string) {
-  const id = texto(body, 'id', true);
-  if (Object.keys(body).some((campo) => !['action', 'id', 'telefone'].includes(campo))) {
-    throw new HttpError(403, 'O coordenador só pode alterar o telefone das equipes.');
-  }
-  const telefone = telefoneOpcional(body);
-  if (telefone === undefined) throw new HttpError(400, 'Nada para atualizar.');
-
+// Equipe (login dono_time) que o coordenador enxerga: cadastrada por ele ou dona de um time
+// de uma liga dele (mesma regra de equipe_visivel_ao_coordenador no banco).
+async function exigirEquipeVisivel(admin: SupabaseClient, id: string, coordenadorId: string) {
   const { data: perfil, error } = await admin.from('profiles').select('id, papel, criado_por').eq('id', id).maybeSingle();
   if (error) throw error;
   if (!perfil || perfil.papel !== 'dono_time') throw new HttpError(404, 'Equipe não encontrada.');
@@ -229,6 +221,18 @@ async function atualizarTelefoneEquipe(admin: SupabaseClient, body: Record<strin
     if (timesError) throw timesError;
     if (!count) throw new HttpError(403, 'Esta equipe não é de uma liga sua.');
   }
+}
+
+// Coordenador: só o telefone de uma equipe que ele cadastrou ou que é de um time das ligas dele.
+async function atualizarTelefoneEquipe(admin: SupabaseClient, body: Record<string, unknown>, coordenadorId: string) {
+  const id = texto(body, 'id', true);
+  if (Object.keys(body).some((campo) => !['action', 'id', 'telefone'].includes(campo))) {
+    throw new HttpError(403, 'O coordenador só pode alterar o telefone das equipes.');
+  }
+  const telefone = telefoneOpcional(body);
+  if (telefone === undefined) throw new HttpError(400, 'Nada para atualizar.');
+
+  await exigirEquipeVisivel(admin, id, coordenadorId);
 
   const { data, error: updateError } = await admin.from('profiles').update({ telefone }).eq('id', id).select().single();
   if (updateError) throw updateError;
@@ -280,7 +284,7 @@ Deno.serve(async (req) => {
         }
         return json(200, { data: await atualizarUsuario(admin, body, chamador.id) });
       case 'reset_password':
-        exigirMaster(chamador);
+        if (chamador.papel === 'admin') await exigirEquipeVisivel(admin, texto(body, 'id', true), chamador.id);
         return json(200, { data: await redefinirSenha(admin, body) });
       default:
         throw new HttpError(400, 'Ação inválida.');

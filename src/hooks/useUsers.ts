@@ -22,3 +22,8 @@ export function useUsers() {
     resetPassword,
   };
 }
+
+export function useUserLeagues() {
+  const query = useQuery({ queryKey: QUERY_KEYS.userLeagues, queryFn: usersService.listLeagues });
+  return { ligas: query.data ?? [], isLoading: query.isPending };
+}

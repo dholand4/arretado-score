@@ -14,7 +14,7 @@ import { SelectGlobal } from '@/components/selectGlobal';
 import { UserFormModalGlobal, type IUserFormSubmit } from '@/components/userFormModalGlobal';
 import { PAPEL_LABEL, PAPEL_OPTIONS } from '@/constants/roles';
 import { useAuth } from '@/hooks/useAuth';
-import { useUsers } from '@/hooks/useUsers';
+import { useUserLeagues, useUsers } from '@/hooks/useUsers';
 import { useConfirmAction } from '@/hooks/useConfirm';
 import { getErrorMessage } from '@/utils/appError';
 import { formatDateTime } from '@/utils/date';
@@ -31,16 +31,39 @@ type ModalState =
   | null;
 
 const FILTER_OPTIONS = [{ value: '', label: 'Todos os papéis' }, ...PAPEL_OPTIONS];
+const LIGA_TODAS = 'todas';
+const ORDEM_NA_LIGA: Record<Papel, number> = { master: 0, admin: 1, dono_time: 2 };
 
 export function UsersScreen() {
   const { profile } = useAuth();
   const { users, isLoading, error, refetch, createUser, updateUser, resetPassword } = useUsers();
+  const { ligas } = useUserLeagues();
+  // O coordenador só vê os logins das equipes que enxerga e só redefine a senha delas.
+  const isMaster = profile?.papel === 'master';
+  const [liga, setLiga] = useState(isMaster ? '' : LIGA_TODAS);
   const [filters, setFilters] = useState<IUserFilters>({ search: '', papel: '' });
   const [modal, setModal] = useState<ModalState>(null);
   const [feedback, setFeedback] = useState<{ variant: AlertVariant; message: string } | null>(null);
   const confirmAction = useConfirmAction();
 
-  const visibleUsers = useMemo(() => filterUsers(users, filters), [users, filters]);
+  // Sem liga escolhida, só os masters (mandam em todas); numa liga, os coordenadores e
+  // depois os logins dos times (o master que criou a liga fica de fora).
+  const minhasLigas = isMaster ? ligas : ligas.filter((l) => profile && l.usuarios.includes(profile.id));
+  const ligaOptions = [
+    ...(isMaster ? [{ value: '', label: 'Escolha uma liga' }] : []),
+    { value: LIGA_TODAS, label: isMaster ? 'Todas as ligas' : 'Todas as minhas ligas' },
+    ...minhasLigas.map((l) => ({ value: l.id, label: l.nome })),
+  ];
+  const usersOfLeague = useMemo(() => {
+    if (!liga) return users.filter((u) => u.papel === 'master');
+    const escolhida = ligas.find((l) => l.id === liga);
+    if (!escolhida) return users;
+    const ids = new Set(escolhida.usuarios);
+    return users
+      .filter((u) => ids.has(u.id) && u.papel !== 'master')
+      .sort((a, b) => ORDEM_NA_LIGA[a.papel] - ORDEM_NA_LIGA[b.papel]);
+  }, [ligas, liga, users]);
+  const visibleUsers = useMemo(() => filterUsers(usersOfLeague, filters), [usersOfLeague, filters]);
 
   const openModal = (next: ModalState) => {
     createUser.reset();
@@ -122,17 +145,21 @@ export function UsersScreen() {
       );
     }
     if (visibleUsers.length === 0) {
-      return (
-        <EmptyStateGlobal
-          title="Nenhum usuário encontrado"
-          description={users.length ? 'Ajuste a busca ou o filtro de papel.' : 'Crie o primeiro usuário.'}
-        />
-      );
+      const description = usersOfLeague.length
+        ? 'Ajuste a busca ou o filtro de papel.'
+        : !isMaster
+          ? 'Cadastre o acesso da equipe junto com o time, na tela de Times da liga.'
+          : liga === LIGA_TODAS || !liga
+            ? 'Crie o primeiro usuário.'
+          : 'Nenhum coordenador ou responsável de time nesta liga.';
+      return <EmptyStateGlobal title="Nenhum usuário encontrado" description={description} />;
     }
     return (
       <>
         <Count>
-          {visibleUsers.length} de {users.length} usuário(s)
+          {liga
+            ? `${visibleUsers.length} de ${usersOfLeague.length} usuário(s)`
+            : `${visibleUsers.length} master(s), com acesso a todas as ligas. Escolha uma liga para ver os coordenadores e responsáveis de time.`}
         </Count>
         <List aria-label="Usuários">
           {visibleUsers.map((user) => {
@@ -154,19 +181,21 @@ export function UsersScreen() {
                 </Badges>
                 <Meta>Último acesso: {formatDateTime(user.ultimo_acesso)}</Meta>
                 <Actions>
-                  <ButtonGlobal
-                    label="Editar"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => openModal({ type: 'edit', user })}
-                  />
+                  {isMaster && (
+                    <ButtonGlobal
+                      label="Editar"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => openModal({ type: 'edit', user })}
+                    />
+                  )}
                   <ButtonGlobal
                     label="Redefinir senha"
                     size="sm"
                     variant="outline"
                     onClick={() => openModal({ type: 'reset', user })}
                   />
-                  {!isSelf && (
+                  {isMaster && !isSelf && (
                     <ButtonGlobal
                       label={user.ativo ? 'Desativar' : 'Reativar'}
                       size="sm"
@@ -187,8 +216,12 @@ export function UsersScreen() {
     <>
       <PageHeaderGlobal
         title="Usuários"
-        subtitle="Coordenadores e equipes só entram com login criado aqui."
-        actions={<ButtonGlobal label="Novo usuário" onClick={() => openModal({ type: 'create' })} />}
+        subtitle={
+          isMaster
+            ? 'Coordenadores e equipes só entram com login criado aqui.'
+            : 'Acessos das equipes das suas ligas. Redefina a senha quando uma equipe esquecer.'
+        }
+        actions={isMaster && <ButtonGlobal label="Novo usuário" onClick={() => openModal({ type: 'create' })} />}
       />
 
       {feedback && (
@@ -198,6 +231,7 @@ export function UsersScreen() {
       )}
 
       <Filters>
+        <SelectGlobal label="Liga" value={liga} options={ligaOptions} onChange={(e) => setLiga(e.target.value)} />
         <InputGlobal
           label="Buscar"
           type="search"
@@ -205,12 +239,14 @@ export function UsersScreen() {
           value={filters.search}
           onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
         />
-        <SelectGlobal
-          label="Papel"
-          value={filters.papel}
-          options={FILTER_OPTIONS}
-          onChange={(e) => setFilters((f) => ({ ...f, papel: e.target.value as Papel | '' }))}
-        />
+        {isMaster && (
+          <SelectGlobal
+            label="Papel"
+            value={filters.papel}
+            options={FILTER_OPTIONS}
+            onChange={(e) => setFilters((f) => ({ ...f, papel: e.target.value as Papel | '' }))}
+          />
+        )}
       </Filters>
 
       {renderContent()}
