@@ -67,6 +67,19 @@ const montar = async () => {
 };
 
 describe('useLiveSheet', () => {
+  it('keeps a confirmed play on screen until the server data brings it', async () => {
+    const { result } = await montar();
+    act(() => {
+      result.current.lancar({ tipo: 'ponto', time_id: 'A', jogador_id: 'a1', valor: 2 });
+    });
+    // O servidor aceitou, mas a consulta seguinte ainda volta sem o lance: não pode sumir.
+    await waitFor(() => expect(result.current.pendentes).toBe(0));
+    await waitFor(() => expect(liveSheetService.getContext).toHaveBeenCalledTimes(2));
+    expect(result.current.resumo?.placar).toEqual({ casa: 2, fora: 0 });
+    expect(result.current.lances).toHaveLength(1);
+    expect(result.current.lances[0].pendente).toBeFalsy();
+  });
+
   it('sends a point, updates the score and resets the shot clock after a basket', async () => {
     const { result } = await montar();
     act(() => {
@@ -105,6 +118,16 @@ describe('useLiveSheet', () => {
     expect(result.current.pendentes).toBe(1);
     expect(result.current.lances[0].pendente).toBe(true);
     expect(localStorage.getItem('mesa:j1')).toContain('"lance"');
+
+    // A internet volta: a fila é enviada, sai do aparelho e o ponto continua no placar.
+    vi.mocked(liveSheetService.addLance).mockResolvedValue();
+    act(() => {
+      window.dispatchEvent(new Event('online'));
+    });
+    await waitFor(() => expect(result.current.pendentes).toBe(0));
+    expect(result.current.offline).toBe(false);
+    expect(localStorage.getItem('mesa:j1')).toBeNull();
+    expect(result.current.resumo?.placar).toEqual({ casa: 1, fora: 0 });
   });
 
   it('refuses a third timeout in the first half', async () => {

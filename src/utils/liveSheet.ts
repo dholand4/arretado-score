@@ -1,4 +1,4 @@
-import type { IJogadorMesa, ILance, IRegrasPartida, IRelogio, LadoMesa, TipoFalta } from '@/@types/liveSheet';
+import type { IJogadorMesa, ILance, IOperacaoMesa, IRegrasPartida, IRelogio, LadoMesa, TipoFalta } from '@/@types/liveSheet';
 
 // Cálculos da súmula ao vivo (seção 6.5.1). Tudo sai dos lances não anulados.
 
@@ -186,6 +186,17 @@ export function describeLance(lance: ILance, jogador: IJogadorMesa | undefined, 
 }
 
 // Junta os lances do servidor com a fila do aparelho: lances pendentes no fim e anulações já aplicadas.
+// Operações que o servidor já aceitou mas a última consulta ainda não trouxe (a consulta saiu antes
+// do envio terminar). Seguem valendo na tela até aparecerem: sem isso, o lance some e volta.
+export function unseenConfirmations(servidor: ILance[], confirmados: IOperacaoMesa[]): IOperacaoMesa[] {
+  const porId = new Map(servidor.map((l) => [l.id, l]));
+  return confirmados.filter((op) => {
+    if (op.tipo === 'lance') return !porId.has(op.lance.id);
+    if (op.tipo === 'anular') return !porId.get(op.lanceId)?.anulado;
+    return false;
+  });
+}
+
 export function mergeLances(servidor: ILance[], pendentes: ILance[], anulados: string[]): ILance[] {
   const ids = new Set(servidor.map((l) => l.id));
   const anuladosSet = new Set(anulados);

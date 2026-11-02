@@ -9,6 +9,7 @@ import {
   snapshotClock,
   summarizeLive,
   timeoutLimit,
+  unseenConfirmations,
 } from '@/utils/liveSheet';
 
 const regras: IRegrasPartida = {
@@ -139,6 +140,21 @@ describe('periods', () => {
     expect(nextStep(4, regras, { casa: 10, fora: 10 }, false)).toBe('prorrogacao');
     expect(nextStep(4, regras, { casa: 10, fora: 10 }, true)).toBe('fim');
     expect(nextStep(5, regras, { casa: 12, fora: 10 }, false)).toBe('fim');
+  });
+});
+
+describe('unseenConfirmations', () => {
+  it('keeps confirmed plays and voids until the server data shows them', () => {
+    const feito = lance({ id: 'c1' });
+    const anulado = lance({ id: 'c2' });
+    const confirmados = [
+      { tipo: 'lance' as const, lance: feito },
+      { tipo: 'anular' as const, lanceId: 'c2' },
+    ];
+    // A consulta saiu antes: ainda não tem nem o lance nem a anulação.
+    expect(unseenConfirmations([anulado], confirmados)).toEqual(confirmados);
+    // A consulta seguinte trouxe os dois: nada mais a segurar na tela.
+    expect(unseenConfirmations([feito, { ...anulado, anulado: true }], confirmados)).toEqual([]);
   });
 });
 

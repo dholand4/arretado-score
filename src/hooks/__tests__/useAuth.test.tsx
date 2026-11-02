@@ -53,6 +53,19 @@ describe('useAuth', () => {
     expect(result.current.profile?.precisa_trocar_senha).toBe(true);
   });
 
+  it('keeps the user signed in when a profile refetch fails (unstable internet)', async () => {
+    vi.mocked(authService.getSession).mockResolvedValue(session);
+    vi.mocked(authService.getProfile).mockResolvedValue(profile());
+    const { result } = setup();
+    await waitFor(() => expect(result.current.status).toBe('signedIn'));
+    vi.mocked(authService.getProfile).mockRejectedValue(new TypeError('Failed to fetch'));
+    act(() => result.current.retryProfile());
+    await waitFor(() => expect(authService.getProfile).toHaveBeenCalledTimes(2));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(result.current.status).toBe('signedIn');
+    expect(result.current.profile?.nome).toBe('Ana');
+  });
+
   it('rejects sign in of a deactivated user and signs out', async () => {
     vi.mocked(authService.signIn).mockResolvedValue(session);
     vi.mocked(authService.getProfile).mockResolvedValue(profile({ ativo: false }));

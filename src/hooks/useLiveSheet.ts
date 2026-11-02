@@ -6,7 +6,15 @@ import { liveSheetService } from '@/services/liveSheetService';
 import { supabase } from '@/services/supabaseService';
 import { getErrorMessage, isNetworkError } from '@/utils/appError';
 import { playBuzzer } from '@/utils/buzzer';
-import { clockAt, mergeLances, nextStep, periodDurationMs, snapshotClock, summarizeLive } from '@/utils/liveSheet';
+import {
+  clockAt,
+  mergeLances,
+  nextStep,
+  periodDurationMs,
+  snapshotClock,
+  summarizeLive,
+  unseenConfirmations,
+} from '@/utils/liveSheet';
 
 export type AvisoMesa = 'fim_periodo' | 'posse' | null;
 
@@ -70,6 +78,9 @@ export function useLiveSheet(competicaoId: string, jogoId: string) {
   const emEnvio = useRef<IOperacaoMesa | null>(null);
   const [offline, setOffline] = useState(false);
   const [erroFila, setErroFila] = useState<string | null>(null);
+  // Já aceitos pelo servidor, mas a consulta ainda não trouxe: continuam na tela até aparecerem.
+  const [confirmados, setConfirmados] = useState<IOperacaoMesa[]>([]);
+  const lancesServidorRef = useRef<ILance[]>([]);
 
   const salvarFila = useCallback(
     (proxima: IOperacaoMesa[]) => {
@@ -92,6 +103,10 @@ export function useLiveSheet(competicaoId: string, jogoId: string) {
           else if (op.tipo === 'anular') await liveSheetService.voidLance(op.lanceId);
           else await liveSheetService.clock(jogoId, op.relogio);
           setOffline(false);
+          // Guarda o aceito e descarta os que a consulta já trouxe.
+          if (op.tipo !== 'relogio') {
+            setConfirmados((atual) => [...unseenConfirmations(lancesServidorRef.current, atual), op]);
+          }
         } catch (err) {
           if (isNetworkError(err)) {
             setOffline(true);
@@ -242,15 +257,21 @@ export function useLiveSheet(competicaoId: string, jogoId: string) {
   );
 
   // ---- Lances e resumo ----------------------------------------------------------------------
-  const lances: ILance[] = useMemo(
-    () =>
-      mergeLances(
-        ctx?.lances ?? [],
-        fila.flatMap((o) => (o.tipo === 'lance' ? [o.lance] : [])),
-        fila.flatMap((o) => (o.tipo === 'anular' ? [o.lanceId] : [])),
-      ),
-    [ctx?.lances, fila],
-  );
+  const lancesServidor = ctx?.lances;
+  useEffect(() => {
+    lancesServidorRef.current = lancesServidor ?? [];
+  }, [lancesServidor]);
+
+  // Tela = servidor + confirmados que ainda não voltaram na consulta + fila do aparelho.
+  const lances: ILance[] = useMemo(() => {
+    const servidor = lancesServidor ?? [];
+    const aindaNaoVieram = unseenConfirmations(servidor, confirmados);
+    return mergeLances(
+      [...servidor, ...aindaNaoVieram.flatMap((o) => (o.tipo === 'lance' ? [o.lance] : []))],
+      fila.flatMap((o) => (o.tipo === 'lance' ? [o.lance] : [])),
+      [...aindaNaoVieram, ...fila].flatMap((o) => (o.tipo === 'anular' ? [o.lanceId] : [])),
+    );
+  }, [lancesServidor, confirmados, fila]);
 
   const resumo = useMemo(
     () =>
@@ -361,6 +382,7 @@ export function useLiveSheet(competicaoId: string, jogoId: string) {
     mutationFn: () => liveSheetService.discard(jogoId),
     onSuccess: () => {
       salvarFila([]);
+      setConfirmados([]);
       void recarregar();
     },
   });

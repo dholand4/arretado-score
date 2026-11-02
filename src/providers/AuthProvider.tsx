@@ -97,7 +97,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   let status: AuthStatus;
   if (!sessionLoaded || (userId && profileQuery.isPending)) status = 'loading';
   else if (!session || (profile && !profile.ativo)) status = 'signedOut';
-  else if (profileQuery.isError) status = 'error';
+  // Só é erro se o perfil nunca carregou: uma nova consulta que falha (internet oscilando no ginásio,
+  // reconexão) não derruba a tela de quem já está usando o app.
+  else if (profileQuery.isError && !profile) status = 'error';
   else status = 'signedIn';
 
   const { refetch } = profileQuery;
