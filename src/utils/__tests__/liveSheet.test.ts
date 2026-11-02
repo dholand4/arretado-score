@@ -1,8 +1,13 @@
-import type { ILance, IRegrasPartida } from '@/@types/liveSheet';
+import type { ILance, IMesa, IMesaContexto, IRegrasPartida } from '@/@types/liveSheet';
 import {
+  applyLiveChange,
   clockAt,
+  clockFromMesa,
   formatGameClock,
   formatShotClock,
+  liveBoardTeams,
+  livePlayItems,
+  liveSituation,
   mergeLances,
   nextStep,
   periodLabel,
@@ -166,5 +171,67 @@ describe('mergeLances', () => {
       ['s1', true, false],
       ['p1', false, true],
     ]);
+  });
+});
+
+describe('ao vivo público', () => {
+  const mesa = {
+    jogo_id: 'j',
+    competicao_id: 'c',
+    status: 'em_andamento',
+    escalados: ['a1'],
+    periodo: 2,
+    relogio_restante_ms: 300_000,
+    posse_restante_ms: 14_000,
+    relogio_rodando: true,
+    relogio_referencia_em: '2026-11-01T15:00:00Z',
+  } as unknown as IMesa;
+  const ctx = (): IMesaContexto =>
+    ({
+      jogo: { id: 'j', competicao_id: 'c', status: 'agendado', fase: 'Fase 1', empatePermitido: false },
+      competicao: { nome: 'Liga', ...regras },
+      casa: { id: 'A', nome: 'Okami BC', logo_url: 'https://x/okami.png' },
+      fora: { id: 'B', nome: 'QuixaRocks', logo_url: null },
+      jogadores: [{ id: 'a1', time_id: 'A', nome: 'Bebeto', apelido: null, numero: 7 }],
+      mesa,
+      lances: [],
+    }) as IMesaContexto;
+
+  it('reads the clocks stored in the table', () => {
+    expect(clockFromMesa(mesa)).toEqual({
+      periodo: 2,
+      restanteMs: 300_000,
+      posseMs: 14_000,
+      rodando: true,
+      referenciaMs: Date.parse('2026-11-01T15:00:00Z'),
+    });
+  });
+
+  it('applies realtime changes without reloading', () => {
+    const novo = lance({ id: 'n1' });
+    let atual = applyLiveChange(ctx(), { tabela: 'jogo_lances', evento: 'INSERT', novo: { ...novo }, antigo: null });
+    expect(atual.lances.map((l) => l.id)).toEqual(['n1']);
+    atual = applyLiveChange(atual, { tabela: 'jogo_lances', evento: 'INSERT', novo: { ...novo }, antigo: null });
+    expect(atual.lances).toHaveLength(1);
+    atual = applyLiveChange(atual, { tabela: 'jogo_lances', evento: 'UPDATE', novo: { ...novo, anulado: true }, antigo: null });
+    expect(atual.lances[0].anulado).toBe(true);
+    atual = applyLiveChange(atual, { tabela: 'jogo_mesa', evento: 'UPDATE', novo: { ...mesa, periodo: 3 }, antigo: null });
+    expect(atual.mesa?.periodo).toBe(3);
+    atual = applyLiveChange(atual, { tabela: 'jogo_mesa', evento: 'DELETE', novo: null, antigo: { jogo_id: 'j' } });
+    expect(atual.mesa).toBeNull();
+    expect(atual.lances).toEqual([]);
+  });
+
+  it('builds the public scoreboard and the play-by-play', () => {
+    const c = { ...ctx(), lances: [lance({ id: 'p1', time_id: 'A', jogador_id: 'a1', valor: 3 })] };
+    const resumo = summarizeLive(c.lances, 2, c.competicao, { casa: 'A', fora: 'B' });
+    const { casa, fora } = liveBoardTeams(c, resumo);
+    expect(casa).toMatchObject({ nome: 'Okami BC', logoUrl: 'https://x/okami.png', placar: 3 });
+    expect(fora).toMatchObject({ nome: 'QuixaRocks', placar: 0 });
+    expect(livePlayItems(c)[0]).toMatchObject({ id: 'p1', anulado: false, pendente: false });
+    expect(liveSituation('em_andamento')).toBe('AO VIVO');
+    expect(liveSituation('aguardando_aprovacao')).toBe('Aguardando aprovação');
+    expect(liveSituation('encerrada')).toBe('FINAL');
+    expect(liveSituation(null)).toBe('Em breve');
   });
 });

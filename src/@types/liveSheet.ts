@@ -4,7 +4,8 @@ import type { Tables } from './database';
 export type TipoLance = 'ponto' | 'falta' | 'tempo';
 export type TipoFalta = 'pessoal' | 'tecnica' | 'antidesportiva' | 'desqualificante';
 export type LadoMesa = 'casa' | 'fora';
-export type StatusMesa = 'em_andamento' | 'encerrada';
+// aguardando_aprovacao: o mesário (pelo link) encerrou e o coordenador ainda não aprovou.
+export type StatusMesa = 'em_andamento' | 'aguardando_aprovacao' | 'encerrada';
 
 export type IRegrasPartida = Pick<
   Tables<'competicoes'>,
@@ -92,3 +93,9 @@ export type IOperacaoMesa =
   | { tipo: 'lance'; lance: ILance }
   | { tipo: 'anular'; lanceId: string }
   | { tipo: 'relogio'; relogio: IRelogio };
+
+// Link de mesa ativo de um jogo (só o coordenador vê).
+export interface ILinkMesa {
+  token: string;
+  expira_em: string;
+}

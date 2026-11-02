@@ -33,6 +33,9 @@ export const ROUTE_PATTERNS = {
   gamePrintSheet: '/painel/competicoes/:competitionId/jogos/:gameId/sumula/imprimir',
   // Etapa 9
   gameLiveSheet: '/painel/competicoes/:competitionId/jogos/:gameId/mesa',
+  // Mesário pelo link (sem login) e placar em tela cheia (telão), fora do painel e da área pública.
+  mesaLink: '/mesa/:token',
+  scoreboard: '/placar/:gameId',
   publicStandings: '/c/:slug/tabela',
   publicPlayoffs: '/c/:slug/playoffs',
   // Etapa 6
@@ -72,6 +75,8 @@ export const paths = {
     `/painel/competicoes/${competitionId}/jogos/${gameId}/sumula/imprimir` as const,
   gameLiveSheet: (competitionId: string, gameId: string) =>
     `/painel/competicoes/${competitionId}/jogos/${gameId}/mesa` as const,
+  mesaLink: (token: string) => `/mesa/${token}` as const,
+  scoreboard: (gameId: string) => `/placar/${gameId}` as const,
   publicStandings: (slug: string) => `/c/${slug}/tabela` as const,
   publicPlayoffs: (slug: string) => `/c/${slug}/playoffs` as const,
   publicCompetition: (slug: string) => `/c/${slug}` as const,
@@ -95,6 +100,7 @@ export interface IRouteParams {
   teamId: string;
   gameId: string;
   slug: string;
+  token: string;
 }
 
 // Estado aceito pela rota de login (para voltar à página que exigiu autenticação).

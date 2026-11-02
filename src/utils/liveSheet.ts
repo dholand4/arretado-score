@@ -1,4 +1,14 @@
-import type { IJogadorMesa, ILance, IOperacaoMesa, IRegrasPartida, IRelogio, LadoMesa, TipoFalta } from '@/@types/liveSheet';
+import type {
+  IJogadorMesa,
+  ILance,
+  IMesa,
+  IMesaContexto,
+  IOperacaoMesa,
+  IRegrasPartida,
+  IRelogio,
+  LadoMesa,
+  TipoFalta,
+} from '@/@types/liveSheet';
 
 // Cálculos da súmula ao vivo (seção 6.5.1). Tudo sai dos lances não anulados.
 
@@ -203,4 +213,77 @@ export function mergeLances(servidor: ILance[], pendentes: ILance[], anulados: s
   return [...servidor, ...pendentes.filter((l) => !ids.has(l.id)).map((l) => ({ ...l, pendente: true }))].map((l) =>
     anuladosSet.has(l.id) ? { ...l, anulado: true } : l,
   );
+}
+
+// Relógios guardados na mesa (servidor) no formato usado na tela.
+export function clockFromMesa(mesa: IMesa): IRelogio {
+  return {
+    periodo: mesa.periodo,
+    restanteMs: mesa.relogio_restante_ms,
+    posseMs: mesa.posse_restante_ms,
+    rodando: mesa.relogio_rodando,
+    referenciaMs: new Date(mesa.relogio_referencia_em).getTime(),
+  };
+}
+
+export interface ILiveChange {
+  tabela: 'jogo_mesa' | 'jogo_lances';
+  evento: 'INSERT' | 'UPDATE' | 'DELETE';
+  novo: Record<string, unknown> | null;
+  antigo: Record<string, unknown> | null;
+}
+
+// Aplica na tela pública uma mudança vinda do Realtime, sem consultar o banco de novo: com muita gente
+// assistindo, cada lance vira só uma mensagem pequena por aparelho.
+export function applyLiveChange(ctx: IMesaContexto, mudanca: ILiveChange): IMesaContexto {
+  if (mudanca.tabela === 'jogo_mesa') {
+    if (mudanca.evento === 'DELETE') return { ...ctx, mesa: null, lances: [] };
+    return mudanca.novo ? { ...ctx, mesa: mudanca.novo as unknown as IMesa } : ctx;
+  }
+  if (mudanca.evento === 'DELETE') {
+    const id = mudanca.antigo?.id;
+    return { ...ctx, lances: ctx.lances.filter((l) => l.id !== id) };
+  }
+  if (!mudanca.novo) return ctx;
+  const lance = mudanca.novo as unknown as ILance;
+  const existe = ctx.lances.some((l) => l.id === lance.id);
+  return {
+    ...ctx,
+    lances: existe ? ctx.lances.map((l) => (l.id === lance.id ? lance : l)) : [...ctx.lances, lance],
+  };
+}
+
+// Situação do jogo no placar público e no telão.
+export function liveSituation(status: IMesa['status'] | null): string {
+  if (status === 'em_andamento') return 'AO VIVO';
+  if (status === 'aguardando_aprovacao') return 'Aguardando aprovação';
+  if (status === 'encerrada') return 'FINAL';
+  return 'Em breve';
+}
+
+// Os dois lados do placar público (escudo, pontos, faltas, bônus e tempos que restam).
+export function liveBoardTeams(ctx: IMesaContexto, resumo: IResumoMesa | null) {
+  const lado = (l: LadoMesa) => ({
+    nome: ctx[l].nome,
+    logoUrl: ctx[l].logo_url,
+    placar: resumo?.placar[l] ?? 0,
+    faltas: resumo?.faltasEquipe[l] ?? 0,
+    emBonus: resumo?.emBonus[l] ?? false,
+    temposRestantes: resumo ? Math.max(0, resumo.temposLimite - resumo.temposUsados[l]) : 0,
+  });
+  return { casa: lado('casa'), fora: lado('fora') };
+}
+
+// Lance a lance (do mais recente para o mais antigo), com o jogador e o time de cada lance.
+export function livePlayItems(ctx: IMesaContexto) {
+  const jogadores = new Map(ctx.jogadores.map((j) => [j.id, j]));
+  const nomeDoTime = (timeId: string) => (timeId === ctx.casa.id ? ctx.casa.nome : ctx.fora.nome);
+  return [...ctx.lances].reverse().map((l) => ({
+    id: l.id,
+    periodo: periodShortLabel(l.periodo, ctx.competicao),
+    tempo: formatLanceTime(l.tempo_restante_ms),
+    texto: describeLance(l, l.jogador_id ? jogadores.get(l.jogador_id) : undefined, nomeDoTime(l.time_id)),
+    anulado: l.anulado,
+    pendente: false,
+  }));
 }

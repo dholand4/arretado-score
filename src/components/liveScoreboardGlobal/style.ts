@@ -54,6 +54,29 @@ export const Score = styled.output`
   }
 `;
 
+// Escudo + placar: o escudo fica do lado de fora (casa à esquerda, visitante à direita).
+export const ScoreRow = styled.div<{ $lado: 'casa' | 'fora' }>`
+  display: flex;
+  flex-direction: ${({ $lado }) => ($lado === 'casa' ? 'row' : 'row-reverse')};
+  align-items: center;
+  justify-content: center;
+  gap: ${({ theme }) => theme.spacing.sm}px;
+`;
+
+// No celular a coluna é estreita demais: o escudo aparece a partir do tablet.
+export const Crest = styled.span`
+  display: none;
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.md}px) {
+    display: inline-flex;
+  }
+
+  flex-shrink: 0;
+  padding: ${({ theme }) => theme.spacing.xxs}px;
+  border-radius: ${({ theme }) => theme.radius.pill}px;
+  background-color: ${({ theme }) => theme.colors.surface};
+`;
+
 export const Meta = styled.span`
   display: flex;
   flex-wrap: wrap;

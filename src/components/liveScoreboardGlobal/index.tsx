@@ -1,3 +1,4 @@
+import { AvatarGlobal } from '@/components/avatarGlobal';
 import { formatGameClock, formatShotClock } from '@/utils/liveSheet';
 import {
   Board,
@@ -5,10 +6,12 @@ import {
   Center,
   ClockButton,
   Controls,
+  Crest,
   GameClock,
   Meta,
   Period,
   Score,
+  ScoreRow,
   ShotClock,
   StartButton,
   Team,
@@ -16,11 +19,16 @@ import {
 } from './style';
 import type { ILiveScoreboardProps, ILiveScoreboardTeam } from './types';
 
-function TeamScore({ time }: { time: ILiveScoreboardTeam }) {
+function TeamScore({ time, lado }: { time: ILiveScoreboardTeam; lado: 'casa' | 'fora' }) {
   return (
     <Team>
       <TeamName title={time.nome}>{time.nome}</TeamName>
-      <Score aria-label={`Pontos de ${time.nome}`}>{time.placar}</Score>
+      <ScoreRow $lado={lado}>
+        <Crest>
+          <AvatarGlobal name={time.nome} src={time.logoUrl} size="sm" />
+        </Crest>
+        <Score aria-label={`Pontos de ${time.nome}`}>{time.placar}</Score>
+      </ScoreRow>
       <Meta>
         <span>Faltas {time.faltas}</span>
         {time.emBonus && <Bonus>BÔNUS</Bonus>}
@@ -52,7 +60,7 @@ export function LiveScoreboardGlobal({
   const posseDesligada = posseMs !== null && posseMs > jogoMs;
   return (
     <Board aria-label="Placar da mesa">
-      <TeamScore time={casa} />
+      <TeamScore time={casa} lado="casa" />
       <Center>
         <Period>{periodo}</Period>
         <GameClock $rodando={rodando} aria-label="Cronômetro do jogo">
@@ -97,7 +105,7 @@ export function LiveScoreboardGlobal({
           </Controls>
         )}
       </Center>
-      <TeamScore time={fora} />
+      <TeamScore time={fora} lado="fora" />
     </Board>
   );
 }

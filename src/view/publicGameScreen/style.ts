@@ -20,3 +20,8 @@ export const Teams = styled.div`
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 `;
+
+export const LiveTitle = styled.h2`
+  font-size: ${({ theme }) => theme.fontSize.lg}px;
+  font-weight: ${({ theme }) => theme.fontWeight.semibold};
+`;

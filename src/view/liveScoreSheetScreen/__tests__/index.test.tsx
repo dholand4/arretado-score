@@ -2,11 +2,13 @@ import { fireEvent, screen } from '@testing-library/react';
 import { Route, Routes } from 'react-router-dom';
 import type { IMesaContexto } from '@/@types/liveSheet';
 import { useLiveSheet } from '@/hooks/useLiveSheet';
+import { useMesaLink } from '@/hooks/useMesaLink';
 import { summarizeLive } from '@/utils/liveSheet';
 import { renderScreen } from '@/utils/testUtils';
-import { LiveScoreSheetScreen } from '..';
+import { LiveScoreSheetScreen, LiveSheetView } from '..';
 
 vi.mock('@/hooks/useLiveSheet');
+vi.mock('@/hooks/useMesaLink');
 
 const regras = {
   qtd_periodos: 4,
@@ -89,6 +91,8 @@ function mockMesa(mesa: IMesaContexto['mesa']) {
     abrir: mutation(),
     escalar: mutation(),
     encerrar: mutation(),
+    finalizar: mutation(),
+    reabrir: mutation(),
     descartar: mutation(),
   };
   vi.mocked(useLiveSheet).mockReturnValue(value as unknown as ReturnType<typeof useLiveSheet>);
@@ -103,7 +107,56 @@ const render = () =>
     '/c/c1/j/j1',
   );
 
+const linkMesa = { link: null, isLoading: false, error: null, gerar: mutation(), cancelar: mutation() };
+beforeEach(() => {
+  vi.mocked(useMesaLink).mockReturnValue(linkMesa as unknown as ReturnType<typeof useMesaLink>);
+});
+
+// Mesário pelo link: mesma tela, sem o painel.
+const renderViaLink = () => renderScreen(<LiveSheetView competitionId="c1" gameId="j1" token="tok" />);
+
 describe('LiveScoreSheetScreen', () => {
+  it('lets the coordinator create the mesário link', () => {
+    mockMesa(mesaBase);
+    render();
+    fireEvent.click(screen.getByRole('button', { name: 'Link do mesário' }));
+    expect(screen.getByRole('dialog', { name: 'Link do mesário' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Gerar link' }));
+    expect(linkMesa.gerar.mutate).toHaveBeenCalled();
+  });
+
+  it('sends the game to approval when the mesário closes it', () => {
+    const mesa = mockMesa(mesaBase);
+    renderViaLink();
+    expect(useLiveSheet).toHaveBeenCalledWith('c1', 'j1', 'tok');
+    expect(screen.queryByRole('button', { name: 'Descartar mesa' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Link do mesário' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Jogos/ })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Encerrar o jogo' }));
+    expect(screen.getByText(/vai para a aprovação do coordenador/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Encerrar' }));
+    expect(mesa.finalizar.mutate).toHaveBeenCalled();
+    expect(mesa.encerrar.mutate).not.toHaveBeenCalled();
+  });
+
+  it('lets the coordinator approve or reopen a game closed by the mesário', () => {
+    const mesa = mockMesa({ ...mesaBase, status: 'aguardando_aprovacao' });
+    render();
+    expect(screen.getByText('O mesário encerrou o jogo')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Reabrir para o mesário' }));
+    expect(mesa.reabrir.mutate).toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Aprovar resultado' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Aprovar' }));
+    expect(mesa.encerrar.mutate).toHaveBeenCalled();
+  });
+
+  it('tells the mesário the game is waiting for approval', () => {
+    mockMesa({ ...mesaBase, status: 'aguardando_aprovacao' });
+    renderViaLink();
+    expect(screen.getByText('Jogo enviado para aprovação')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Aprovar resultado' })).not.toBeInTheDocument();
+  });
+
   it('opens the table for a game without a result', () => {
     const { abrir } = mockMesa(null);
     render();

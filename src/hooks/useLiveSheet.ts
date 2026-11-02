@@ -6,6 +6,8 @@ import { liveSheetService } from '@/services/liveSheetService';
 import { supabase } from '@/services/supabaseService';
 import { getErrorMessage, isNetworkError } from '@/utils/appError';
 import { playBuzzer } from '@/utils/buzzer';
+import { useServerClock } from './useServerClock';
+import { useWakeLock } from './useWakeLock';
 import {
   clockAt,
   mergeLances,
@@ -48,28 +50,17 @@ function lastClock(fila: IOperacaoMesa[]): IRelogio | null {
 }
 
 // Súmula ao vivo (seção 6.5.1): relógios na hora do servidor, lances com fila offline e
-// sincronização com outros aparelhos pelo Realtime.
-export function useLiveSheet(competicaoId: string, jogoId: string) {
+// sincronização com outros aparelhos pelo Realtime. Com `token` (link de mesa), opera sem login.
+export function useLiveSheet(competicaoId: string, jogoId: string, token?: string) {
   const queryClient = useQueryClient();
-  const query = useQuery({ queryKey: QUERY_KEYS.liveSheet(jogoId), queryFn: () => liveSheetService.getContext(jogoId) });
+  const query = useQuery({
+    queryKey: QUERY_KEYS.liveSheet(jogoId),
+    queryFn: () => liveSheetService.getContext(jogoId, token),
+  });
   const ctx = query.data;
 
-  // Diferença entre a hora do servidor e a do aparelho, para todos verem o mesmo relógio.
-  const offsetRef = useRef(0);
-  useEffect(() => {
-    let ativo = true;
-    const inicio = Date.now();
-    liveSheetService
-      .serverTime()
-      .then((servidor) => {
-        if (ativo) offsetRef.current = servidor - (inicio + Date.now()) / 2;
-      })
-      .catch(() => undefined);
-    return () => {
-      ativo = false;
-    };
-  }, []);
-  const agora = useCallback(() => Date.now() + offsetRef.current, []);
+  // Hora do servidor, para todos verem o mesmo relógio.
+  const agora = useServerClock();
 
   // ---- Fila do aparelho -------------------------------------------------------------------
   const [fila, setFila] = useState<IOperacaoMesa[]>(() => readQueue(jogoId));
@@ -99,9 +90,9 @@ export function useLiveSheet(competicaoId: string, jogoId: string) {
         const op = filaRef.current[0];
         emEnvio.current = op;
         try {
-          if (op.tipo === 'lance') await liveSheetService.addLance(op.lance);
-          else if (op.tipo === 'anular') await liveSheetService.voidLance(op.lanceId);
-          else await liveSheetService.clock(jogoId, op.relogio);
+          if (op.tipo === 'lance') await liveSheetService.addLance(op.lance, token);
+          else if (op.tipo === 'anular') await liveSheetService.voidLance(op.lanceId, token);
+          else await liveSheetService.clock(jogoId, op.relogio, token);
           setOffline(false);
           // Guarda o aceito e descarta os que a consulta já trouxe.
           if (op.tipo !== 'relogio') {
@@ -122,7 +113,7 @@ export function useLiveSheet(competicaoId: string, jogoId: string) {
       emEnvio.current = null;
       enviando.current = false;
     }
-  }, [jogoId, queryClient, salvarFila]);
+  }, [jogoId, queryClient, salvarFila, token]);
 
   const enfileirar = useCallback(
     (op: IOperacaoMesa) => {
@@ -348,13 +339,26 @@ export function useLiveSheet(competicaoId: string, jogoId: string) {
   // ---- Abrir, escalar, encerrar e descartar ----------------------------------------------
   const recarregar = () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.liveSheet(jogoId) });
 
-  const abrir = useMutation({ mutationFn: () => liveSheetService.open(jogoId), onSuccess: recarregar });
+  const abrir = useMutation({ mutationFn: () => liveSheetService.open(jogoId, token), onSuccess: recarregar });
 
   const escalar = useMutation({
     mutationFn: ({ escalados, oficiais }: { escalados: string[]; oficiais: IOficiaisMesa }) =>
-      liveSheetService.lineup(jogoId, escalados, oficiais),
+      liveSheetService.lineup(jogoId, escalados, oficiais, token),
     onSuccess: recarregar,
   });
+
+  // Mesário pelo link: encerra e manda para a aprovação do coordenador (ainda não conta na tabela).
+  const finalizar = useMutation({
+    mutationFn: async () => {
+      if (filaRef.current.length) await enviar();
+      if (filaRef.current.length) throw new Error('Ainda há lances sem enviar. Aguarde a conexão voltar.');
+      await liveSheetService.finish(jogoId, token);
+    },
+    onSuccess: recarregar,
+  });
+
+  // Coordenador devolve a mesa para o mesário corrigir.
+  const reabrir = useMutation({ mutationFn: () => liveSheetService.reopen(jogoId), onSuccess: recarregar });
 
   const encerrar = useMutation({
     mutationFn: async () => {
@@ -404,28 +408,7 @@ export function useLiveSheet(competicaoId: string, jogoId: string) {
   }, [jogoId, queryClient]);
 
   // Tela sempre acesa enquanto a mesa está aberta.
-  const emAndamento = mesa?.status === 'em_andamento';
-  useEffect(() => {
-    if (!emAndamento || !('wakeLock' in navigator)) return;
-    let trava: WakeLockSentinel | null = null;
-    const pedir = () => {
-      navigator.wakeLock
-        .request('screen')
-        .then((t) => {
-          trava = t;
-        })
-        .catch(() => undefined);
-    };
-    const aoVoltar = () => {
-      if (document.visibilityState === 'visible') pedir();
-    };
-    pedir();
-    document.addEventListener('visibilitychange', aoVoltar);
-    return () => {
-      document.removeEventListener('visibilitychange', aoVoltar);
-      void trava?.release();
-    };
-  }, [emAndamento]);
+  useWakeLock(mesa?.status === 'em_andamento');
 
   return {
     ctx,
@@ -457,6 +440,8 @@ export function useLiveSheet(competicaoId: string, jogoId: string) {
     abrir,
     escalar,
     encerrar,
+    finalizar,
+    reabrir,
     descartar,
   };
 }

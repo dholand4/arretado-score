@@ -17,6 +17,7 @@ import { useAdjustClassification, useClassification } from '@/hooks/useClassific
 import { useCompetition } from '@/hooks/useCompetitions';
 import { useGames } from '@/hooks/useGames';
 import { useGamesPreview } from '@/hooks/useGamesPreview';
+import { useOpenMesas } from '@/hooks/useMesaLink';
 import { usePhases } from '@/hooks/usePhases';
 import { useRouteParams } from '@/hooks/useRouteParams';
 import { useTeams } from '@/hooks/useTeams';
@@ -95,6 +96,8 @@ export function GamesScreen() {
   const { competitionId } = useRouteParams('competitionId');
   const { competition } = useCompetition(competitionId);
   const { jogos, fases, times, grupos, isLoading, error, refetch } = useGames(competitionId);
+  // Súmulas ao vivo abertas ou encerradas pelo mesário, esperando a aprovação.
+  const mesas = useOpenMesas(competitionId);
   // Fase nula = automática: acompanha a fase em andamento até o admin escolher outra.
   const [faseEscolhida, setFaseEscolhida] = useState<string | null>(null);
   const [outrosFiltros, setOutrosFiltros] = useState<Omit<IGameFilters, 'faseId'>>({ timeId: '', status: '' });
@@ -126,8 +129,25 @@ export function GamesScreen() {
     const faseSelecionada = fases.find((fase) => fase.id === filters.faseId);
     const gruposDaFase = grupos.filter((grupo) => grupo.fase_id === filters.faseId);
 
+    const aguardando = [...mesas.values()].filter((s) => s === 'aguardando_aprovacao').length;
+    const acaoDoJogo = (jogo: (typeof jogos)[number]) => {
+      const mesa = mesas.get(jogo.id);
+      if (mesa === 'aguardando_aprovacao') return { to: paths.gameLiveSheet(competitionId, jogo.id), label: 'Aprovar súmula ao vivo' };
+      if (mesa === 'em_andamento') return { to: paths.gameLiveSheet(competitionId, jogo.id), label: 'Súmula ao vivo em andamento' };
+      return {
+        to: paths.gameScoreSheet(competitionId, jogo.id),
+        label: hasResult(jogo) ? 'Editar resultado' : 'Lançar súmula ou W.O.',
+      };
+    };
+
     return (
       <>
+        {aguardando > 0 && (
+          <AlertGlobal
+            variant="warning"
+            message={`${pluralize(aguardando, 'jogo encerrado pelo mesário aguarda', 'jogos encerrados pelo mesário aguardam')} a sua aprovação.`}
+          />
+        )}
         <Count>{pluralize(visiveis.length, 'jogo', 'jogos')}</Count>
         {visiveis.length === 0 ? (
           <EmptyStateGlobal title="Nenhum jogo com esses filtros" />
@@ -135,16 +155,17 @@ export function GamesScreen() {
           <List aria-label="Jogos">
             {visiveis.map((jogo) => {
               const status = gameStatus(jogo.status);
+              const acao = acaoDoJogo(jogo);
               return (
                 <li key={jogo.id}>
                   <GameCardGlobal
-                    to={paths.gameScoreSheet(competitionId, jogo.id)}
+                    to={acao.to}
                     {...gameCardTexts(jogo, contexto)}
                     homeScore={jogo.placar_casa}
                     awayScore={jogo.placar_fora}
                     statusLabel={status.label}
                     statusTone={status.tone}
-                    actionLabel={hasResult(jogo) ? 'Editar resultado' : 'Lançar súmula ou W.O.'}
+                    actionLabel={acao.label}
                   />
                 </li>
               );

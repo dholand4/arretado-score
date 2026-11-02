@@ -417,6 +417,18 @@ isOneToOne: true
       referencedColumns: ["id"]
     }
                   ]
+                },"mesa_links": {
+                  Row: {
+                    "competicao_id": string,"created_at": string,"criado_por": string | null,"expira_em": string,"id": string,"jogo_id": string,"revogado_em": string | null,"token": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "competicao_id": string,"created_at"?: string,"criado_por"?: string | null,"expira_em": string,"id"?: string,"jogo_id": string,"revogado_em"?: string | null,"token": string
+                  }
+                  Update: {
+                    "competicao_id"?: string,"created_at"?: string,"criado_por"?: string | null,"expira_em"?: string,"id"?: string,"jogo_id"?: string,"revogado_em"?: string | null,"token"?: string
+                  }
+                  Relationships: []
                 },"jogos": {
                   Row: {
                     "competicao_id": string,"created_at": string,"evento_id": string | null,"fase_id": string,"grupo_id": string | null,"id": string,"inicio_previsto": string | null,"numero_na_serie": number | null,"ordem_no_evento": number | null,"placar_casa": number | null,"placar_fora": number | null,"rodada": number | null,"serie_id": string | null,"so_placar": boolean,"status": string,"time_casa_id": string,"time_fora_id": string,"vencedor_id": string | null,"wo_ausente": string | null
@@ -893,7 +905,7 @@ isOneToOne: false
             }[]
                            },
 "mesa_abrir":
-{ Args: { "p_jogo_id": string }; Returns: {
+{ Args: { "p_jogo_id": string,"p_token"?: string }; Returns: {
               "aberta_por": string | null,
 "apontador": string | null,
 "arbitro": string | null,
@@ -919,7 +931,10 @@ isOneToOne: false
         isSetofReturn: false
       } },
 "mesa_anular":
-{ Args: { "p_lance_id": string }; Returns: undefined
+{ Args: { "p_lance_id": string,"p_token"?: string }; Returns: undefined
+                           },
+"mesa_cancelar_link":
+{ Args: { "p_jogo_id": string }; Returns: undefined
                            },
 "mesa_descartar":
 { Args: { "p_jogo_id": string }; Returns: undefined
@@ -928,13 +943,19 @@ isOneToOne: false
 { Args: { "p_jogo_id": string }; Returns: undefined
                            },
 "mesa_escalar":
-{ Args: { "p_escalados": (string)[],"p_jogo_id": string,"p_oficiais"?: Json }; Returns: undefined
+{ Args: { "p_escalados": (string)[],"p_jogo_id": string,"p_oficiais"?: Json,"p_token"?: string }; Returns: undefined
+                           },
+"mesa_finalizar":
+{ Args: { "p_jogo_id": string,"p_token"?: string }; Returns: undefined
+                           },
+"mesa_gerar_link":
+{ Args: { "p_jogo_id": string }; Returns: Json
                            },
 "mesa_lance":
-{ Args: { "p_lance": Json }; Returns: undefined
+{ Args: { "p_lance": Json,"p_token"?: string }; Returns: undefined
                            },
 "mesa_para_lancar":
-{ Args: { "p_jogo_id": string }; Returns: {
+{ Args: { "p_jogo_id": string,"p_token"?: string }; Returns: {
               "aberta_por": string | null,
 "apontador": string | null,
 "arbitro": string | null,
@@ -959,8 +980,14 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"mesa_pelo_link":
+{ Args: { "p_token": string }; Returns: Json
+                           },
+"mesa_reabrir":
+{ Args: { "p_jogo_id": string }; Returns: undefined
+                           },
 "mesa_relogio":
-{ Args: { "p_estado": Json,"p_jogo_id": string }; Returns: string
+{ Args: { "p_estado": Json,"p_jogo_id": string,"p_token"?: string }; Returns: string
                            },
 "numero_serie":
 { Args: { "p_codigo": string }; Returns: number

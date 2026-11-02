@@ -22,6 +22,8 @@ export const HomeScreen = lazy(() => import('@/view/homeScreen').then((m) => ({ 
 export const LiveScoreSheetScreen = lazy(() =>
   import('@/view/liveScoreSheetScreen').then((m) => ({ default: m.LiveScoreSheetScreen })),
 );
+export const MesaLinkScreen = lazy(() => import('@/view/mesaLinkScreen').then((m) => ({ default: m.MesaLinkScreen })));
+export const ScoreboardScreen = lazy(() => import('@/view/scoreboardScreen').then((m) => ({ default: m.ScoreboardScreen })));
 export const LoginScreen = lazy(() => import('@/view/loginScreen').then((m) => ({ default: m.LoginScreen })));
 export const MyTeamDetailScreen = lazy(() => import('@/view/myTeamDetailScreen').then((m) => ({ default: m.MyTeamDetailScreen })));
 export const MyTeamLeagueScreen = lazy(() =>

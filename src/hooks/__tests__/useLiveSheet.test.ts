@@ -67,6 +67,16 @@ const montar = async () => {
 };
 
 describe('useLiveSheet', () => {
+  it('sends the plays with the mesa link when opened by the mesário', async () => {
+    const hook = renderHook(() => useLiveSheet('c1', 'j1', 'tok'), { wrapper: createQueryWrapper() });
+    await waitFor(() => expect(hook.result.current.resumo).not.toBeNull());
+    expect(liveSheetService.getContext).toHaveBeenCalledWith('j1', 'tok');
+    act(() => {
+      hook.result.current.lancar({ tipo: 'ponto', time_id: 'A', jogador_id: 'a1', valor: 3 });
+    });
+    await waitFor(() => expect(liveSheetService.addLance).toHaveBeenCalledWith(expect.objectContaining({ valor: 3 }), 'tok'));
+  });
+
   it('keeps a confirmed play on screen until the server data brings it', async () => {
     const { result } = await montar();
     act(() => {
@@ -87,7 +97,7 @@ describe('useLiveSheet', () => {
     });
     expect(result.current.resumo?.placar).toEqual({ casa: 2, fora: 0 });
     expect(result.current.posseMs).toBe(24_000);
-    await waitFor(() => expect(liveSheetService.addLance).toHaveBeenCalledWith(expect.objectContaining({ valor: 2, periodo: 1 })));
+    await waitFor(() => expect(liveSheetService.addLance).toHaveBeenCalledWith(expect.objectContaining({ valor: 2, periodo: 1 }), undefined));
     expect(liveSheetService.clock).toHaveBeenCalled();
   });
 
@@ -105,7 +115,7 @@ describe('useLiveSheet', () => {
     const { result } = await montar();
     act(() => result.current.iniciar());
     expect(result.current.relogio?.rodando).toBe(true);
-    await waitFor(() => expect(liveSheetService.clock).toHaveBeenCalledWith('j1', expect.objectContaining({ rodando: true })));
+    await waitFor(() => expect(liveSheetService.clock).toHaveBeenCalledWith('j1', expect.objectContaining({ rodando: true }), undefined));
   });
 
   it('keeps plays in the queue while offline', async () => {

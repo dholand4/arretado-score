@@ -1,5 +1,7 @@
 export interface ILiveScoreboardTeam {
   nome: string;
+  // Escudo do time ao lado do placar (sem escudo, as iniciais).
+  logoUrl?: string | null;
   placar: number;
   faltas: number;
   emBonus: boolean;

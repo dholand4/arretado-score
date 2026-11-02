@@ -5,12 +5,16 @@ import { OfflineNoticeGlobal } from '@/components/offlineNoticeGlobal';
 import { appStack } from './AppStack';
 import { authStack } from './AuthStack';
 import { publicStack } from './PublicStack';
-import { NotFoundScreen } from './screens';
+import { MesaLinkScreen, NotFoundScreen, ScoreboardScreen } from './screens';
+import { ROUTE_PATTERNS } from './types';
 
 const router = createBrowserRouter([
   publicStack,
   ...authStack,
   appStack,
+  // Sem login e sem layout: mesário pelo link e placar em tela cheia (telão).
+  { path: ROUTE_PATTERNS.mesaLink, element: <MesaLinkScreen /> },
+  { path: ROUTE_PATTERNS.scoreboard, element: <ScoreboardScreen /> },
   { path: '*', element: <NotFoundScreen /> },
 ]);
 

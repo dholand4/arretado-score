@@ -13,12 +13,15 @@ import { LivePlayLogGlobal } from '@/components/livePlayLogGlobal';
 import { LiveScoreboardGlobal } from '@/components/liveScoreboardGlobal';
 import { LiveTeamPanelGlobal } from '@/components/liveTeamPanelGlobal';
 import { LoaderGlobal } from '@/components/loaderGlobal';
+import { MesaLinkModalGlobal } from '@/components/mesaLinkModalGlobal';
 import { ModalGlobal } from '@/components/modalGlobal';
 import { SegmentedGlobal } from '@/components/segmentedGlobal';
 import { useLiveSheet } from '@/hooks/useLiveSheet';
+import { useMesaLink } from '@/hooks/useMesaLink';
 import { useRouteParams } from '@/hooks/useRouteParams';
 import { paths } from '@/routes/types';
 import { getErrorMessage } from '@/utils/appError';
+import { formatDateTime } from '@/utils/date';
 import {
   TIPO_FALTA_LABEL,
   describeLance,
@@ -45,7 +48,7 @@ import {
 } from './style';
 
 type Aba = 'casa' | 'fora' | 'lances';
-type Dialogo = null | 'encerrar' | 'descartar' | { jogadorId: string; timeId: string };
+type Dialogo = null | 'encerrar' | 'aprovar' | 'descartar' | { jogadorId: string; timeId: string };
 
 const OUTRAS_FALTAS: TipoFalta[] = ['tecnica', 'antidesportiva', 'desqualificante'];
 const SEM_OFICIAIS: IOficiaisMesa = { apontador: '', cronometrista: '', operador_24: '', arbitro: '', fiscal: '' };
@@ -53,12 +56,26 @@ const SEM_OFICIAIS: IOficiaisMesa = { apontador: '', cronometrista: '', operador
 // Súmula ao vivo (seção 6.5.1): o mesário lança pontos, faltas e tempos com cronômetro e relógio de posse.
 export function LiveScoreSheetScreen() {
   const { competitionId, gameId } = useRouteParams('competitionId', 'gameId');
-  const mesa = useLiveSheet(competitionId, gameId);
+  return <LiveSheetView competitionId={competitionId} gameId={gameId} />;
+}
+
+interface ILiveSheetViewProps {
+  competitionId: string;
+  gameId: string;
+  // Link de mesa: o mesário opera sem login; não descarta, e o encerramento vai para a aprovação.
+  token?: string;
+}
+
+export function LiveSheetView({ competitionId, gameId, token }: ILiveSheetViewProps) {
+  const viaLink = Boolean(token);
+  const mesa = useLiveSheet(competitionId, gameId, token);
   const { ctx, relogio, resumo } = mesa;
   const [aba, setAba] = useState<Aba>('casa');
   const [editandoEscalacao, setEditandoEscalacao] = useState(false);
   const [dialogo, setDialogo] = useState<Dialogo>(null);
   const [mensagem, setMensagem] = useState<string | null>(null);
+  const [linkAberto, setLinkAberto] = useState(false);
+  const linkMesa = useMesaLink(gameId, !viaLink && linkAberto);
 
   const jogadores = useMemo(() => new Map((ctx?.jogadores ?? []).map((j) => [j.id, j])), [ctx?.jogadores]);
   const escalados = ctx?.mesa?.escalados ?? [];
@@ -86,8 +103,42 @@ export function LiveScoreSheetScreen() {
 
   const avisar = (erro: string | null) => setMensagem(erro);
 
-  const voltar = (
+  const voltar = viaLink ? null : (
     <LinkButtonGlobal to={paths.competitionGames(competitionId)} label="← Jogos" size="sm" variant="ghost" />
+  );
+
+  // Placar em tela cheia para o segundo tablet (de frente para a quadra) e link para o mesário.
+  const abrirTelao = () => window.open(paths.scoreboard(gameId), '_blank', 'noopener');
+  const botoesExtras = (
+    <>
+      <ButtonGlobal label="Placar (telão)" size="sm" variant="outline" onClick={abrirTelao} />
+      {!viaLink && (
+        <ButtonGlobal
+          label="Link do mesário"
+          size="sm"
+          variant="outline"
+          onClick={() => {
+            linkMesa.gerar.reset();
+            linkMesa.cancelar.reset();
+            setLinkAberto(true);
+          }}
+        />
+      )}
+    </>
+  );
+  const linkErro = linkMesa.gerar.error ?? linkMesa.cancelar.error ?? linkMesa.error;
+  const modalLink = !viaLink && (
+    <MesaLinkModalGlobal
+      open={linkAberto}
+      url={linkMesa.link ? `${window.location.origin}${paths.mesaLink(linkMesa.link.token)}` : null}
+      expiraEm={linkMesa.link ? formatDateTime(linkMesa.link.expira_em) : null}
+      loading={linkMesa.isLoading}
+      busy={linkMesa.gerar.isPending || linkMesa.cancelar.isPending}
+      error={linkErro ? getErrorMessage(linkErro) : null}
+      onGenerate={() => linkMesa.gerar.mutate()}
+      onCancelLink={() => linkMesa.cancelar.mutate()}
+      onClose={() => setLinkAberto(false)}
+    />
   );
 
   if (mesa.isLoading) return <LoaderGlobal label="Carregando a mesa" />;
@@ -126,8 +177,10 @@ export function LiveScoreSheetScreen() {
           {temResultado ? (
             <EmptyStateGlobal
               title="Este jogo já tem resultado"
-              description="Para corrigir, use a súmula normal."
-              action={<LinkButtonGlobal to={paths.gameScoreSheet(competitionId, gameId)} label="Abrir súmula" />}
+              description={viaLink ? 'A súmula deste jogo já foi fechada.' : 'Para corrigir, use a súmula normal.'}
+              action={
+                viaLink ? undefined : <LinkButtonGlobal to={paths.gameScoreSheet(competitionId, gameId)} label="Abrir súmula" />
+              }
             />
           ) : (
             <CardGlobal title="Súmula ao vivo">
@@ -138,15 +191,19 @@ export function LiveScoreSheetScreen() {
               {mesa.abrir.error && <AlertGlobal variant="error" message={getErrorMessage(mesa.abrir.error)} />}
               <Toolbar>
                 <ButtonGlobal label="Abrir a mesa" loading={mesa.abrir.isPending} onClick={() => mesa.abrir.mutate()} />
-                <LinkButtonGlobal
-                  to={paths.gameScoreSheet(competitionId, gameId)}
-                  label="Usar a súmula normal"
-                  variant="ghost"
-                />
+                {botoesExtras}
+                {!viaLink && (
+                  <LinkButtonGlobal
+                    to={paths.gameScoreSheet(competitionId, gameId)}
+                    label="Usar a súmula normal"
+                    variant="ghost"
+                  />
+                )}
               </Toolbar>
             </CardGlobal>
           )}
         </Intro>
+        {modalLink}
       </Page>
     );
   }
@@ -162,14 +219,96 @@ export function LiveScoreSheetScreen() {
         <Intro>
           <AlertGlobal
             variant="success"
-            message={`Jogo encerrado: ${ctx.casa.nome} ${resumo?.placar.casa ?? ''} x ${resumo?.placar.fora ?? ''} ${ctx.fora.nome}. Rebotes, assistências e correções vão na súmula normal.`}
+            message={
+              viaLink
+                ? `Jogo encerrado e aprovado: ${ctx.casa.nome} ${resumo?.placar.casa ?? ''} x ${resumo?.placar.fora ?? ''} ${ctx.fora.nome}. Obrigado!`
+                : `Jogo encerrado: ${ctx.casa.nome} ${resumo?.placar.casa ?? ''} x ${resumo?.placar.fora ?? ''} ${ctx.fora.nome}. Rebotes, assistências e correções vão na súmula normal.`
+            }
           />
-          <Toolbar>
-            <LinkButtonGlobal to={paths.gameScoreSheet(competitionId, gameId)} label="Abrir súmula" />
-          </Toolbar>
+          {!viaLink && (
+            <Toolbar>
+              <LinkButtonGlobal to={paths.gameScoreSheet(competitionId, gameId)} label="Abrir súmula" />
+            </Toolbar>
+          )}
           <SectionTitle>Lances</SectionTitle>
           <LivePlayLogGlobal itens={itensLances} />
         </Intro>
+      </Page>
+    );
+  }
+
+  // ---- Encerrada pelo mesário: aguardando a aprovação do coordenador --------------------
+  if (ctx.mesa.status === 'aguardando_aprovacao') {
+    const placar = `${ctx.casa.nome} ${resumo?.placar.casa ?? 0} x ${resumo?.placar.fora ?? 0} ${ctx.fora.nome}`;
+    return (
+      <Page>
+        <TopBar>
+          {voltar}
+          <Title>{titulo}</Title>
+        </TopBar>
+        <Intro>
+          {viaLink ? (
+            <AlertGlobal
+              variant="success"
+              title="Jogo enviado para aprovação"
+              message={`${placar}. O coordenador vai conferir e aprovar; só depois o resultado entra na tabela. Obrigado!`}
+            />
+          ) : (
+            <>
+              <AlertGlobal
+                variant="warning"
+                title="O mesário encerrou o jogo"
+                message={`${placar}. Confira os lances e aprove para o resultado entrar na tabela, ou reabra para o mesário corrigir.`}
+              />
+              <Toolbar>
+                <ButtonGlobal label="Aprovar resultado" onClick={() => setDialogo('aprovar')} />
+                <ButtonGlobal
+                  label="Reabrir para o mesário"
+                  variant="outline"
+                  loading={mesa.reabrir.isPending}
+                  onClick={() => mesa.reabrir.mutate()}
+                />
+                <ButtonGlobal label="Descartar mesa" variant="ghost" onClick={() => setDialogo('descartar')} />
+              </Toolbar>
+              {mesa.reabrir.error && <AlertGlobal variant="error" message={getErrorMessage(mesa.reabrir.error)} />}
+            </>
+          )}
+          {resumo && (
+            <PeriodScores aria-label="Placar por período">
+              {resumo.porPeriodo.map((p) => (
+                <PeriodScore key={p.periodo}>
+                  {periodShortLabel(p.periodo, ctx.competicao)} {p.casa}–{p.fora}
+                </PeriodScore>
+              ))}
+            </PeriodScores>
+          )}
+          <SectionTitle>Lances</SectionTitle>
+          <LivePlayLogGlobal itens={itensLances} />
+        </Intro>
+        <ConfirmDialogGlobal
+          open={dialogo === 'aprovar'}
+          title="Aprovar resultado"
+          message={`${placar}. O resultado vai para a tabela e a mesa fica só para leitura.`}
+          confirmLabel="Aprovar"
+          loading={mesa.encerrar.isPending}
+          error={mesa.encerrar.error ? getErrorMessage(mesa.encerrar.error) : null}
+          onConfirm={() => mesa.encerrar.mutate(undefined, { onSuccess: () => setDialogo(null) })}
+          onClose={() => {
+            mesa.encerrar.reset();
+            setDialogo(null);
+          }}
+        />
+        <ConfirmDialogGlobal
+          open={dialogo === 'descartar'}
+          title="Descartar a mesa"
+          message="Todos os lances deste jogo serão apagados e o jogo volta para a súmula normal."
+          confirmLabel="Descartar"
+          danger
+          loading={mesa.descartar.isPending}
+          error={mesa.descartar.error ? getErrorMessage(mesa.descartar.error) : null}
+          onConfirm={() => mesa.descartar.mutate(undefined, { onSuccess: () => setDialogo(null) })}
+          onClose={() => setDialogo(null)}
+        />
       </Page>
     );
   }
@@ -239,6 +378,7 @@ export function LiveScoreSheetScreen() {
 
   const time = (lado: 'casa' | 'fora') => ({
     nome: ctx[lado].nome,
+    logoUrl: ctx[lado].logo_url,
     placar: resumo.placar[lado],
     faltas: resumo.faltasEquipe[lado],
     emBonus: resumo.emBonus[lado],
@@ -254,6 +394,8 @@ export function LiveScoreSheetScreen() {
       ? { label: `Enviando ${mesa.pendentes}`, tone: 'warning' as const }
       : { label: 'Tudo salvo', tone: 'success' as const };
   const dialogoFalta = dialogo && typeof dialogo === 'object' ? dialogo : null;
+  // Pelo link, encerrar manda para a aprovação; o coordenador encerra direto.
+  const encerramento = viaLink ? mesa.finalizar : mesa.encerrar;
   const jogadorFalta = dialogoFalta ? jogadores.get(dialogoFalta.jogadorId) : undefined;
 
   return (
@@ -307,8 +449,11 @@ export function LiveScoreSheetScreen() {
           <ButtonGlobal label={proximoLabel} size="sm" variant="outline" onClick={mesa.proximoPeriodo} />
         )}
         <ButtonGlobal label="Escalação" size="sm" variant="ghost" onClick={() => setEditandoEscalacao(true)} />
+        {botoesExtras}
         <ButtonGlobal label="Encerrar o jogo" size="sm" onClick={() => setDialogo('encerrar')} />
-        <ButtonGlobal label="Descartar mesa" size="sm" variant="ghost" onClick={() => setDialogo('descartar')} />
+        {!viaLink && (
+          <ButtonGlobal label="Descartar mesa" size="sm" variant="ghost" onClick={() => setDialogo('descartar')} />
+        )}
       </Toolbar>
 
       <Tabs>
@@ -368,16 +513,21 @@ export function LiveScoreSheetScreen() {
         title="Encerrar o jogo"
         message={`${ctx.casa.nome} ${resumo.placar.casa} x ${resumo.placar.fora} ${ctx.fora.nome}.${
           mesa.proximoPasso === 'fim' ? '' : ' O tempo de jogo ainda não terminou.'
-        } O resultado vai para a tabela e a mesa fica só para leitura.`}
+        } ${
+          viaLink
+            ? 'O jogo vai para a aprovação do coordenador; só depois o resultado entra na tabela.'
+            : 'O resultado vai para a tabela e a mesa fica só para leitura.'
+        }`}
         confirmLabel="Encerrar"
-        loading={mesa.encerrar.isPending}
-        error={mesa.encerrar.error ? getErrorMessage(mesa.encerrar.error) : null}
-        onConfirm={() => mesa.encerrar.mutate(undefined, { onSuccess: () => setDialogo(null) })}
+        loading={encerramento.isPending}
+        error={encerramento.error ? getErrorMessage(encerramento.error) : null}
+        onConfirm={() => encerramento.mutate(undefined, { onSuccess: () => setDialogo(null) })}
         onClose={() => {
-          mesa.encerrar.reset();
+          encerramento.reset();
           setDialogo(null);
         }}
       />
+      {modalLink}
       <ConfirmDialogGlobal
         open={dialogo === 'descartar'}
         title="Descartar a mesa"
