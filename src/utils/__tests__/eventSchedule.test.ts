@@ -96,6 +96,25 @@ describe('event schedule', () => {
       expect(Object.fromEntries(dayGameNumbers([...dia, sozinho]))).toEqual({ j1: 1, j2: 2, j3: 3 });
     });
 
+    it('looks past a game that does not change the order', () => {
+      // Dia de 4 jogos como no app: o Jogo 1 não mexe na ordem; o Jogo 2 decide quem enfrenta o UFC.
+      const dia = [
+        confronto('j1', 'QuixaRocks', 'UFC Quixadá'),
+        confronto('j2', 'Estadual', 'Okami BC'),
+        confronto('j3', 'UFC Quixadá', 'Okami BC'),
+        confronto('j4', 'UFC Quixadá', 'Estadual'),
+      ];
+      expect(Object.fromEntries(dependentGames(dia))).toEqual({
+        j3: { home: 'Perdedor Jogo\u00a02', away: 'UFC Quixadá' },
+        j4: { home: 'Vencedor Jogo\u00a02', away: 'UFC Quixadá' },
+      });
+      // Com o Jogo 1 encerrado, continua igual; com o Jogo 2 encerrado, voltam os nomes.
+      dia[0] = { ...dia[0], status: 'encerrado' };
+      expect(dependentGames(dia).size).toBe(2);
+      dia[1] = { ...dia[1], status: 'encerrado' };
+      expect(dependentGames(dia).size).toBe(0);
+    });
+
     it('stops once the order no longer depends on a result', () => {
       const dia = [
         confronto('j1', 'A', 'B', { status: 'encerrado', vencedor_id: 'A' }),

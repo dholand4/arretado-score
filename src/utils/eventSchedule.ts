@@ -61,36 +61,49 @@ export interface IGameSides {
 type IJogoDoDia = Pick<IJogoResumo, 'id' | 'status' | 'evento_id' | 'ordem_no_evento' | 'time_casa_id' | 'time_fora_id' | 'casa' | 'fora'>;
 
 function dependentInDay(dia: IJogoDoDia[], out: Map<string, IGameSides>) {
-  const atual = dia.findIndex((j) => j.status === 'agendado');
-  if (atual < 0) return;
-  const jogo = dia[atual];
-  const restantes = dia.map((j, posicao) => ({ j, posicao })).filter(({ j, posicao }) => posicao > atual && j.status === 'agendado');
-  if (restantes.length === 0) return;
+  // Percorre os jogos sem resultado na ordem: enquanto o resultado de um jogo não muda o seguinte
+  // (ex.: Jogo 1 = A x B e Jogo 2 = C x D), passa adiante até achar o jogo que decide os confrontos.
+  let atual = dia.findIndex((j) => j.status === 'agendado');
+  while (atual >= 0) {
+    const jogo = dia[atual];
+    const posicaoAtual = atual;
+    const restantes = dia
+      .map((j, posicao) => ({ j, posicao }))
+      .filter(({ j, posicao }) => posicao > posicaoAtual && j.status === 'agendado');
+    if (restantes.length === 0) return;
 
-  const proximo = (vencedor: string) => {
-    const peso = (j: IJogoDoDia) =>
-      [j.time_casa_id, j.time_fora_id]
-        .filter((t) => t === jogo.time_casa_id || t === jogo.time_fora_id)
-        .reduce((soma, t) => soma + (t === vencedor ? 2 : 1), 0);
-    return restantes.reduce((melhor, item) => (peso(item.j) < peso(melhor.j) ? item : melhor));
-  };
-  const seCasaVence = proximo(jogo.time_casa_id);
-  const seForaVence = proximo(jogo.time_fora_id);
-  if (seCasaVence.j.id === seForaVence.j.id) return;
+    const proximo = (vencedor: string) => {
+      const peso = (j: IJogoDoDia) =>
+        [j.time_casa_id, j.time_fora_id]
+          .filter((t) => t === jogo.time_casa_id || t === jogo.time_fora_id)
+          .reduce((soma, t) => soma + (t === vencedor ? 2 : 1), 0);
+      return restantes.reduce((melhor, item) => (peso(item.j) < peso(melhor.j) ? item : melhor));
+    };
+    const seCasaVence = proximo(jogo.time_casa_id);
+    const seForaVence = proximo(jogo.time_fora_id);
+    if (seCasaVence.j.id === seForaVence.j.id) {
+      // O resultado não muda o seguinte. Se o banco não for reordenar, segue para ele; senão a ordem
+      // depois deste jogo ainda vai mudar e não dá para prever além.
+      if (seCasaVence.posicao !== restantes[0].posicao) return;
+      atual = seCasaVence.posicao;
+      continue;
+    }
 
-  // Cada candidato tem o perdedor da sua hipótese; o adversário dele precisa ser o mesmo nos dois.
-  const adversario = (j: IJogoDoDia, perdedor: string) =>
-    j.time_casa_id === perdedor ? j.fora : j.time_fora_id === perdedor ? j.casa : null;
-  const advCasaVence = adversario(seCasaVence.j, jogo.time_fora_id);
-  const advForaVence = adversario(seForaVence.j, jogo.time_casa_id);
-  const proximaPosicao = restantes[0].posicao;
-  const posicoes = [seCasaVence.posicao, seForaVence.posicao];
-  if (!advCasaVence || advCasaVence.nome !== advForaVence?.nome || !posicoes.includes(proximaPosicao)) return;
+    // Cada candidato tem o perdedor da sua hipótese; o adversário dele precisa ser o mesmo nos dois.
+    const adversario = (j: IJogoDoDia, perdedor: string) =>
+      j.time_casa_id === perdedor ? j.fora : j.time_fora_id === perdedor ? j.casa : null;
+    const advCasaVence = adversario(seCasaVence.j, jogo.time_fora_id);
+    const advForaVence = adversario(seForaVence.j, jogo.time_casa_id);
+    const proximaPosicao = restantes[0].posicao;
+    const posicoes = [seCasaVence.posicao, seForaVence.posicao];
+    if (!advCasaVence || advCasaVence.nome !== advForaVence?.nome || !posicoes.includes(proximaPosicao)) return;
 
-  const outraPosicao = posicoes.find((p) => p !== proximaPosicao) as number;
-  const doJogo = `Jogo\u00a0${atual + 1}`;
-  out.set(dia[proximaPosicao].id, { home: `Perdedor ${doJogo}`, away: advCasaVence.nome });
-  out.set(dia[outraPosicao].id, { home: `Vencedor ${doJogo}`, away: advCasaVence.nome });
+    const outraPosicao = posicoes.find((p) => p !== proximaPosicao) as number;
+    const doJogo = `Jogo\u00a0${atual + 1}`;
+    out.set(dia[proximaPosicao].id, { home: `Perdedor ${doJogo}`, away: advCasaVence.nome });
+    out.set(dia[outraPosicao].id, { home: `Vencedor ${doJogo}`, away: advCasaVence.nome });
+    return;
+  }
 }
 
 // Jogos (de um ou de vários dias) cujo confronto depende do resultado anterior.
