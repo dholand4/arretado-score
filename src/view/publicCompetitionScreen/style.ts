@@ -41,6 +41,11 @@ export const Rankings = styled.div`
 
   @media (min-width: ${({ theme }) => theme.breakpoints.md}px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    /* Ranking que sobra sozinho na linha (ex.: só o Cestinha) ocupa a largura toda. */
+    & > :last-child:nth-child(odd) {
+      grid-column: 1 / -1;
+    }
   }
 `;
 
