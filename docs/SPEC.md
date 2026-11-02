@@ -247,7 +247,7 @@ O admin pode adicionar quantas categorias quiser (ex.: no basquete, Rebotes, Ass
 
 **`jogo_mesa`** (estado da súmula ao vivo de um jogo, 6.5.1; uma linha por jogo)
 - `jogo_id uuid primary key references jogos on delete cascade`
-- `status text default 'em_andamento'` — `'em_andamento' | 'encerrada'`
+- `status text default 'em_andamento'` — `'em_andamento' | 'aguardando_aprovacao' | 'encerrada'` (aguardando: o mesário do link encerrou e o coordenador ainda não aprovou)
 - `escalados uuid[]` — jogadores marcados para o jogo
 - `periodo int not null default 1` — períodos depois de `qtd_periodos` são prorrogações
 - `relogio_restante_ms int not null`, `posse_restante_ms int` (nulo sem relógio de posse) — quanto faltava em `relogio_referencia_em`
@@ -267,6 +267,14 @@ O admin pode adicionar quantas categorias quiser (ex.: no basquete, Rebotes, Ass
 - `valor int` — em `ponto`: 1, 2 ou 3
 - `tipo_falta text` — em `falta`: `'pessoal' | 'tecnica' | 'antidesportiva' | 'desqualificante'`
 - `anulado boolean default false` — "desfazer" anula em vez de apagar
+- `criado_por uuid references profiles`, `created_at`
+
+**`mesa_links`** (link do mesário, 6.5.1; um ativo por jogo)
+- `id uuid primary key`
+- `jogo_id uuid references jogos on delete cascade`, `competicao_id uuid references competicoes on delete cascade`
+- `token text unique` — 64 caracteres aleatórios; é a única credencial do link
+- `expira_em timestamptz` — 12 horas depois do horário do jogo (ou de quando foi gerado, o que for depois)
+- `revogado_em timestamptz` — preenchido ao gerar outro, cancelar, aprovar ou descartar
 - `criado_por uuid references profiles`, `created_at`
 
 ### 4.6 Financeiro
@@ -384,7 +392,10 @@ Colunas: **J** (jogos), **V**, **E** (só se `permite_empate`), **D**, **WO** (d
 #### 6.5.1 Súmula ao vivo (mesa)
 O mesário preenche a súmula durante o jogo, no celular ou tablet, do mesmo jeito que a súmula de papel: cronômetro, pontos e faltas de cada jogador, faltas da equipe e tempos debitados. No fim, o jogo é encerrado e vira uma súmula normal (6.5).
 
-- **Quem opera**: admin da competição e master (o login do coordenador basta).
+- **Quem opera**: admin da competição e master (o login do coordenador basta) ou um **mesário sem login, pelo link do jogo**.
+- **Link do mesário**: na mesa, o coordenador toca em "Link do mesário" e gera um link `/mesa/:token` daquele jogo (compartilhável pelo WhatsApp). Vale 12 horas a partir do horário do jogo; gerar outro ou cancelar invalida o anterior; aprovar ou descartar a mesa também. Quem abre o link vê só a mesa daquele jogo, sem o menu e sem as opções de descartar ou voltar à súmula normal.
+- **Aprovação**: quando o mesário do link encerra o jogo, a mesa fica `aguardando_aprovacao`: não aceita mais lances e o resultado ainda **não conta** na tabela. O coordenador vê o aviso na lista de jogos e na mesa e pode **aprovar o resultado** (grava como em "Encerrar o jogo"), **reabrir para o mesário** corrigir ou **descartar a mesa**. Quando o próprio coordenador opera a mesa, "Encerrar" grava direto, sem aprovação.
+- **Acompanhar ao vivo**: em liga pública, a página pública do jogo mostra placar, período, relógios, faltas, tempos e o lance a lance enquanto a mesa está aberta (Realtime, sem login). A tela de placar `/placar/:gameId` mostra o mesmo em letras grandes para um segundo tablet ou TV de frente para a quadra (botão "Placar (telão)" na mesa e "Placar em tela cheia" na página do jogo), com os escudos e os nomes dos times.
 - **Onde**: rota própria, sem o menu do painel, aberta pelo botão "Súmula ao vivo" da súmula do jogo. A tela se adapta: no celular, um time por vez (abas "Casa", "Fora" e "Lances"); no tablet, os dois times lado a lado; no computador, os dois times e os lances. No computador, **espaço** liga e pausa o relógio e **Ctrl/Cmd+Z** desfaz. A tela fica acesa enquanto a mesa está aberta.
 - **Abrir a mesa**: em jogo `pendente` ou `agendado`, com os dois times definidos e ainda sem resultado. Abrir cria a linha em `jogo_mesa` (período 1, relógio parado com a duração do período). Jogo com mesa aberta não aceita súmula normal nem W.O. até a mesa ser encerrada ou descartada.
 - **Antes de começar**: o mesário marca, em cada time, os jogadores que vão jogar (entre os ativos do elenco, com o número). Só eles aparecem para lançar. Dá para incluir alguém depois. Os nomes de apontador, cronometrista, árbitro e fiscal são opcionais.
@@ -405,9 +416,9 @@ O mesário preenche a súmula durante o jogo, no celular ou tablet, do mesmo jei
 - **Descartar a mesa**: enquanto não encerrada, o admin pode descartá-la (apaga `jogo_mesa` e os lances, com confirmação) e voltar à súmula normal.
 - **Conexão**: cada lance e cada mudança do relógio vão para o servidor na hora. Sem conexão, o lance entra numa fila no aparelho, aparece como "pendente" e é reenviado quando a internet volta; como o `id` vem do aparelho, reenviar não duplica. Um aviso fixo mostra quando há lances pendentes, e o jogo não pode ser encerrado com fila pendente. O lance aparece na tela na hora e fica nela: o que o servidor já aceitou continua valendo até a consulta seguinte trazê-lo, para não sumir e voltar.
 - **Um aparelho por jogo**: pensado para uma mesa só. Se outro aparelho abrir a mesma mesa, ele vê o mesmo estado e pode continuar (ex.: o celular descarregou).
-- Todas as escritas (abrir, lance, anular, relógio, período, encerrar, descartar) são RPCs que conferem se o jogo é da competição do usuário e se a mesa está `em_andamento`.
+- Todas as escritas (abrir, lance, anular, relógio, período, encerrar, descartar) são RPCs que conferem se o jogo é da competição do usuário (ou se o token do link é válido para aquele jogo) e se a mesa está `em_andamento`. Gerar e cancelar link, aprovar, reabrir e descartar são só do coordenador.
 
-**Decisões**: regras FIBA como padrão, editáveis por liga; o coordenador opera a mesa; relógio de posse incluído; placar ao vivo para o público e súmula impressa preenchida ficam para a etapa 10.
+**Decisões**: regras FIBA como padrão, editáveis por liga; o coordenador opera a mesa; relógio de posse incluído; mesário sem login só pelo link do jogo, com aprovação do coordenador; placar ao vivo para o público incluído; súmula impressa preenchida fica para a etapa 10.
 
 ### 6.6 Séries e avanço de fase
 - **Série melhor de N**: vence quem chegar a ⌈N/2⌉ vitórias. O jogo 1 é criado (`pendente`) assim que os dois times da série estão definidos. Cada jogo seguinte só é criado quando o anterior termina e a série ainda não foi decidida. Mando nominal: time de melhor campanha é mandante nos jogos ímpares.
@@ -487,7 +498,9 @@ Para quando os vencedores de um mata-mata não fecham a fase seguinte. Ex.: 6 ti
 | `/` | Lista de competições em andamento e encerradas recentes (logo, nome, modalidade) |
 | `/c/:slug` | Início da competição: próximos jogos (eventos publicados), últimos resultados, top 3 de cada ranking, atalho para tabela e playoffs e o **formato**: fases em ordem com status, o resumo visual do caminho até a final (o mesmo do assistente) e os times de cada grupo já sorteado |
 | `/c/:slug/jogos` | Jogos agrupados por dia (eventos publicados), com placar quando encerrados; filtros por fase e time |
-| `/c/:slug/jogos/:jogoId` | Detalhe: placar, data/local, estatísticas por jogador (box score) |
+| `/c/:slug/jogos/:jogoId` | Detalhe: placar, data/local, estatísticas por jogador (box score). Com a súmula ao vivo aberta: placar ao vivo e lance a lance (6.5.1) |
+| `/placar/:gameId` | Tela de placar (telão) do jogo, em tela cheia: escudos, nomes, placar, período, relógios, faltas e tempos |
+| `/mesa/:token` | Mesa do jogo para o mesário do link (6.5.1), sem login |
 | `/c/:slug/tabela` | Classificação por fase (abas) e por grupo; linhas dos classificados destacadas. Fases de mata-mata com melhores perdedores também aparecem, com a tabela da fase (6.6.1) |
 | `/c/:slug/playoffs` | Chaveamento visual das fases de mata-mata, com placar da série (ex.: 2–1) e origens pendentes |
 | `/c/:slug/rankings` | Rankings por categoria (abas com o título de cada uma) |
@@ -547,7 +560,8 @@ Atualização ao vivo via Supabase Realtime nas páginas de jogos, tabela e deta
 | `times`, `jogadores` | pública (anon) se a competição não está em rascunho | admin da competição; dono do time (`jogadores` do seu time e `times.logo_url`/`nome` do seu time) |
 | `eventos`, `jogos` | pública só de eventos publicados / jogos de eventos publicados ou encerrados | admin da competição |
 | `jogo_jogadores`, `sumula_estatisticas` | pública para jogos encerrados | admin da competição (via RPC) |
-| `jogo_mesa`, `jogo_lances` | admin da competição (pública na etapa 10) | admin da competição (via RPC, 6.5.1) |
+| `jogo_mesa`, `jogo_lances` | admin da competição; pública (anon) em competição pública | admin da competição ou mesário com link válido (via RPC, 6.5.1) |
+| `mesa_links` | admin da competição | ninguém direto (RPCs do coordenador) |
 | `cobrancas` | admin da competição | admin da competição |
 | `pagamentos_internos` | dono do time, master | dono do time, master |
 
@@ -610,10 +624,12 @@ Implemente uma etapa por vez. Ao final de cada uma, rode o projeto, confira os c
 - ✅ Desfazer anula o último lance e o placar volta.
 - ✅ Empate no fim do 4º período abre prorrogação; encerrar grava placar, pontos por jogador, tabela e cestinha como a súmula normal.
 - ✅ Sem internet, os lances ficam pendentes e sobem quando a conexão volta, sem duplicar; não dá para encerrar com fila pendente.
-- ✅ Dono do time e visitante não leem nem escrevem `jogo_mesa`/`jogo_lances`.
+- ✅ Dono do time e visitante não escrevem em `jogo_mesa`/`jogo_lances` (leitura só em liga pública).
+- ✅ O coordenador gera o link; o mesário abre sem login, lança e encerra; o jogo fica aguardando aprovação e não conta na tabela até o coordenador aprovar; reabrir devolve a mesa ao mesário; link cancelado ou expirado mostra "Link de mesa indisponível".
+- ✅ A página pública do jogo e `/placar/:gameId` mostram placar e lances mudando sem recarregar.
 
 **Etapa 10 — Placar ao vivo e súmula preenchida**
-- Página pública do jogo com placar, período e relógio ao vivo (Realtime) enquanto a mesa está aberta.
+- (Feito na etapa 9: página pública do jogo com placar, período e relógio ao vivo e tela de placar.)
 - Súmula para imprimir já preenchida com os lances: faltas por jogador, faltas da equipe, tempos, contagem de pontos e placar por período, para as assinaturas.
 
 **Etapa 11 — Arte de divulgação do dia**
