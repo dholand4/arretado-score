@@ -11,7 +11,7 @@ describe('useCategories', () => {
     vi.mocked(categoriesService.create).mockResolvedValue({ id: 'r' } as never);
     const { result } = renderHook(() => useCategories('c1'), { wrapper: createQueryWrapper() });
     await waitFor(() => expect(result.current.categories).toHaveLength(1));
-    await act(() => result.current.createCategory.mutateAsync({ nome: 'Rebotes', sigla: 'REB', titulo_ranking: 'Reboteiro' }));
-    expect(categoriesService.create).toHaveBeenCalledWith('c1', { nome: 'Rebotes', sigla: 'REB', titulo_ranking: 'Reboteiro' });
+    await act(() => result.current.createCategory.mutateAsync({ nome: 'Rebotes', sigla: 'REB', titulo_ranking: 'Reboteiro', conta_cestas_de: null }));
+    expect(categoriesService.create).toHaveBeenCalledWith('c1', { nome: 'Rebotes', sigla: 'REB', titulo_ranking: 'Reboteiro', conta_cestas_de: null });
   });
 });

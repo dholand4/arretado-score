@@ -5,6 +5,7 @@ import { BadgeGlobal } from '@/components/badgeGlobal';
 import { ButtonGlobal } from '@/components/buttonGlobal';
 import { CategoryFormModalGlobal } from '@/components/categoryFormModalGlobal';
 import { ConfirmDialogGlobal } from '@/components/confirmDialogGlobal';
+import { CONTA_CESTAS_OPCOES } from '@/constants/competition';
 import { Actions, List, Meta, Row, Texts, Title, Wrapper } from './style';
 import type { ICategoriesEditorProps } from './types';
 
@@ -43,7 +44,11 @@ export function CategoriesEditorGlobal({
                   {category.soma_no_placar && <BadgeGlobal label="Placar" tone="primary" />}
                   {!category.ativa && <BadgeGlobal label="Inativa" />}
                 </Title>
-                <Meta>Ranking: {category.titulo_ranking}</Meta>
+                <Meta>
+                  Ranking: {category.titulo_ranking}
+                  {category.conta_cestas_de !== null &&
+                    ` · conta as ${CONTA_CESTAS_OPCOES.find((o) => o.value === category.conta_cestas_de)?.short} da súmula ao vivo`}
+                </Meta>
               </Texts>
               <Actions>
                 {!category.soma_no_placar && (
@@ -118,6 +123,7 @@ export function CategoriesEditorGlobal({
             nome: modal.category.nome,
             sigla: modal.category.sigla,
             titulo_ranking: modal.category.titulo_ranking,
+            conta_cestas_de: modal.category.conta_cestas_de,
           }}
           isScoreCategory={modal.category.soma_no_placar}
           saving={busy}

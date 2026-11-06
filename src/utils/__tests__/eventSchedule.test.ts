@@ -2,7 +2,7 @@ import type { IEvento, IJogoResumo, IMontagemEvento } from '@/@types/event';
 import {
   assemblyNotice,
   defaultEventInput,
-  dayGameNumbers,
+  gameNumbers,
   dependentGames,
   eventToInput,
   doubleGameMessage,
@@ -90,10 +90,23 @@ describe('event schedule', () => {
       expect(gameSides(dia[0], dependentGames(dia))).toEqual({ home: 'Estadual', away: 'QuixaRocks' });
     });
 
-    it('numbers the games of each day in order', () => {
-      const dia = [confronto('j3', 'A', 'C'), confronto('j1', 'A', 'B'), confronto('j2', 'B', 'C')];
-      const sozinho = confronto('j9', 'X', 'Y', { evento_id: 'dia2' });
-      expect(Object.fromEntries(dayGameNumbers([...dia, sozinho]))).toEqual({ j1: 1, j2: 2, j3: 3 });
+    it('numbers the games across the competition, without restarting each day', () => {
+      const jogos = [
+        confronto('j1', 'A', 'B', { numero: 1 }),
+        confronto('j2', 'B', 'C', { numero: 2 }),
+        confronto('j4', 'X', 'Y', { evento_id: 'dia2', numero: 4 }),
+        confronto('j9', 'X', 'Z', { evento_id: null, numero: null }),
+      ];
+      expect(Object.fromEntries(gameNumbers(jogos))).toEqual({ j1: 1, j2: 2, j4: 4 });
+    });
+
+    it('names the dependent games after the competition number', () => {
+      const dia = [
+        confronto('j1', 'A', 'B', { evento_id: 'dia2', numero: 4 }),
+        confronto('j2', 'A', 'C', { evento_id: 'dia2', numero: 5 }),
+        confronto('j3', 'B', 'C', { evento_id: 'dia2', numero: 6 }),
+      ];
+      expect(dependentGames(dia).get('j2')?.home).toBe('Perdedor Jogo\u00a04');
     });
 
     it('looks past a game that does not change the order', () => {

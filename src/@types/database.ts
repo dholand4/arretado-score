@@ -101,14 +101,14 @@ isOneToOne: false
                   ]
                 },"categorias_estatistica": {
                   Row: {
-                    "ativa": boolean,"competicao_id": string,"created_at": string,"id": string,"nome": string,"ordem": number | null,"sigla": string,"soma_no_placar": boolean,"titulo_ranking": string
+                    "ativa": boolean,"competicao_id": string,"conta_cestas_de": number | null,"created_at": string,"id": string,"nome": string,"ordem": number | null,"sigla": string,"soma_no_placar": boolean,"titulo_ranking": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "ativa"?: boolean,"competicao_id": string,"created_at"?: string,"id"?: string,"nome": string,"ordem"?: number | null,"sigla": string,"soma_no_placar"?: boolean,"titulo_ranking": string
+                    "ativa"?: boolean,"competicao_id": string,"conta_cestas_de"?: number | null,"created_at"?: string,"id"?: string,"nome": string,"ordem"?: number | null,"sigla": string,"soma_no_placar"?: boolean,"titulo_ranking": string
                   }
                   Update: {
-                    "ativa"?: boolean,"competicao_id"?: string,"created_at"?: string,"id"?: string,"nome"?: string,"ordem"?: number | null,"sigla"?: string,"soma_no_placar"?: boolean,"titulo_ranking"?: string
+                    "ativa"?: boolean,"competicao_id"?: string,"conta_cestas_de"?: number | null,"created_at"?: string,"id"?: string,"nome"?: string,"ordem"?: number | null,"sigla"?: string,"soma_no_placar"?: boolean,"titulo_ranking"?: string
                   }
                   Relationships: [
                     {
@@ -419,9 +419,9 @@ isOneToOne: true
                   ]
                 },"jogos": {
                   Row: {
-                    "competicao_id": string,"created_at": string,"evento_id": string | null,"fase_id": string,"grupo_id": string | null,"id": string,"inicio_previsto": string | null,"numero_na_serie": number | null,"ordem_no_evento": number | null,"placar_casa": number | null,"placar_fora": number | null,"rodada": number | null,"serie_id": string | null,"so_placar": boolean,"status": string,"time_casa_id": string,"time_fora_id": string,"vencedor_id": string | null,"wo_ausente": string | null
+                    "competicao_id": string,"created_at": string,"evento_id": string | null,"fase_id": string,"grupo_id": string | null,"id": string,"inicio_previsto": string | null,"numero_na_serie": number | null,"ordem_no_evento": number | null,"placar_casa": number | null,"placar_fora": number | null,"rodada": number | null,"serie_id": string | null,"so_placar": boolean,"status": string,"time_casa_id": string,"time_fora_id": string,"vencedor_id": string | null,"wo_ausente": string | null,"numero": number | null
                   }
-                  ComputedFields: never
+                  ComputedFields: "numero"
                   Insert: {
                     "competicao_id": string,"created_at"?: string,"evento_id"?: string | null,"fase_id": string,"grupo_id"?: string | null,"id"?: string,"inicio_previsto"?: string | null,"numero_na_serie"?: number | null,"ordem_no_evento"?: number | null,"placar_casa"?: number | null,"placar_fora"?: number | null,"rodada"?: number | null,"serie_id"?: string | null,"so_placar"?: boolean,"status"?: string,"time_casa_id": string,"time_fora_id": string,"vencedor_id"?: string | null,"wo_ausente"?: string | null
                   }
@@ -729,6 +729,9 @@ isOneToOne: false
 { Args: { "modalidade": string }; Returns: {
               "nome": string,"sigla": string,"titulo_ranking": string
             }[]
+                           },
+"cestas_do_jogador":
+{ Args: { "p_jogador_id": string,"p_jogo_id": string,"p_valor": number }; Returns: number
                            },
 "classificacao_mata_mata":
 { Args: { "p_fase_id": string }; Returns: {
@@ -1040,6 +1043,9 @@ isOneToOne: false
                            },
 "mesa_tem_acesso":
 { Args: { "p_jogo_id": string,"p_token": string }; Returns: boolean
+                           },
+"numero":
+{ Args: { "j": Omit<Database["public"]['Tables']["jogos"]['Row'], Database["public"]['Tables']["jogos"]['ComputedFields']> }; Returns: number
                            },
 "numero_serie":
 { Args: { "p_codigo": string }; Returns: number

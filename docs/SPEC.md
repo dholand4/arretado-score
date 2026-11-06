@@ -117,6 +117,7 @@ Nomes de tabelas e colunas em português, `snake_case`. Todas as tabelas têm `i
 - `soma_no_placar boolean default false` — exatamente **uma** categoria por competição tem `true` (a de pontos/gols); o placar do jogo sai da soma dela
 - `ordem int`
 - `ativa boolean default true`
+- `conta_cestas_de int null` — `1`, `2` ou `3`: a categoria é preenchida sozinha pela súmula ao vivo (6.5.1) com quantos lances de +1, +2 ou +3 cada jogador converteu (ex.: "Cestas de 3"). Nulo = digitada na súmula. No máximo uma categoria por valor em cada competição; a categoria de placar não usa.
 
 Ao criar a competição, o sistema cria automaticamente a categoria de placar conforme a modalidade:
 | Modalidade | Nome | Sigla | Título do ranking |
@@ -126,7 +127,7 @@ Ao criar a competição, o sistema cria automaticamente a categoria de placar co
 | volei | Pontos | PTS | Maior pontuador |
 | outro | Pontos | PTS | Maior pontuador |
 
-O admin pode adicionar quantas categorias quiser (ex.: no basquete, Rebotes, Assistências, Tocos). Cada categoria ativa ganha um ranking próprio.
+O admin pode adicionar quantas categorias quiser (ex.: no basquete, Rebotes, Assistências, Tocos). Cada categoria ativa ganha um ranking próprio. Ao criar uma categoria com `conta_cestas_de` (ou ligar isso numa existente), os jogos já encerrados pela súmula ao vivo são preenchidos com a contagem dos lances, sem sobrescrever valores já lançados na súmula.
 
 ### 4.3 Times e jogadores
 
@@ -319,7 +320,7 @@ Tela em etapas, com botão "Salvar rascunho" em todas:
 1. **Dados básicos** — nome, logo (upload), modalidade, descrição, local padrão, intervalo padrão entre jogos. O `slug` é gerado do nome e pode ser editado.
 2. **Regras** — as regras da partida usadas pela súmula ao vivo (4.2): períodos, duração, prorrogação, bônus de faltas da equipe, faltas para exclusão, tempos debitados, relógio de posse e se a falta para o cronômetro, já com o padrão FIBA (botão "Usar padrão FIBA"). Não entram na trava de estrutura.
 3. **Pontuação e W.O.** — vem preenchido com o padrão (vitória 1, derrota 0, W.O. 20 x 0, derrota por W.O. 0). Botão "Usar padrão FIBA" troca para vitória 2, derrota 1, derrota por W.O. 0. Futsal liga empate por padrão (vitória 3, empate 1, derrota 0). Ordem dos critérios de desempate arrastável.
-4. **Estatísticas** — lista com a categoria de placar (fixa, só renomeável) e botão para adicionar outras (nome, sigla, título do ranking).
+4. **Estatísticas** — lista com a categoria de placar (fixa, só renomeável) e botão para adicionar outras (nome, sigla, título do ranking e, opcionalmente, "Preencher pela súmula ao vivo": não, lances livres convertidos, cestas de 2 ou cestas de 3).
 5. **Fases** — o admin adiciona fases em ordem. Para cada uma: nome, tipo e os campos do tipo (seção 4.4). Mostra um **resumo visual** do formato (ex.: "Fase 1: 5 times, todos contra todos, 10 jogos → 4 avançam → Semifinal melhor de 3: 1º x 4º, 2º x 3º → Final melhor de 3"). Valida a coerência (ex.: classificados precisam caber no mata-mata seguinte, que precisa de número par de times).
 6. **Cobrança** — nenhuma, por time ou por jogador; valor, dia de vencimento, mês de início, quantidade de meses.
 7. **Times** — o cadastro de times e jogadores da competição, o mesmo da aba Times (abaixo).
@@ -358,7 +359,7 @@ O admin cria um evento informando **data, local (preenchido com o padrão), hora
 6. Jogos de um evento ficam `agendado`. Excluir um evento devolve os jogos sem súmula para `pendente`.
    - **Editar o dia** (rascunho ou publicado, RPC `atualizar_evento`): muda data, hora de início, local, intervalo e observações sem mexer nos jogos nem na ordem; os horários são recalculados a partir do novo início. Se algum jogo do dia já tem resultado, só local e observações mudam.
 7. **Ordem conforme os resultados**: quando um jogo do dia termina, o próximo passa a ser, entre os que faltam, o que menos repete os times dele (vencedor pesa 2, perdedor 1): quem perdeu joga em seguida e quem venceu descansa, a não ser que não haja outra opção. Ex. com 3 times: A x B; depois C x perdedor; por último C x vencedor.
-8. **Como os confrontos aparecem** (painel e área pública): cada jogo mostra seu número no dia ("Jogo 1", "Jogo 2"…) e a fase (com grupo ou série, quando houver), nunca a rodada. Enquanto um jogo não tem resultado, os que dependem dele aparecem como "Perdedor Jogo 1 x C" e "Vencedor Jogo 1 x C". Só quando os dois candidatos têm o mesmo adversário; nos outros casos aparecem os nomes.
+8. **Como os confrontos aparecem** (painel e área pública): cada jogo mostra seu número na competição ("Jogo 1", "Jogo 2"…) e a fase (com grupo ou série, quando houver), nunca a rodada. Enquanto um jogo não tem resultado, os que dependem dele aparecem como "Perdedor Jogo 1 x C" e "Vencedor Jogo 1 x C". Só quando os dois candidatos têm o mesmo adversário; nos outros casos aparecem os nomes. A numeração não recomeça a cada dia: o primeiro jogo marcado é o Jogo 1 e a contagem segue pelos dias seguintes (dias publicados antes dos rascunhos, depois data, hora de início e a ordem no dia). Jogo sem dia ou cancelado não tem número. Vem do campo calculado `numero` de `jogos` (função SQL).
 
 ### 6.3 Classificação
 Colunas: **J** (jogos), **V**, **E** (só se `permite_empate`), **D**, **WO** (derrotas por W.O.), **PTS**, **PF** (pontos/gols a favor), **PC** (contra), **SALDO**, **%** (aproveitamento = V / J).
@@ -414,8 +415,8 @@ O mesário preenche a súmula durante o jogo, no celular ou tablet, do mesmo jei
 - **Tempos debitados**: botão por equipe. Ao pedir, a mesa mostra a contagem de **1 minuto** embaixo dos tempos daquela equipe (no visual do relógio de posse); no fim toca a sirene e fica em 00:00. Ligar o relógio encerra o tempo (antes ou depois do minuto), e desfazer o lance tira a contagem. Limite por metade: `tempos_primeira_metade` nos primeiros `qtd_periodos / 2` períodos, `tempos_segunda_metade` nos demais e `tempos_prorrogacao` em cada prorrogação. Tempo não usado não passa para a metade seguinte.
 - **Placar**: sempre a soma dos pontos dos lances não anulados. O placar por período e a "contagem de pontos" corrida saem dos lances.
 - **Desfazer**: anula o último lance; a lista de lances do jogo permite anular qualquer um (com confirmação). Lance anulado não conta em nada, mas continua no histórico.
-- **Encerrar o jogo** (RPC transacional, com confirmação mostrando o placar): aplica as mesmas validações e efeitos da súmula normal (6.5). Grava a presença (`jogo_jogadores`) dos jogadores marcados e os pontos de cada um na categoria `soma_no_placar` (`sumula_estatisticas`); `so_placar = false`. A mesa fica `encerrada` e só para leitura.
-- **Depois de encerrado**: as outras categorias (rebotes, assistências…) e qualquer correção são feitas na súmula normal. A súmula normal manda; os lances ficam como histórico.
+- **Encerrar o jogo** (RPC transacional, com confirmação mostrando o placar): aplica as mesmas validações e efeitos da súmula normal (6.5). Grava a presença (`jogo_jogadores`) dos jogadores marcados, os pontos de cada um na categoria `soma_no_placar` e, em cada categoria ativa com `conta_cestas_de`, quantos lances daquele valor o jogador converteu (`sumula_estatisticas`); `so_placar = false`. A mesa fica `encerrada` e só para leitura.
+- **Depois de encerrado**: as outras categorias (rebotes, assistências…, menos as preenchidas pelos lances) e qualquer correção são feitas na súmula normal. A súmula normal manda; os lances ficam como histórico.
 - **Descartar a mesa**: enquanto não encerrada, o admin pode descartá-la (apaga `jogo_mesa` e os lances, com confirmação) e voltar à súmula normal.
 - **Conexão**: cada lance e cada mudança do relógio vão para o servidor na hora. Sem conexão, o lance entra numa fila no aparelho, aparece como "pendente" e é reenviado quando a internet volta; como o `id` vem do aparelho, reenviar não duplica. Um aviso fixo mostra quando há lances pendentes, e o jogo não pode ser encerrado com fila pendente. O lance aparece na tela na hora e fica nela: o que o servidor já aceitou continua valendo até a consulta seguinte trazê-lo, para não sumir e voltar.
 - **Sair da conta**: "Sair" encerra a sessão só naquele aparelho; não derruba o coordenador logado na mesa em outro aparelho.

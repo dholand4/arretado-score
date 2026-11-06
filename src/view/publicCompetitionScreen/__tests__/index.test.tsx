@@ -13,6 +13,7 @@ const jogo = (id: string, ordem: number, casa: string, fora: string, hora: strin
     id,
     evento_id: 'dia1',
     ordem_no_evento: ordem,
+    numero: ordem,
     status: 'agendado',
     time_casa_id: casa,
     time_fora_id: fora,

@@ -10,7 +10,7 @@ import {
   type IEventArtFormat,
 } from '@/constants/eventArt';
 import { AppError } from './appError';
-import { dayGameNumbers, dependentGames, formatTime, gameDetails, gameSides, shortTime } from './eventSchedule';
+import { dependentGames, gameNumbers, formatTime, gameDetails, gameSides, shortTime } from './eventSchedule';
 import { loadImageBitmap } from './image';
 
 // ---------- Conteúdo (o que a arte mostra) ----------
@@ -67,7 +67,7 @@ function gameCenter(jogo: IJogoResumo): string {
 export function eventArtContent(event: IEvento, league: { nome: string; logo_url: string | null }): IEventArtContent {
   const jogos = [...event.jogos].sort((a, b) => (a.ordem_no_evento ?? 0) - (b.ordem_no_evento ?? 0));
   const dependentes = dependentGames(jogos);
-  const numeros = dayGameNumbers(jogos);
+  const numeros = gameNumbers(jogos);
 
   const games = jogos.map((jogo): IEventArtGame => {
     const lados = gameSides(jogo, dependentes);

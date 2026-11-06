@@ -51,3 +51,11 @@ export const WIZARD_STEPS = [
 ] as const;
 
 export type WizardStepKey = (typeof WIZARD_STEPS)[number]['key'];
+
+// Categoria preenchida sozinha pela súmula ao vivo: quantos lances de +1, +2 ou +3 o jogador converteu.
+export const CONTA_CESTAS_OPCOES: { value: number | null; label: string; short: string }[] = [
+  { value: null, label: 'Não, digitar na súmula', short: '' },
+  { value: 1, label: 'Lances livres convertidos (+1)', short: 'lances de +1' },
+  { value: 2, label: 'Cestas de 2 (+2)', short: 'cestas de 2' },
+  { value: 3, label: 'Cestas de 3 (+3)', short: 'cestas de 3' },
+];

@@ -13,6 +13,7 @@ const cat = (overrides: Partial<ICategoria>): ICategoria => ({
   ordem: 1,
   ativa: true,
   created_at: '',
+  conta_cestas_de: null,
   ...overrides,
 });
 
@@ -53,6 +54,16 @@ describe('CategoriesEditorGlobal', () => {
     fireEvent.change(within(dialog).getByLabelText('Sigla'), { target: { value: 'TOC' } });
     fireEvent.change(within(dialog).getByLabelText('Título do ranking'), { target: { value: 'Paredão' } });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Salvar' }));
-    expect(h.onCreate).toHaveBeenCalledWith({ nome: 'Tocos', sigla: 'TOC', titulo_ranking: 'Paredão' }, expect.any(Function));
+    expect(h.onCreate).toHaveBeenCalledWith({ nome: 'Tocos', sigla: 'TOC', titulo_ranking: 'Paredão', conta_cestas_de: null }, expect.any(Function));
+  });
+
+  it('shows when a category is filled by the live score sheet', () => {
+    renderWithTheme(
+      <CategoriesEditorGlobal
+        categories={[...categories, cat({ id: 't', nome: 'Cestas de 3', sigla: '3PT', titulo_ranking: 'Mão de seda', conta_cestas_de: 3, ordem: 4 })]}
+        {...handlers()}
+      />,
+    );
+    expect(screen.getByText(/conta as cestas de 3 da súmula ao vivo/)).toBeInTheDocument();
   });
 });

@@ -8,6 +8,7 @@ const jogo = (id: string, casa: string, fora: string, ordem: number, patch: Part
     id,
     evento_id: 'e1',
     ordem_no_evento: ordem,
+    numero: ordem,
     time_casa_id: casa,
     time_fora_id: fora,
     casa: time(casa, `https://logos/${casa}.webp`),
@@ -141,8 +142,12 @@ describe('eventArtContent', () => {
     expect(content.games.map((g) => g.center)).toEqual(['70 x 65', 'W.O.', 'Cancelado']);
   });
 
-  it('has no game number on a day with a single game', () => {
-    expect(eventArtContent(event([jogo('j1', 'A', 'B', 1)]), league).games[0].order).toBeNull();
+  it('keeps the competition number on a day with a single game', () => {
+    expect(eventArtContent(event([jogo('j4', 'A', 'B', 1, { numero: 4 })]), league).games[0].order).toBe('JOGO 4');
+  });
+
+  it('has no game number when the game has none', () => {
+    expect(eventArtContent(event([jogo('j1', 'A', 'B', 1, { numero: null })]), league).games[0].order).toBeNull();
   });
 });
 

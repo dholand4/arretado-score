@@ -22,6 +22,7 @@ const UNIQUE_MESSAGES: Record<string, string> = {
   jogadores_time_numero_key: 'Já existe um jogador com esse número neste time.',
   jogadores_competicao_documento_key: 'Esse documento já está cadastrado em outro jogador desta competição.',
   competicao_admins_pkey: 'Esse usuário já administra a competição.',
+  categorias_estatistica_cestas_unico: 'Já existe uma estatística que conta esse tipo de cesta.',
 };
 
 interface ICodedError {

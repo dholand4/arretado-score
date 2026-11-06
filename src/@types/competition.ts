@@ -68,6 +68,8 @@ export interface ICategoriaInput {
   nome: string;
   sigla: string;
   titulo_ranking: string;
+  // 1, 2 ou 3: preenchida pela súmula ao vivo com os lances desse valor. Nulo = digitada na súmula.
+  conta_cestas_de: number | null;
 }
 
 export interface ITimeInput {

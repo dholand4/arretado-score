@@ -2,13 +2,17 @@ import { useId, useState, type FormEvent } from 'react';
 import type { ICategoriaInput } from '@/@types/competition';
 import { AlertGlobal } from '@/components/alertGlobal';
 import { ButtonGlobal } from '@/components/buttonGlobal';
+import { CONTA_CESTAS_OPCOES } from '@/constants/competition';
 import { InputGlobal } from '@/components/inputGlobal';
 import { ModalGlobal } from '@/components/modalGlobal';
+import { SelectGlobal } from '@/components/selectGlobal';
 import { hasErrors, validateCategory, type FormErrors } from '@/utils/competitionValidators';
 import { Form } from './style';
 import type { ICategoryFormModalProps } from './types';
 
-const EMPTY: ICategoriaInput = { nome: '', sigla: '', titulo_ranking: '' };
+const EMPTY: ICategoriaInput = { nome: '', sigla: '', titulo_ranking: '', conta_cestas_de: null };
+
+const CESTAS_OPTIONS = CONTA_CESTAS_OPCOES.map((option) => ({ value: String(option.value ?? ''), label: option.label }));
 
 export function CategoryFormModalGlobal({
   open,
@@ -22,7 +26,7 @@ export function CategoryFormModalGlobal({
   const formId = useId();
   const [values, setValues] = useState(initialValues ?? EMPTY);
   const [errors, setErrors] = useState<FormErrors<ICategoriaInput>>({});
-  const set = (field: keyof ICategoriaInput, value: string) => setValues((current) => ({ ...current, [field]: value }));
+  const set = (field: 'nome' | 'sigla' | 'titulo_ranking', value: string) => setValues((current) => ({ ...current, [field]: value }));
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
@@ -30,6 +34,7 @@ export function CategoryFormModalGlobal({
       nome: values.nome.trim(),
       sigla: values.sigla.trim().toUpperCase(),
       titulo_ranking: values.titulo_ranking.trim(),
+      conta_cestas_de: isScoreCategory ? null : values.conta_cestas_de,
     };
     const found = validateCategory(payload);
     setErrors(found);
@@ -75,6 +80,22 @@ export function CategoryFormModalGlobal({
           onChange={(e) => set('titulo_ranking', e.target.value)}
           error={errors.titulo_ranking}
         />
+        {!isScoreCategory && (
+          <SelectGlobal
+            label="Preencher pela súmula ao vivo"
+            options={CESTAS_OPTIONS}
+            value={String(values.conta_cestas_de ?? '')}
+            onChange={(e) =>
+              setValues((current) => ({ ...current, conta_cestas_de: e.target.value ? Number(e.target.value) : null }))
+            }
+          />
+        )}
+        {values.conta_cestas_de !== null && !isScoreCategory && (
+          <AlertGlobal
+            variant="info"
+            message="Ao encerrar o jogo ao vivo, cada jogador recebe quantas dessas cestas converteu. Os jogos já encerrados pela súmula ao vivo também são preenchidos. Jogos lançados só na súmula normal continuam sendo digitados."
+          />
+        )}
         {error && <AlertGlobal variant="error" message={error} />}
       </Form>
     </ModalGlobal>

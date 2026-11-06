@@ -14,7 +14,7 @@ import { sortByNumber } from '@/utils/scoreSheet';
 import { supabase } from './supabaseService';
 
 export const GAME_LIST_SELECT =
-  '*, casa:times!jogos_time_casa_id_fkey(nome, sigla), fora:times!jogos_time_fora_id_fkey(nome, sigla), ' +
+  '*, numero, casa:times!jogos_time_casa_id_fkey(nome, sigla), fora:times!jogos_time_fora_id_fkey(nome, sigla), ' +
   'fase:fases(nome), grupo:grupos(nome), serie:series(codigo), evento:eventos(data, local, status)';
 
 const PHASE_FIELDS = 'id, nome, ordem, tipo, status, classificam, melhores_extras';
