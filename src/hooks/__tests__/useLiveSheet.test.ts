@@ -26,6 +26,7 @@ const contexto = (): IMesaContexto => ({
     relogio_posse: true,
     posse_segundos: 24,
     posse_reset_curto: 14,
+    falta_para_relogio: false,
   },
   casa: { id: 'A', nome: 'Okami BC', logo_url: null },
   fora: { id: 'B', nome: 'QuixaRocks', logo_url: null },
@@ -111,7 +112,7 @@ describe('useLiveSheet', () => {
     expect(result.current.posseMs).toBe(14_000);
   });
 
-  it('keeps the clock running after a foul', async () => {
+  it('keeps the clock running after a foul when the league plays straight time', async () => {
     const { result } = await montar();
     act(() => result.current.iniciar());
     act(() => {
@@ -119,6 +120,19 @@ describe('useLiveSheet', () => {
     });
     expect(result.current.relogio?.rodando).toBe(true);
     expect(result.current.resumo?.jogadores.a1?.faltas).toBe(1);
+  });
+
+  it('stops the clock on a foul when the league asks for it', async () => {
+    vi.mocked(liveSheetService.getContext).mockResolvedValue({
+      ...contexto(),
+      competicao: { ...contexto().competicao, falta_para_relogio: true },
+    });
+    const { result } = await montar();
+    act(() => result.current.iniciar());
+    act(() => {
+      result.current.lancar({ tipo: 'falta', time_id: 'A', jogador_id: 'a1' });
+    });
+    expect(result.current.relogio?.rodando).toBe(false);
   });
 
   it('stops the clock and counts one minute on a timeout', async () => {

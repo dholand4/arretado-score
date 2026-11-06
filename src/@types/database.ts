@@ -185,14 +185,14 @@ isOneToOne: false
                   ]
                 },"competicoes": {
                   Row: {
-                    "ativa": boolean,"cobranca_dia_vencimento": number | null,"cobranca_mes_inicio": string | null,"cobranca_modelo": string,"cobranca_qtd_meses": number | null,"cobranca_valor": number | null,"created_at": string,"criado_por": string | null,"criterios_desempate": NonNullable<Json>,"descricao": string | null,"duracao_periodo_min": number,"duracao_prorrogacao_min": number,"estrutura_travada": boolean,"faltas_bonus_equipe": number,"faltas_exclusao_jogador": number,"id": string,"intervalo_jogos_min": number,"local_padrao": string | null,"logo_url": string | null,"modalidade": string,"nome": string,"permite_empate": boolean,"pontos_derrota": number,"pontos_derrota_wo": number,"pontos_empate": number,"pontos_vitoria": number,"posse_reset_curto": number,"posse_segundos": number,"qtd_periodos": number,"relogio_posse": boolean,"slug": string,"status": string,"tempos_primeira_metade": number,"tempos_prorrogacao": number,"tempos_segunda_metade": number,"wo_placar_perdedor": number,"wo_placar_vencedor": number
+                    "ativa": boolean,"cobranca_dia_vencimento": number | null,"cobranca_mes_inicio": string | null,"cobranca_modelo": string,"cobranca_qtd_meses": number | null,"cobranca_valor": number | null,"created_at": string,"criado_por": string | null,"criterios_desempate": NonNullable<Json>,"descricao": string | null,"duracao_periodo_min": number,"duracao_prorrogacao_min": number,"estrutura_travada": boolean,"falta_para_relogio": boolean,"faltas_bonus_equipe": number,"faltas_exclusao_jogador": number,"id": string,"intervalo_jogos_min": number,"local_padrao": string | null,"logo_url": string | null,"modalidade": string,"nome": string,"permite_empate": boolean,"pontos_derrota": number,"pontos_derrota_wo": number,"pontos_empate": number,"pontos_vitoria": number,"posse_reset_curto": number,"posse_segundos": number,"qtd_periodos": number,"relogio_posse": boolean,"slug": string,"status": string,"tempos_primeira_metade": number,"tempos_prorrogacao": number,"tempos_segunda_metade": number,"wo_placar_perdedor": number,"wo_placar_vencedor": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "ativa"?: boolean,"cobranca_dia_vencimento"?: number | null,"cobranca_mes_inicio"?: string | null,"cobranca_modelo"?: string,"cobranca_qtd_meses"?: number | null,"cobranca_valor"?: number | null,"created_at"?: string,"criado_por"?: string | null,"criterios_desempate"?: NonNullable<Json>,"descricao"?: string | null,"duracao_periodo_min"?: number,"duracao_prorrogacao_min"?: number,"estrutura_travada"?: boolean,"faltas_bonus_equipe"?: number,"faltas_exclusao_jogador"?: number,"id"?: string,"intervalo_jogos_min"?: number,"local_padrao"?: string | null,"logo_url"?: string | null,"modalidade": string,"nome": string,"permite_empate"?: boolean,"pontos_derrota"?: number,"pontos_derrota_wo"?: number,"pontos_empate"?: number,"pontos_vitoria"?: number,"posse_reset_curto"?: number,"posse_segundos"?: number,"qtd_periodos"?: number,"relogio_posse"?: boolean,"slug": string,"status"?: string,"tempos_primeira_metade"?: number,"tempos_prorrogacao"?: number,"tempos_segunda_metade"?: number,"wo_placar_perdedor"?: number,"wo_placar_vencedor"?: number
+                    "ativa"?: boolean,"cobranca_dia_vencimento"?: number | null,"cobranca_mes_inicio"?: string | null,"cobranca_modelo"?: string,"cobranca_qtd_meses"?: number | null,"cobranca_valor"?: number | null,"created_at"?: string,"criado_por"?: string | null,"criterios_desempate"?: NonNullable<Json>,"descricao"?: string | null,"duracao_periodo_min"?: number,"duracao_prorrogacao_min"?: number,"estrutura_travada"?: boolean,"falta_para_relogio"?: boolean,"faltas_bonus_equipe"?: number,"faltas_exclusao_jogador"?: number,"id"?: string,"intervalo_jogos_min"?: number,"local_padrao"?: string | null,"logo_url"?: string | null,"modalidade": string,"nome": string,"permite_empate"?: boolean,"pontos_derrota"?: number,"pontos_derrota_wo"?: number,"pontos_empate"?: number,"pontos_vitoria"?: number,"posse_reset_curto"?: number,"posse_segundos"?: number,"qtd_periodos"?: number,"relogio_posse"?: boolean,"slug": string,"status"?: string,"tempos_primeira_metade"?: number,"tempos_prorrogacao"?: number,"tempos_segunda_metade"?: number,"wo_placar_perdedor"?: number,"wo_placar_vencedor"?: number
                   }
                   Update: {
-                    "ativa"?: boolean,"cobranca_dia_vencimento"?: number | null,"cobranca_mes_inicio"?: string | null,"cobranca_modelo"?: string,"cobranca_qtd_meses"?: number | null,"cobranca_valor"?: number | null,"created_at"?: string,"criado_por"?: string | null,"criterios_desempate"?: NonNullable<Json>,"descricao"?: string | null,"duracao_periodo_min"?: number,"duracao_prorrogacao_min"?: number,"estrutura_travada"?: boolean,"faltas_bonus_equipe"?: number,"faltas_exclusao_jogador"?: number,"id"?: string,"intervalo_jogos_min"?: number,"local_padrao"?: string | null,"logo_url"?: string | null,"modalidade"?: string,"nome"?: string,"permite_empate"?: boolean,"pontos_derrota"?: number,"pontos_derrota_wo"?: number,"pontos_empate"?: number,"pontos_vitoria"?: number,"posse_reset_curto"?: number,"posse_segundos"?: number,"qtd_periodos"?: number,"relogio_posse"?: boolean,"slug"?: string,"status"?: string,"tempos_primeira_metade"?: number,"tempos_prorrogacao"?: number,"tempos_segunda_metade"?: number,"wo_placar_perdedor"?: number,"wo_placar_vencedor"?: number
+                    "ativa"?: boolean,"cobranca_dia_vencimento"?: number | null,"cobranca_mes_inicio"?: string | null,"cobranca_modelo"?: string,"cobranca_qtd_meses"?: number | null,"cobranca_valor"?: number | null,"created_at"?: string,"criado_por"?: string | null,"criterios_desempate"?: NonNullable<Json>,"descricao"?: string | null,"duracao_periodo_min"?: number,"duracao_prorrogacao_min"?: number,"estrutura_travada"?: boolean,"falta_para_relogio"?: boolean,"faltas_bonus_equipe"?: number,"faltas_exclusao_jogador"?: number,"id"?: string,"intervalo_jogos_min"?: number,"local_padrao"?: string | null,"logo_url"?: string | null,"modalidade"?: string,"nome"?: string,"permite_empate"?: boolean,"pontos_derrota"?: number,"pontos_derrota_wo"?: number,"pontos_empate"?: number,"pontos_vitoria"?: number,"posse_reset_curto"?: number,"posse_segundos"?: number,"qtd_periodos"?: number,"relogio_posse"?: boolean,"slug"?: string,"status"?: string,"tempos_primeira_metade"?: number,"tempos_prorrogacao"?: number,"tempos_segunda_metade"?: number,"wo_placar_perdedor"?: number,"wo_placar_vencedor"?: number
                   }
                   Relationships: [
                     {
@@ -417,18 +417,6 @@ isOneToOne: true
       referencedColumns: ["id"]
     }
                   ]
-                },"mesa_links": {
-                  Row: {
-                    "competicao_id": string,"created_at": string,"criado_por": string | null,"expira_em": string,"id": string,"jogo_id": string,"revogado_em": string | null,"token": string
-                  }
-                  ComputedFields: never
-                  Insert: {
-                    "competicao_id": string,"created_at"?: string,"criado_por"?: string | null,"expira_em": string,"id"?: string,"jogo_id": string,"revogado_em"?: string | null,"token": string
-                  }
-                  Update: {
-                    "competicao_id"?: string,"created_at"?: string,"criado_por"?: string | null,"expira_em"?: string,"id"?: string,"jogo_id"?: string,"revogado_em"?: string | null,"token"?: string
-                  }
-                  Relationships: []
                 },"jogos": {
                   Row: {
                     "competicao_id": string,"created_at": string,"evento_id": string | null,"fase_id": string,"grupo_id": string | null,"id": string,"inicio_previsto": string | null,"numero_na_serie": number | null,"ordem_no_evento": number | null,"placar_casa": number | null,"placar_fora": number | null,"rodada": number | null,"serie_id": string | null,"so_placar": boolean,"status": string,"time_casa_id": string,"time_fora_id": string,"vencedor_id": string | null,"wo_ausente": string | null
@@ -488,6 +476,38 @@ isOneToOne: false
       columns: ["vencedor_id"]
 isOneToOne: false
       referencedRelation: "times"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"mesa_links": {
+                  Row: {
+                    "competicao_id": string,"created_at": string,"criado_por": string | null,"expira_em": string,"id": string,"jogo_id": string,"revogado_em": string | null,"token": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "competicao_id": string,"created_at"?: string,"criado_por"?: string | null,"expira_em": string,"id"?: string,"jogo_id": string,"revogado_em"?: string | null,"token": string
+                  }
+                  Update: {
+                    "competicao_id"?: string,"created_at"?: string,"criado_por"?: string | null,"expira_em"?: string,"id"?: string,"jogo_id"?: string,"revogado_em"?: string | null,"token"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "mesa_links_competicao_id_fkey"
+      columns: ["competicao_id"]
+isOneToOne: false
+      referencedRelation: "competicoes"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "mesa_links_criado_por_fkey"
+      columns: ["criado_por"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "mesa_links_jogo_id_fkey"
+      columns: ["jogo_id"]
+isOneToOne: false
+      referencedRelation: "jogos"
       referencedColumns: ["id"]
     }
                   ]
@@ -939,6 +959,32 @@ isOneToOne: false
 "mesa_descartar":
 { Args: { "p_jogo_id": string }; Returns: undefined
                            },
+"mesa_do_coordenador":
+{ Args: { "p_jogo_id": string }; Returns: {
+              "aberta_por": string | null,
+"apontador": string | null,
+"arbitro": string | null,
+"competicao_id": string,
+"created_at": string,
+"cronometrista": string | null,
+"encerrada_em": string | null,
+"escalados": (string)[],
+"fiscal": string | null,
+"jogo_id": string,
+"operador_24": string | null,
+"periodo": number,
+"posse_restante_ms": number | null,
+"relogio_referencia_em": string,
+"relogio_restante_ms": number,
+"relogio_rodando": boolean,
+"status": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "jogo_mesa"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "mesa_encerrar":
 { Args: { "p_jogo_id": string }; Returns: undefined
                            },
@@ -953,6 +999,9 @@ isOneToOne: false
                            },
 "mesa_lance":
 { Args: { "p_lance": Json,"p_token"?: string }; Returns: undefined
+                           },
+"mesa_link_valido":
+{ Args: { "p_jogo_id": string,"p_token": string }; Returns: boolean
                            },
 "mesa_para_lancar":
 { Args: { "p_jogo_id": string,"p_token"?: string }; Returns: {
@@ -988,6 +1037,9 @@ isOneToOne: false
                            },
 "mesa_relogio":
 { Args: { "p_estado": Json,"p_jogo_id": string,"p_token"?: string }; Returns: string
+                           },
+"mesa_tem_acesso":
+{ Args: { "p_jogo_id": string,"p_token": string }; Returns: boolean
                            },
 "numero_serie":
 { Args: { "p_codigo": string }; Returns: number

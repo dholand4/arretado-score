@@ -22,6 +22,7 @@ const regras = {
   relogio_posse: true,
   posse_segundos: 24,
   posse_reset_curto: 14,
+  falta_para_relogio: true,
 };
 
 const mesaBase = {

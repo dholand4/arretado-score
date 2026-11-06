@@ -23,6 +23,7 @@ const FIBA: IRegrasPartida = {
   relogio_posse: true,
   posse_segundos: 24,
   posse_reset_curto: 14,
+  falta_para_relogio: true,
 };
 
 const toStrings = (values: IRegrasPartida) =>
@@ -35,6 +36,7 @@ const toStrings = (values: IRegrasPartida) =>
 export function MatchRulesFormGlobal({ initialValues, saving = false, error, saved = false, onSave }: IMatchRulesFormProps) {
   const [numbers, setNumbers] = useState(() => toStrings(initialValues));
   const [relogioPosse, setRelogioPosse] = useState(initialValues.relogio_posse);
+  const [faltaParaRelogio, setFaltaParaRelogio] = useState(initialValues.falta_para_relogio);
   const [errors, setErrors] = useState<FormErrors<IRegrasPartida>>({});
 
   const input = (field: NumericField, label: string, hint?: string) => (
@@ -58,6 +60,7 @@ export function MatchRulesFormGlobal({ initialValues, saving = false, error, sav
         (Object.keys(MATCH_RULE_LIMITS) as NumericField[]).map((f) => [f, parseIntField(numbers[f])]),
       ) as Record<NumericField, number>),
       relogio_posse: relogioPosse,
+      falta_para_relogio: faltaParaRelogio,
     };
     const found = validateMatchRules(payload);
     setErrors(found);
@@ -80,6 +83,12 @@ export function MatchRulesFormGlobal({ initialValues, saving = false, error, sav
           {input('tempos_prorrogacao', 'Tempos por prorrogação')}
         </Grid>
         <CheckboxGlobal
+          label="Falta para o cronômetro"
+          description="Desmarcado, o jogo segue correndo na falta e a mesa pausa quando quiser."
+          checked={faltaParaRelogio}
+          onChange={(e) => setFaltaParaRelogio(e.target.checked)}
+        />
+        <CheckboxGlobal
           label="Usar relógio de posse (24 segundos)"
           checked={relogioPosse}
           onChange={(e) => setRelogioPosse(e.target.checked)}
@@ -101,6 +110,7 @@ export function MatchRulesFormGlobal({ initialValues, saving = false, error, sav
           onClick={() => {
             setNumbers(toStrings(FIBA));
             setRelogioPosse(true);
+            setFaltaParaRelogio(true);
             setErrors({});
           }}
         />

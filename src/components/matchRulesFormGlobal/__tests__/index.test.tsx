@@ -15,6 +15,7 @@ const regras: IRegrasPartida = {
   relogio_posse: false,
   posse_segundos: 24,
   posse_reset_curto: 14,
+  falta_para_relogio: false,
 };
 
 describe('MatchRulesFormGlobal', () => {
@@ -33,7 +34,16 @@ describe('MatchRulesFormGlobal', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Usar padrão FIBA' }));
     expect(screen.getByLabelText('Segundos de posse')).toHaveValue(24);
     fireEvent.click(screen.getByRole('button', { name: 'Salvar regras' }));
-    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ qtd_periodos: 4, duracao_periodo_min: 10, relogio_posse: true }));
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ qtd_periodos: 4, duracao_periodo_min: 10, relogio_posse: true, falta_para_relogio: true }));
+  });
+
+  it('lets the league choose whether a foul stops the clock', () => {
+    const onSave = vi.fn();
+    renderWithTheme(<MatchRulesFormGlobal initialValues={regras} onSave={onSave} />);
+    expect(screen.getByRole('checkbox', { name: /^Falta para o cronômetro/ })).not.toBeChecked();
+    fireEvent.click(screen.getByRole('checkbox', { name: /^Falta para o cronômetro/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar regras' }));
+    expect(onSave).toHaveBeenCalledWith({ ...regras, falta_para_relogio: true });
   });
 
   it('rejects values out of range', () => {

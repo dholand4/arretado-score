@@ -20,6 +20,7 @@ export type IRegrasPartida = Pick<
   | 'relogio_posse'
   | 'posse_segundos'
   | 'posse_reset_curto'
+  | 'falta_para_relogio'
 >;
 
 export type IMesa = Omit<Tables<'jogo_mesa'>, 'status'> & { status: StatusMesa };

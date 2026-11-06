@@ -323,10 +323,12 @@ export function useLiveSheet(competicaoId: string, jogoId: string, token?: strin
         anulado: false,
       };
       enfileirar({ tipo: 'lance', lance });
-      // Tempo para o jogo e conta 1 minuto; falta não para (a mesa pausa se quiser); cesta de quadra troca a posse.
+      // Tempo para o jogo e conta 1 minuto; falta para só se a liga quiser; cesta de quadra troca a posse.
       if (novo.tipo === 'tempo') {
         if (atual.rodando) pausar();
         setTempoPedido({ lanceId: lance.id, timeId: novo.time_id, fimMs: agora() + DURACAO_TEMPO_MS });
+      } else if (novo.tipo === 'falta') {
+        if (atual.rodando && ctx.competicao.falta_para_relogio) pausar();
       } else if (novo.tipo === 'ponto' && (novo.valor ?? 0) >= 2 && posseCheia !== null) {
         mudarRelogio((s) => ({ ...s, posseMs: posseCheia }));
       }

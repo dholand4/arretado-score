@@ -5,7 +5,8 @@ import { supabase } from './supabaseService';
 
 const REGRAS =
   'qtd_periodos, duracao_periodo_min, duracao_prorrogacao_min, faltas_bonus_equipe, faltas_exclusao_jogador, ' +
-  'tempos_primeira_metade, tempos_segunda_metade, tempos_prorrogacao, relogio_posse, posse_segundos, posse_reset_curto';
+  'tempos_primeira_metade, tempos_segunda_metade, tempos_prorrogacao, relogio_posse, posse_segundos, posse_reset_curto, ' +
+  'falta_para_relogio';
 
 type IJogoMesaBruto = {
   id: string;
