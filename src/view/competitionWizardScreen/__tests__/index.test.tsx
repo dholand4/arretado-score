@@ -91,11 +91,42 @@ describe('CompetitionWizardScreen', () => {
       saveBasics: mutation(),
       saveScoring: mutation(),
       saveMatchRules: mutation(),
+      saveBilling: mutation(),
+      setActive: mutation(),
     } as unknown as ReturnType<typeof useCompetition>);
     renderAt('/painel/competicoes/c1/configuracao?etapa=pontuacao');
     expect(screen.getByRole('button', { name: /Pontuação/ })).toHaveAttribute('aria-current', 'step');
     expect(screen.getByText(/estrutura está travada/)).toBeInTheDocument();
     expect(screen.getByLabelText('Vitória')).toBeDisabled();
+  });
+
+  it('shows the match rules in their own step, right after the basics', () => {
+    const saveMatchRules = mutation();
+    vi.mocked(useCompetition).mockReturnValue({
+      competition: { ...competition, falta_para_relogio: false },
+      isLoading: false,
+      error: null,
+      saveBasics: mutation(),
+      saveScoring: mutation(),
+      saveMatchRules,
+      saveBilling: mutation(),
+      setActive: mutation(),
+    } as unknown as ReturnType<typeof useCompetition>);
+    renderAt('/painel/competicoes/c1/configuracao?etapa=regras');
+    const etapas = screen.getAllByRole('button', { name: /Dados básicos|Regras|Pontuação|Estatísticas|Fases|Cobrança|Times|Revisão/ });
+    expect(etapas.map((b) => b.textContent?.replace(/^\d+/, ''))).toEqual([
+      'Dados básicos',
+      'Regras',
+      'Pontuação',
+      'Estatísticas',
+      'Fases',
+      'Cobrança',
+      'Times',
+      'Revisão',
+    ]);
+    expect(screen.getByRole('button', { name: /Regras/ })).toHaveAttribute('aria-current', 'step');
+    expect(screen.getByRole('checkbox', { name: /^Falta para o cronômetro/ })).toBeInTheDocument();
+    expect(screen.queryByLabelText('Vitória')).not.toBeInTheDocument();
   });
 
   it('switches steps through the stepper', () => {
@@ -106,6 +137,8 @@ describe('CompetitionWizardScreen', () => {
       saveBasics: mutation(),
       saveScoring: mutation(),
       saveMatchRules: mutation(),
+      saveBilling: mutation(),
+      setActive: mutation(),
     } as unknown as ReturnType<typeof useCompetition>);
     renderAt('/painel/competicoes/c1/configuracao');
     fireEvent.click(screen.getByRole('button', { name: /Revisão/ }));
@@ -120,6 +153,8 @@ describe('CompetitionWizardScreen', () => {
       saveBasics: mutation(),
       saveScoring: mutation(),
       saveMatchRules: mutation(),
+      saveBilling: mutation(),
+      setActive: mutation(),
     } as unknown as ReturnType<typeof useCompetition>);
     vi.mocked(useTeams).mockReturnValue({
       teams: [1, 2, 3, 4, 5].map((n) => ({ id: `t${n}` })),
@@ -159,6 +194,8 @@ describe('CompetitionWizardScreen', () => {
       saveBasics: mutation(),
       saveScoring: mutation(),
       saveMatchRules: mutation(),
+      saveBilling: mutation(),
+      setActive: mutation(),
     } as unknown as ReturnType<typeof useCompetition>);
     renderAt('/painel/competicoes/c1/configuracao?etapa=fases');
     expect(screen.getByText(/Só o admin master pode alterar as fases/)).toBeInTheDocument();

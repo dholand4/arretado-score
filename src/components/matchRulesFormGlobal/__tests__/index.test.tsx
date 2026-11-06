@@ -23,8 +23,8 @@ describe('MatchRulesFormGlobal', () => {
     const onSave = vi.fn();
     renderWithTheme(<MatchRulesFormGlobal initialValues={regras} onSave={onSave} />);
     fireEvent.change(screen.getByLabelText('Minutos por período'), { target: { value: '15' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Salvar regras' }));
-    expect(onSave).toHaveBeenCalledWith({ ...regras, duracao_periodo_min: 15 });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar rascunho' }));
+    expect(onSave).toHaveBeenCalledWith({ ...regras, duracao_periodo_min: 15 }, false);
   });
 
   it('fills the FIBA defaults and shows the shot clock fields', () => {
@@ -33,8 +33,8 @@ describe('MatchRulesFormGlobal', () => {
     expect(screen.queryByLabelText('Segundos de posse')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Usar padrão FIBA' }));
     expect(screen.getByLabelText('Segundos de posse')).toHaveValue(24);
-    fireEvent.click(screen.getByRole('button', { name: 'Salvar regras' }));
-    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ qtd_periodos: 4, duracao_periodo_min: 10, relogio_posse: true, falta_para_relogio: true }));
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar rascunho' }));
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ qtd_periodos: 4, duracao_periodo_min: 10, relogio_posse: true, falta_para_relogio: true }), false);
   });
 
   it('lets the league choose whether a foul stops the clock', () => {
@@ -42,15 +42,22 @@ describe('MatchRulesFormGlobal', () => {
     renderWithTheme(<MatchRulesFormGlobal initialValues={regras} onSave={onSave} />);
     expect(screen.getByRole('checkbox', { name: /^Falta para o cronômetro/ })).not.toBeChecked();
     fireEvent.click(screen.getByRole('checkbox', { name: /^Falta para o cronômetro/ }));
-    fireEvent.click(screen.getByRole('button', { name: 'Salvar regras' }));
-    expect(onSave).toHaveBeenCalledWith({ ...regras, falta_para_relogio: true });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar rascunho' }));
+    expect(onSave).toHaveBeenCalledWith({ ...regras, falta_para_relogio: true }, false);
+  });
+
+  it('saves and goes to the next step', () => {
+    const onSave = vi.fn();
+    renderWithTheme(<MatchRulesFormGlobal initialValues={regras} onSave={onSave} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar e continuar' }));
+    expect(onSave).toHaveBeenCalledWith(regras, true);
   });
 
   it('rejects values out of range', () => {
     const onSave = vi.fn();
     renderWithTheme(<MatchRulesFormGlobal initialValues={regras} onSave={onSave} />);
     fireEvent.change(screen.getByLabelText('Períodos'), { target: { value: '0' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Salvar regras' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar rascunho' }));
     expect(screen.getByText('Use um número de 1 a 8.')).toBeInTheDocument();
     expect(onSave).not.toHaveBeenCalled();
   });

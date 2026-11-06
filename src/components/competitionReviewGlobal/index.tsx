@@ -31,6 +31,27 @@ export function CompetitionReviewGlobal({ competition: c, categories, teamsCount
         </List>
       </CardGlobal>
 
+      <CardGlobal title="Regras da partida" actions={edit('regras')}>
+        <List>
+          <Term>Períodos</Term>
+          <Value>
+            {c.qtd_periodos} × {c.duracao_periodo_min} min (prorrogação {c.duracao_prorrogacao_min} min)
+          </Value>
+          <Term>Faltas</Term>
+          <Value>
+            Bônus depois de {c.faltas_bonus_equipe} da equipe; exclusão com {c.faltas_exclusao_jogador}
+          </Value>
+          <Term>Tempos</Term>
+          <Value>
+            {c.tempos_primeira_metade} na 1ª metade, {c.tempos_segunda_metade} na 2ª, {c.tempos_prorrogacao} por prorrogação
+          </Value>
+          <Term>Relógio de posse</Term>
+          <Value>{c.relogio_posse ? `${c.posse_segundos} s (curta ${c.posse_reset_curto} s)` : 'Não usa'}</Value>
+          <Term>Falta para o cronômetro</Term>
+          <Value>{c.falta_para_relogio ? 'Sim' : 'Não'}</Value>
+        </List>
+      </CardGlobal>
+
       <CardGlobal title="Pontuação e W.O." actions={edit('pontuacao')}>
         <List>
           <Term>Vitória</Term>

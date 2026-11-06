@@ -82,12 +82,13 @@ describe('checklist', () => {
 });
 
 describe('wizard', () => {
-  it('skips unavailable steps', () => {
-    expect(nextWizardStep('estatisticas')).toBe('fases');
-    expect(nextWizardStep('fases')).toBe('revisao');
-    expect(isWizardStep('fases')).toBe(true);
-    expect(isWizardStep('cobranca')).toBe(false);
-    expect(isWizardStep('pontuacao')).toBe(true);
+  it('follows the step order', () => {
+    expect(nextWizardStep('dados')).toBe('regras');
+    expect(nextWizardStep('regras')).toBe('pontuacao');
+    expect(nextWizardStep('cobranca')).toBe('times');
+    expect(nextWizardStep('times')).toBe('revisao');
+    expect(isWizardStep('regras')).toBe(true);
+    expect(isWizardStep('outra')).toBe(false);
   });
 });
 

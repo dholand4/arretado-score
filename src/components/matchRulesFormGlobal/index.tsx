@@ -33,11 +33,13 @@ const toStrings = (values: IRegrasPartida) =>
   >;
 
 // Regras usadas pela súmula ao vivo (seção 6.5.1). Ficam fora da trava de estrutura.
-export function MatchRulesFormGlobal({ initialValues, saving = false, error, saved = false, onSave }: IMatchRulesFormProps) {
+export function MatchRulesFormGlobal({ initialValues, saving = false, error, onSave }: IMatchRulesFormProps) {
   const [numbers, setNumbers] = useState(() => toStrings(initialValues));
   const [relogioPosse, setRelogioPosse] = useState(initialValues.relogio_posse);
   const [faltaParaRelogio, setFaltaParaRelogio] = useState(initialValues.falta_para_relogio);
   const [errors, setErrors] = useState<FormErrors<IRegrasPartida>>({});
+  // Qual botão disparou o último salvamento (para o indicador de carregamento).
+  const [advance, setAdvance] = useState(false);
 
   const input = (field: NumericField, label: string, hint?: string) => (
     <InputGlobal
@@ -53,8 +55,7 @@ export function MatchRulesFormGlobal({ initialValues, saving = false, error, sav
     />
   );
 
-  const handleSubmit = (event: FormEvent) => {
-    event.preventDefault();
+  const save = (goNext: boolean) => {
     const payload = {
       ...(Object.fromEntries(
         (Object.keys(MATCH_RULE_LIMITS) as NumericField[]).map((f) => [f, parseIntField(numbers[f])]),
@@ -64,7 +65,14 @@ export function MatchRulesFormGlobal({ initialValues, saving = false, error, sav
     };
     const found = validateMatchRules(payload);
     setErrors(found);
-    if (!hasErrors(found)) onSave(payload);
+    if (hasErrors(found)) return;
+    setAdvance(goNext);
+    onSave(payload, goNext);
+  };
+
+  const handleSubmit = (event: FormEvent) => {
+    event.preventDefault();
+    save(false);
   };
 
   return (
@@ -101,7 +109,6 @@ export function MatchRulesFormGlobal({ initialValues, saving = false, error, sav
         )}
       </Section>
       {error && <AlertGlobal variant="error" message={error} />}
-      {saved && !error && <AlertGlobal variant="success" message="Regras da partida salvas." />}
       <FormActionsGlobal>
         <ButtonGlobal
           label="Usar padrão FIBA"
@@ -114,7 +121,14 @@ export function MatchRulesFormGlobal({ initialValues, saving = false, error, sav
             setErrors({});
           }}
         />
-        <ButtonGlobal label="Salvar regras" type="submit" loading={saving} />
+        <ButtonGlobal
+          label="Salvar rascunho"
+          variant="outline"
+          type="submit"
+          loading={saving && !advance}
+          disabled={saving}
+        />
+        <ButtonGlobal label="Salvar e continuar" loading={saving && advance} disabled={saving} onClick={() => save(true)} />
       </FormActionsGlobal>
     </Form>
   );

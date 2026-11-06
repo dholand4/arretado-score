@@ -87,7 +87,7 @@ Nomes de tabelas e colunas em português, `snake_case`. Todas as tabelas têm `i
   - `wo_placar_vencedor int default 20`
   - `wo_placar_perdedor int default 0`
 - `criterios_desempate jsonb default '["confronto_direto","saldo","pontos_pro"]'` — ordem aplicada após os pontos
-- **Regras da partida** (usadas pela súmula ao vivo, 6.5.1; padrão FIBA, editáveis por liga na etapa "Pontuação e W.O." do assistente):
+- **Regras da partida** (usadas pela súmula ao vivo, 6.5.1; padrão FIBA, editáveis por liga na etapa "Regras" do assistente):
   - `qtd_periodos int default 4`
   - `duracao_periodo_min int default 10`
   - `duracao_prorrogacao_min int default 5`
@@ -317,11 +317,13 @@ Os números da tabela e dos rankings **não são armazenados**; são calculados 
 Tela em etapas, com botão "Salvar rascunho" em todas:
 
 1. **Dados básicos** — nome, logo (upload), modalidade, descrição, local padrão, intervalo padrão entre jogos. O `slug` é gerado do nome e pode ser editado.
-2. **Pontuação e W.O.** — vem preenchido com o padrão (vitória 1, derrota 0, W.O. 20 x 0, derrota por W.O. 0). Botão "Usar padrão FIBA" troca para vitória 2, derrota 1, derrota por W.O. 0. Futsal liga empate por padrão (vitória 3, empate 1, derrota 0). Ordem dos critérios de desempate arrastável. Num bloco "Regras da partida", os campos da súmula ao vivo (4.2): períodos, duração, prorrogação, bônus de faltas da equipe, faltas para exclusão, tempos debitados e se a falta para o cronômetro, já com o padrão FIBA. Não entram na trava de estrutura.
-3. **Estatísticas** — lista com a categoria de placar (fixa, só renomeável) e botão para adicionar outras (nome, sigla, título do ranking).
-4. **Fases** — o admin adiciona fases em ordem. Para cada uma: nome, tipo e os campos do tipo (seção 4.4). Mostra um **resumo visual** do formato (ex.: "Fase 1: 5 times, todos contra todos, 10 jogos → 4 avançam → Semifinal melhor de 3: 1º x 4º, 2º x 3º → Final melhor de 3"). Valida a coerência (ex.: classificados precisam caber no mata-mata seguinte, que precisa de número par de times).
-5. **Cobrança** — nenhuma, por time ou por jogador; valor, dia de vencimento, mês de início, quantidade de meses.
-6. **Revisão** — resumo completo.
+2. **Regras** — as regras da partida usadas pela súmula ao vivo (4.2): períodos, duração, prorrogação, bônus de faltas da equipe, faltas para exclusão, tempos debitados, relógio de posse e se a falta para o cronômetro, já com o padrão FIBA (botão "Usar padrão FIBA"). Não entram na trava de estrutura.
+3. **Pontuação e W.O.** — vem preenchido com o padrão (vitória 1, derrota 0, W.O. 20 x 0, derrota por W.O. 0). Botão "Usar padrão FIBA" troca para vitória 2, derrota 1, derrota por W.O. 0. Futsal liga empate por padrão (vitória 3, empate 1, derrota 0). Ordem dos critérios de desempate arrastável.
+4. **Estatísticas** — lista com a categoria de placar (fixa, só renomeável) e botão para adicionar outras (nome, sigla, título do ranking).
+5. **Fases** — o admin adiciona fases em ordem. Para cada uma: nome, tipo e os campos do tipo (seção 4.4). Mostra um **resumo visual** do formato (ex.: "Fase 1: 5 times, todos contra todos, 10 jogos → 4 avançam → Semifinal melhor de 3: 1º x 4º, 2º x 3º → Final melhor de 3"). Valida a coerência (ex.: classificados precisam caber no mata-mata seguinte, que precisa de número par de times).
+6. **Cobrança** — nenhuma, por time ou por jogador; valor, dia de vencimento, mês de início, quantidade de meses.
+7. **Times** — o cadastro de times e jogadores da competição, o mesmo da aba Times (abaixo).
+8. **Revisão** — resumo completo.
 
 **Times e jogadores** são cadastrados numa tela própria da competição (pode ser antes ou depois do assistente). O admin cadastra o time, opcionalmente vincula um dono, e cadastra jogadores; o dono vinculado também pode cadastrar e editar jogadores do seu time.
 

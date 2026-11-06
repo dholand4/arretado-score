@@ -4,6 +4,6 @@ export interface IMatchRulesFormProps {
   initialValues: IRegrasPartida;
   saving?: boolean;
   error?: string | null;
-  saved?: boolean;
-  onSave: (values: IRegrasPartida) => void;
+  // advance: "Salvar e continuar" (vai para a próxima etapa do assistente).
+  onSave: (values: IRegrasPartida, advance: boolean) => void;
 }

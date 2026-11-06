@@ -20,6 +20,7 @@ export function buildChecklist(categories: ICategoria[], teams: ITimeResumo[], p
   const ativas = categories.filter((c) => c.ativa).length;
   return [
     { key: 'dados', label: 'Dados básicos', done: true, step: 'dados' },
+    { key: 'regras', label: 'Regras da partida', done: true, step: 'regras' },
     { key: 'pontuacao', label: 'Pontuação, W.O. e desempate', done: true, step: 'pontuacao' },
     {
       key: 'estatisticas',

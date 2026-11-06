@@ -41,11 +41,12 @@ export const MIN_TIMES_PARA_INICIAR = 2;
 
 export const WIZARD_STEPS = [
   { key: 'dados', label: 'Dados básicos', available: true },
+  { key: 'regras', label: 'Regras', available: true },
   { key: 'pontuacao', label: 'Pontuação', available: true },
-  { key: 'times', label: 'Times', available: true },
   { key: 'estatisticas', label: 'Estatísticas', available: true },
   { key: 'fases', label: 'Fases', available: true },
   { key: 'cobranca', label: 'Cobrança', available: true },
+  { key: 'times', label: 'Times', available: true },
   { key: 'revisao', label: 'Revisão', available: true },
 ] as const;
 
