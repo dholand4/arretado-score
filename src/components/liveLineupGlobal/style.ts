@@ -53,3 +53,8 @@ export const Officials = styled.div`
 export const Legend = styled.h2`
   font-size: ${({ theme }) => theme.fontSize.md}px;
 `;
+
+export const Hint = styled.p`
+  font-size: ${({ theme }) => theme.fontSize.sm}px;
+  color: ${({ theme }) => theme.colors.textMuted};
+`;

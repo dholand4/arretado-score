@@ -1,5 +1,5 @@
 import { AvatarGlobal } from '@/components/avatarGlobal';
-import { formatGameClock, formatShotClock } from '@/utils/liveSheet';
+import { formatGameClock, formatLanceTime, formatShotClock } from '@/utils/liveSheet';
 import {
   Board,
   Bonus,
@@ -11,24 +11,22 @@ import {
   Meta,
   Period,
   Score,
-  ScoreRow,
   ShotClock,
   StartButton,
   Team,
   TeamName,
+  TimeoutClock,
 } from './style';
 import type { ILiveScoreboardProps, ILiveScoreboardTeam } from './types';
 
-function TeamScore({ time, lado }: { time: ILiveScoreboardTeam; lado: 'casa' | 'fora' }) {
+function TeamScore({ time }: { time: ILiveScoreboardTeam }) {
   return (
     <Team>
+      <Crest>
+        <AvatarGlobal name={time.nome} src={time.logoUrl} size="sm" />
+      </Crest>
       <TeamName title={time.nome}>{time.nome}</TeamName>
-      <ScoreRow $lado={lado}>
-        <Crest>
-          <AvatarGlobal name={time.nome} src={time.logoUrl} size="sm" />
-        </Crest>
-        <Score aria-label={`Pontos de ${time.nome}`}>{time.placar}</Score>
-      </ScoreRow>
+      <Score aria-label={`Pontos de ${time.nome}`}>{time.placar}</Score>
       <Meta>
         <span>Faltas {time.faltas}</span>
         {time.emBonus && <Bonus>BÔNUS</Bonus>}
@@ -36,6 +34,9 @@ function TeamScore({ time, lado }: { time: ILiveScoreboardTeam; lado: 'casa' | '
       <Meta>
         Tempos {time.temposUsados}/{time.temposLimite}
       </Meta>
+      {time.tempoPedidoMs != null && (
+        <TimeoutClock aria-label={`Tempo pedido de ${time.nome}`}>{formatLanceTime(time.tempoPedidoMs)}</TimeoutClock>
+      )}
     </Team>
   );
 }
@@ -60,7 +61,7 @@ export function LiveScoreboardGlobal({
   const posseDesligada = posseMs !== null && posseMs > jogoMs;
   return (
     <Board aria-label="Placar da mesa">
-      <TeamScore time={casa} lado="casa" />
+      <TeamScore time={casa} />
       <Center>
         <Period>{periodo}</Period>
         <GameClock $rodando={rodando} aria-label="Cronômetro do jogo">
@@ -105,7 +106,7 @@ export function LiveScoreboardGlobal({
           </Controls>
         )}
       </Center>
-      <TeamScore time={fora} lado="fora" />
+      <TeamScore time={fora} />
     </Board>
   );
 }

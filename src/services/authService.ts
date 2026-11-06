@@ -24,8 +24,9 @@ export const authService = {
     return data.session;
   },
 
+  // Só neste aparelho: o padrão (global) derruba a sessão da mesa aberta em outro aparelho.
   async signOut(): Promise<void> {
-    const { error } = await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut({ scope: 'local' });
     if (error) throw error;
   },
 

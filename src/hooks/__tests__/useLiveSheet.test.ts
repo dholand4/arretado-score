@@ -111,6 +111,40 @@ describe('useLiveSheet', () => {
     expect(result.current.posseMs).toBe(14_000);
   });
 
+  it('keeps the clock running after a foul', async () => {
+    const { result } = await montar();
+    act(() => result.current.iniciar());
+    act(() => {
+      result.current.lancar({ tipo: 'falta', time_id: 'A', jogador_id: 'a1' });
+    });
+    expect(result.current.relogio?.rodando).toBe(true);
+    expect(result.current.resumo?.jogadores.a1?.faltas).toBe(1);
+  });
+
+  it('stops the clock and counts one minute on a timeout', async () => {
+    const { result } = await montar();
+    act(() => result.current.iniciar());
+    act(() => {
+      result.current.lancar({ tipo: 'tempo', time_id: 'B' });
+    });
+    expect(result.current.relogio?.rodando).toBe(false);
+    expect(result.current.tempoPedido).toEqual({ timeId: 'B', restanteMs: 60_000 });
+
+    // Desfazer o tempo tira a contagem.
+    act(() => result.current.desfazer());
+    await waitFor(() => expect(result.current.tempoPedido).toBeNull());
+  });
+
+  it('ends the timeout when the clock starts again', async () => {
+    const { result } = await montar();
+    act(() => {
+      result.current.lancar({ tipo: 'tempo', time_id: 'A' });
+    });
+    expect(result.current.tempoPedido?.timeId).toBe('A');
+    act(() => result.current.iniciar());
+    expect(result.current.tempoPedido).toBeNull();
+  });
+
   it('starts the clock and sends its state', async () => {
     const { result } = await montar();
     act(() => result.current.iniciar());

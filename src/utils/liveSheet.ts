@@ -14,6 +14,9 @@ import type {
 
 const MS_MINUTO = 60_000;
 
+// Máximo de atletas de um time na súmula do jogo (o mesmo vale em mesa_escalar).
+export const MAX_ESCALADOS_POR_TIME = 12;
+
 export const TIPO_FALTA_LABEL: Record<TipoFalta, string> = {
   pessoal: 'Falta',
   tecnica: 'Falta técnica',

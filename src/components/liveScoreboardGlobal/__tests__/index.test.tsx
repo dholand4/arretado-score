@@ -29,6 +29,12 @@ describe('LiveScoreboardGlobal', () => {
     expect(screen.getByLabelText('Relógio de posse')).toHaveTextContent('24');
   });
 
+  it('shows the timeout countdown under the team that called it', () => {
+    renderWithTheme(<LiveScoreboardGlobal {...props({ fora: { ...props().fora, tempoPedidoMs: 29_000 } })} />);
+    expect(screen.getByLabelText('Tempo pedido de QuixaRocks')).toHaveTextContent('00:29');
+    expect(screen.queryByLabelText('Tempo pedido de Okami BC')).not.toBeInTheDocument();
+  });
+
   it('starts, resets the shot clock and adjusts the stopped clock', () => {
     const p = props();
     renderWithTheme(<LiveScoreboardGlobal {...p} />);

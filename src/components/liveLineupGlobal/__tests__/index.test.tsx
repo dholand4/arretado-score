@@ -35,6 +35,19 @@ describe('LiveLineupGlobal', () => {
     expect(p.onSubmit).toHaveBeenCalledWith(['a1', 'a2', 'b1'], { ...oficiais, arbitro: 'Carlos' });
   });
 
+  it('lets the mesário pick at most 12 players from a bigger roster', () => {
+    const elenco = Array.from({ length: 13 }, (_, i) => ({ id: `e${i}`, rotulo: `Jogador ${i + 1}` }));
+    const p = props({ times: [{ id: 'e', nome: 'Estadual', jogadores: elenco }] });
+    renderWithTheme(<LiveLineupGlobal {...p} />);
+    expect(screen.queryByRole('button', { name: 'Marcar todos' })).not.toBeInTheDocument();
+    expect(screen.getByText('13 no elenco: escolha até 12 para o jogo.')).toBeInTheDocument();
+    elenco.slice(0, 12).forEach((j) => fireEvent.click(screen.getByLabelText(j.rotulo)));
+    expect(screen.getByText('12 de 12 marcados')).toBeInTheDocument();
+    expect(screen.getByLabelText('Jogador 13')).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Começar o jogo' }));
+    expect(p.onSubmit).toHaveBeenCalledWith(elenco.slice(0, 12).map((j) => j.id), oficiais);
+  });
+
   it('keeps players with plays locked', () => {
     renderWithTheme(<LiveLineupGlobal {...props({ escalados: ['a1'], travados: ['a1'] })} />);
     expect(screen.getByLabelText('#7 Bebeto')).toBeDisabled();

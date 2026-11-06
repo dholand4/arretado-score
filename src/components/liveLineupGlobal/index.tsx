@@ -5,7 +5,8 @@ import { ButtonGlobal } from '@/components/buttonGlobal';
 import { CheckboxGlobal } from '@/components/checkboxGlobal';
 import { FormActionsGlobal } from '@/components/formActionsGlobal';
 import { InputGlobal } from '@/components/inputGlobal';
-import { Count, Form, Legend, Officials, Team, TeamHeader, Teams } from './style';
+import { MAX_ESCALADOS_POR_TIME } from '@/utils/liveSheet';
+import { Count, Form, Hint, Legend, Officials, Team, TeamHeader, Teams } from './style';
 import type { ILiveLineupProps } from './types';
 
 const OFICIAIS: { campo: keyof IOficiaisMesa; label: string }[] = [
@@ -47,6 +48,11 @@ export function LiveLineupGlobal({
       setAviso(`Marque ao menos um jogador de ${semNinguem.nome}.`);
       return;
     }
+    const demais = times.find((t) => t.jogadores.filter((j) => escalados.has(j.id)).length > MAX_ESCALADOS_POR_TIME);
+    if (demais) {
+      setAviso(`Marque no máximo ${MAX_ESCALADOS_POR_TIME} jogadores de ${demais.nome}.`);
+      return;
+    }
     setAviso(null);
     onSubmit([...escalados], oficiais);
   };
@@ -56,23 +62,33 @@ export function LiveLineupGlobal({
       <Teams>
         {times.map((time) => {
           const marcados = time.jogadores.filter((j) => escalados.has(j.id)).length;
+          // Elenco maior que o limite: o mesário escolhe quem entra na súmula.
+          const escolher = time.jogadores.length > MAX_ESCALADOS_POR_TIME;
+          const cheio = marcados >= MAX_ESCALADOS_POR_TIME;
           return (
             <Team key={time.id}>
               <TeamHeader>
-                {time.nome} <Count>{marcados} marcados</Count>
+                {time.nome}{' '}
+                <Count>{escolher ? `${marcados} de ${MAX_ESCALADOS_POR_TIME} marcados` : `${marcados} marcados`}</Count>
               </TeamHeader>
-              <ButtonGlobal
-                label="Marcar todos"
-                size="sm"
-                variant="ghost"
-                onClick={() => time.jogadores.forEach((j) => alternar(j.id, true))}
-              />
+              {escolher ? (
+                <Hint>
+                  {time.jogadores.length} no elenco: escolha até {MAX_ESCALADOS_POR_TIME} para o jogo.
+                </Hint>
+              ) : (
+                <ButtonGlobal
+                  label="Marcar todos"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => time.jogadores.forEach((j) => alternar(j.id, true))}
+                />
+              )}
               {time.jogadores.map((jogador) => (
                 <CheckboxGlobal
                   key={jogador.id}
                   label={jogador.rotulo}
                   checked={escalados.has(jogador.id)}
-                  disabled={travados.includes(jogador.id)}
+                  disabled={travados.includes(jogador.id) || (cheio && !escalados.has(jogador.id))}
                   onChange={(e) => alternar(jogador.id, e.target.checked)}
                 />
               ))}

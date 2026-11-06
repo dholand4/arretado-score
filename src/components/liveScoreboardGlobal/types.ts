@@ -1,12 +1,14 @@
 export interface ILiveScoreboardTeam {
   nome: string;
-  // Escudo do time ao lado do placar (sem escudo, as iniciais).
+  // Escudo do time acima do nome (sem escudo, as iniciais).
   logoUrl?: string | null;
   placar: number;
   faltas: number;
   emBonus: boolean;
   temposUsados: number;
   temposLimite: number;
+  // Contagem do tempo pedido por este time (1 minuto); nulo sem tempo em andamento.
+  tempoPedidoMs?: number | null;
 }
 
 export interface ILiveScoreboardProps {

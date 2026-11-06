@@ -384,6 +384,7 @@ export function LiveSheetView({ competitionId, gameId, token }: ILiveSheetViewPr
     emBonus: resumo.emBonus[lado],
     temposUsados: resumo.temposUsados[lado],
     temposLimite: resumo.temposLimite,
+    tempoPedidoMs: mesa.tempoPedido?.timeId === ctx[lado].id ? mesa.tempoPedido.restanteMs : null,
   });
 
   const proximoLabel =

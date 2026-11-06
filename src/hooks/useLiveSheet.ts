@@ -22,6 +22,8 @@ export type AvisoMesa = 'fim_periodo' | 'posse' | null;
 
 const TICK_MS = 100;
 const RETRY_MS = 4000;
+// Tempo debitado (pedido de tempo): 1 minuto.
+const DURACAO_TEMPO_MS = 60_000;
 
 // Fila guardada no aparelho: sobrevive a recarregar a página sem internet.
 const storageKey = (jogoId: string) => `mesa:${jogoId}`;
@@ -180,6 +182,28 @@ export function useLiveSheet(competicaoId: string, jogoId: string, token?: strin
 
   const [instante, setInstante] = useState(() => Date.now());
   const [aviso, setAviso] = useState<AvisoMesa>(null);
+  // Tempo pedido: conta 1 minuto neste aparelho, toca a sirene no fim e fica em 00:00 até o relógio voltar.
+  const [tempoPedido, setTempoPedido] = useState<{
+    lanceId: string;
+    timeId: string;
+    fimMs: number;
+    terminou?: boolean;
+  } | null>(null);
+  const tempoAtivoRef = useRef(false);
+
+  useEffect(() => {
+    if (!tempoPedido || tempoPedido.terminou) return;
+    const id = window.setInterval(() => {
+      const t = agora();
+      setInstante(t);
+      if (t >= tempoPedido.fimMs) {
+        setTempoPedido({ ...tempoPedido, terminou: true });
+        // Tempo desfeito no meio: some da tela e não toca.
+        if (tempoAtivoRef.current) playBuzzer();
+      }
+    }, TICK_MS);
+    return () => window.clearInterval(id);
+  }, [tempoPedido, agora]);
 
   // Enquanto roda: atualiza a tela e para sozinho no fim do período ou no estouro da posse.
   useEffect(() => {
@@ -215,6 +239,7 @@ export function useLiveSheet(competicaoId: string, jogoId: string, token?: strin
       return { ...s, posseMs, rodando: true };
     });
     setAviso(null);
+    setTempoPedido(null);
   }, [mudarRelogio, posseCheia]);
 
   const pausar = useCallback(() => mudarRelogio((s) => ({ ...s, rodando: false })), [mudarRelogio]);
@@ -298,10 +323,11 @@ export function useLiveSheet(competicaoId: string, jogoId: string, token?: strin
         anulado: false,
       };
       enfileirar({ tipo: 'lance', lance });
-      // Falta e tempo param o jogo; cesta de quadra troca a posse.
-      if (novo.tipo !== 'ponto') {
+      // Tempo para o jogo e conta 1 minuto; falta não para (a mesa pausa se quiser); cesta de quadra troca a posse.
+      if (novo.tipo === 'tempo') {
         if (atual.rodando) pausar();
-      } else if ((novo.valor ?? 0) >= 2 && posseCheia !== null) {
+        setTempoPedido({ lanceId: lance.id, timeId: novo.time_id, fimMs: agora() + DURACAO_TEMPO_MS });
+      } else if (novo.tipo === 'ponto' && (novo.valor ?? 0) >= 2 && posseCheia !== null) {
         mudarRelogio((s) => ({ ...s, posseMs: posseCheia }));
       }
       return null;
@@ -320,6 +346,12 @@ export function useLiveSheet(competicaoId: string, jogoId: string, token?: strin
   );
 
   const ultimoValido = [...lances].reverse().find((l) => !l.anulado) ?? null;
+  // Tempo desfeito ou anulado some junto com o lance.
+  const tempoAtivo =
+    tempoPedido && lances.some((l) => l.id === tempoPedido.lanceId && !l.anulado) ? tempoPedido : null;
+  useEffect(() => {
+    tempoAtivoRef.current = Boolean(tempoAtivo);
+  }, [tempoAtivo]);
   const desfazer = useCallback(() => {
     if (ultimoValido) anular(ultimoValido.id);
   }, [anular, ultimoValido]);
@@ -420,6 +452,10 @@ export function useLiveSheet(competicaoId: string, jogoId: string, token?: strin
     posseMs: valores?.posseMs ?? null,
     aviso,
     fecharAviso: () => setAviso(null),
+    tempoPedido: tempoAtivo && {
+      timeId: tempoAtivo.timeId,
+      restanteMs: tempoAtivo.terminou ? 0 : Math.min(DURACAO_TEMPO_MS, Math.max(0, tempoAtivo.fimMs - instante)),
+    },
     lances,
     resumo,
     proximoPasso,

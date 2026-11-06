@@ -54,23 +54,9 @@ export const Score = styled.output`
   }
 `;
 
-// Escudo + placar: o escudo fica do lado de fora (casa à esquerda, visitante à direita).
-export const ScoreRow = styled.div<{ $lado: 'casa' | 'fora' }>`
-  display: flex;
-  flex-direction: ${({ $lado }) => ($lado === 'casa' ? 'row' : 'row-reverse')};
-  align-items: center;
-  justify-content: center;
-  gap: ${({ theme }) => theme.spacing.sm}px;
-`;
-
-// No celular a coluna é estreita demais: o escudo aparece a partir do tablet.
+// Escudo acima do nome do time.
 export const Crest = styled.span`
-  display: none;
-
-  @media (min-width: ${({ theme }) => theme.breakpoints.md}px) {
-    display: inline-flex;
-  }
-
+  display: inline-flex;
   flex-shrink: 0;
   padding: ${({ theme }) => theme.spacing.xxs}px;
   border-radius: ${({ theme }) => theme.radius.pill}px;
@@ -178,4 +164,18 @@ export const ClockButton = styled.button<{ $primary?: boolean }>`
 export const StartButton = styled(ClockButton)`
   min-width: ${({ theme }) => theme.sizes.controlHeight * 3}px;
   font-size: ${({ theme }) => theme.fontSize.md}px;
+`;
+
+// Contagem do tempo pedido, embaixo dos tempos do time: mesmo visual do relógio de posse.
+export const TimeoutClock = styled.output`
+  ${digits};
+  padding: 0 ${({ theme }) => theme.spacing.sm}px;
+  border-radius: ${({ theme }) => theme.radius.sm}px;
+  background-color: rgba(0, 0, 0, 0.3);
+  font-size: ${({ theme }) => theme.fontSize.xl}px;
+  color: ${({ theme }) => theme.colors.primary};
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.md}px) {
+    font-size: ${({ theme }) => theme.fontSize.xxl}px;
+  }
 `;
