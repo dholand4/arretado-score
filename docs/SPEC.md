@@ -502,7 +502,7 @@ Para quando os vencedores de um mata-mata não fecham a fase seguinte. Ex.: 6 ti
 |---|---|
 | `/` | Lista de competições em andamento e encerradas recentes (logo, nome, modalidade) |
 | `/c/:slug` | Início da competição: próximos jogos (eventos publicados), últimos resultados, top 3 de cada ranking, atalho para tabela e playoffs e o **formato**: fases em ordem com status, o resumo visual do caminho até a final (o mesmo do assistente) e os times de cada grupo já sorteado |
-| `/c/:slug/jogos` | Jogos agrupados por dia (eventos publicados), com placar quando encerrados; filtros por fase e time |
+| `/c/:slug/jogos` | Jogos agrupados por dia (eventos publicados), do último para o primeiro (maior "Jogo N" no começo; sem dia no fim), com placar quando encerrados; filtros por fase e time |
 | `/c/:slug/jogos/:jogoId` | Detalhe: placar, data/local, estatísticas por jogador (box score). Com a súmula ao vivo aberta: placar ao vivo e lance a lance (6.5.1) |
 | `/placar/:gameId` | Tela de placar (telão) do jogo, em tela cheia: escudos, nomes, placar, período, relógios, faltas e tempos |
 | `/mesa/:token` | Mesa do jogo para o mesário do link (6.5.1), sem login |
@@ -528,7 +528,7 @@ Atualização ao vivo via Supabase Realtime nas páginas de jogos, tabela e deta
 | `.../:id/configuracao` | master, admin | Etapas do assistente para editar (respeitando a trava) |
 | `.../:id/times` | master, admin | Times, dono vinculado, jogadores |
 | `.../:id/eventos` | master, admin | Dias de jogos: criar, montar, reordenar, publicar e gerar a arte de divulgação de um dia publicado (abaixo) |
-| `.../:id/jogos` | master, admin | Todos os jogos com filtros; acesso à súmula e ao W.O. |
+| `.../:id/jogos` | master, admin | Todos os jogos com filtros, do último para o primeiro (como em `/c/:slug/jogos`); acesso à súmula e ao W.O. |
 | `.../:id/jogos/:jogoId/sumula` | master, admin | Súmula (seção 6.5) |
 | `.../:id/jogos/:jogoId/mesa` | master, admin | Súmula ao vivo (seção 6.5.1): cronômetro, relógio de posse, lances, faltas e tempos. Tela para celular, tablet ou computador, sem o menu do painel |
 | `.../:id/financeiro` | master, admin | Seção 8.1 |

@@ -31,13 +31,15 @@ function newerFirst(a: IJogoLista, b: IJogoLista): number {
   return b.created_at.localeCompare(a.created_at) || (b.numero_na_serie ?? 0) - (a.numero_na_serie ?? 0);
 }
 
-// Lista de jogos: primeiro os que já aconteceram, do último para o primeiro; depois os que faltam,
-// do mais próximo para o mais distante (sem data no fim).
+// Lista de jogos do último para o primeiro: o maior "Jogo N" da competição no começo, jogado ou não.
+// Jogo sem número (sem dia ou cancelado) vem depois, pelo horário mais recente; sem data no fim.
 export function latestFirst(jogos: IJogoLista[]): IJogoLista[] {
-  const jogados = jogos.filter(hasResult).sort(newerFirst);
-  const faltam = jogos.filter((jogo) => !hasResult(jogo)).sort((a, b) => -newerFirst(a, b));
-  const semData = faltam.filter((jogo) => !jogo.inicio_previsto).reverse();
-  return [...jogados, ...faltam.filter((jogo) => jogo.inicio_previsto), ...semData];
+  return [...jogos].sort((a, b) => {
+    if (a.numero !== null && b.numero !== null) return b.numero - a.numero;
+    if (a.numero !== null) return -1;
+    if (b.numero !== null) return 1;
+    return newerFirst(a, b);
+  });
 }
 
 export function upcomingGames(jogos: IJogoLista[], agora = new Date(), limite = 6): IJogoLista[] {

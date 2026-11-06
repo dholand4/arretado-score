@@ -24,6 +24,7 @@ import { useTeams } from '@/hooks/useTeams';
 import { paths, type IGamesRouteState } from '@/routes/types';
 import { getErrorMessage } from '@/utils/appError';
 import { dayContext } from '@/utils/eventSchedule';
+import { latestFirst } from '@/utils/publicView';
 import { currentPhaseId, filterGames, gameCardTexts, gameStatus, hasResult, type IGameFilters } from '@/utils/games';
 import { pluralize } from '@/utils/text';
 import { CompetitionOverviewScreen } from '@/view/competitionOverviewScreen';
@@ -123,7 +124,7 @@ export function GamesScreen() {
       );
     }
 
-    const visiveis = filterGames(jogos, filters);
+    const visiveis = latestFirst(filterGames(jogos, filters));
     // Confrontos que dependem do resultado anterior do dia, calculados com todos os jogos.
     const contexto = dayContext(jogos);
     const faseSelecionada = fases.find((fase) => fase.id === filters.faseId);
