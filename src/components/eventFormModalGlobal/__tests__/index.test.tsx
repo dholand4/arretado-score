@@ -19,7 +19,7 @@ describe('EventFormModalGlobal', () => {
     expect(screen.getByLabelText('Local')).toHaveValue('Ginásio Municipal');
     expect(screen.getByLabelText('Intervalo (min)')).toHaveValue(90);
     fireEvent.change(screen.getByLabelText('Quantidade de jogos'), { target: { value: '3' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Montar dia' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Lançar' }));
     expect(onSubmit).toHaveBeenCalledWith({ ...initial, qtd_jogos: 3 });
   });
 
@@ -50,7 +50,7 @@ describe('EventFormModalGlobal', () => {
     renderWithTheme(<EventFormModalGlobal open initialValues={initial} onSubmit={onSubmit} onClose={vi.fn()} />);
     fireEvent.change(screen.getByLabelText('Local'), { target: { value: ' ' } });
     fireEvent.change(screen.getByLabelText('Quantidade de jogos'), { target: { value: '' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Montar dia' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Lançar' }));
     expect(onSubmit).not.toHaveBeenCalled();
     expect(screen.getByText('Informe o local.')).toBeInTheDocument();
     expect(screen.getByText('Informe ao menos 1 jogo.')).toBeInTheDocument();

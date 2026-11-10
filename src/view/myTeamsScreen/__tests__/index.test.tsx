@@ -20,7 +20,7 @@ describe('MyTeamsScreen', () => {
     } as unknown as ReturnType<typeof useMyTeams>);
     renderScreen(<MyTeamsScreen />);
     expect(useMyTeams).toHaveBeenCalledWith('d1');
-    expect(screen.getByRole('link', { name: /Tubarões/ })).toHaveAttribute('href', '/painel/meus-times/t1');
+    expect(screen.getByRole('link', { name: /Tubarões/ })).toHaveAttribute('href', '/painel/meus-times/t1/inicio');
     expect(screen.getByText('Liga')).toBeInTheDocument();
   });
 

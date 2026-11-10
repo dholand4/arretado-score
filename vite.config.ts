@@ -58,5 +58,11 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/utils/testSetup.ts'],
     css: false,
+    // Os testes nunca falam com um Supabase de verdade (os serviços são simulados); valores fixos
+    // para rodarem sem .env.local, como no CI.
+    env: {
+      VITE_SUPABASE_URL: 'http://127.0.0.1:54321',
+      VITE_SUPABASE_PUBLISHABLE_KEY: 'chave-de-teste',
+    },
   },
 });

@@ -1,7 +1,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { useTeamRoster } from '@/hooks/useTeamRoster';
 import { playersService } from '@/services/teamsService';
-import { createQueryWrapper } from '@/utils/testUtils';
+import { createConfirmingQueryWrapper } from '@/utils/testUtils';
 
 vi.mock('@/services/teamsService');
 
@@ -14,14 +14,14 @@ beforeEach(() => {
 
 describe('useTeamRoster', () => {
   it('owner roster cannot delete', async () => {
-    const { result } = renderHook(() => useTeamRoster(team, false), { wrapper: createQueryWrapper() });
+    const { result } = renderHook(() => useTeamRoster(team, false), { wrapper: createConfirmingQueryWrapper() });
     await waitFor(() => expect(result.current.rosterProps.players).toHaveLength(1));
     expect(result.current.rosterProps.onDelete).toBeUndefined();
   });
 
   it('opens the form and creates a player', async () => {
     vi.mocked(playersService.create).mockResolvedValue({ id: 'j2' } as never);
-    const { result } = renderHook(() => useTeamRoster(team, true), { wrapper: createQueryWrapper() });
+    const { result } = renderHook(() => useTeamRoster(team, true), { wrapper: createConfirmingQueryWrapper() });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     act(() => result.current.rosterProps.onAdd());
     expect(result.current.formProps?.player).toBeUndefined();
@@ -33,7 +33,7 @@ describe('useTeamRoster', () => {
 
   it('toggles a player active flag', async () => {
     vi.mocked(playersService.setActive).mockResolvedValue();
-    const { result } = renderHook(() => useTeamRoster(team, true), { wrapper: createQueryWrapper() });
+    const { result } = renderHook(() => useTeamRoster(team, true), { wrapper: createConfirmingQueryWrapper() });
     await waitFor(() => expect(result.current.rosterProps.players).toHaveLength(1));
     act(() => result.current.rosterProps.onToggleActive(player as never));
     await waitFor(() => expect(playersService.setActive).toHaveBeenCalledWith('j1', false));

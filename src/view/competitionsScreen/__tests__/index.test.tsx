@@ -21,11 +21,19 @@ const mockList = (value: Partial<ReturnType<typeof useCompetitions>>) =>
   } as unknown as ReturnType<typeof useCompetitions>);
 
 describe('CompetitionsScreen', () => {
-  it('shows the empty state with a create link', () => {
+  it('shows the empty state with a create link for the master', () => {
+    vi.mocked(useAuth).mockReturnValue({ profile: { papel: 'master' } } as unknown as ReturnType<typeof useAuth>);
     mockList({});
     renderScreen(<CompetitionsScreen />);
     expect(screen.getByText('Nenhuma competição ainda')).toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: 'Nova competição' })[0]).toHaveAttribute('href', '/painel/competicoes/nova');
+  });
+
+  it('hides the create link from admins', () => {
+    mockList({});
+    renderScreen(<CompetitionsScreen />);
+    expect(screen.getByText('Nenhuma competição ainda')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Nova competição' })).not.toBeInTheDocument();
   });
 
   it('lists competitions with team counts', () => {

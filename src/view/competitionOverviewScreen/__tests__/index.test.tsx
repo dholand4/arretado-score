@@ -123,7 +123,7 @@ describe('CompetitionOverviewScreen', () => {
     renderOverview();
     expect(screen.getByText('2 jogos da Fase 1 sem dia definido')).toBeInTheDocument();
     expect(screen.getByText('Faltam 2 súmulas para fechar a Fase 1')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Montar dias' })).toHaveAttribute('href', '/painel/competicoes/c1/eventos');
+    expect(screen.getAllByRole('link', { name: 'Lançar jogos' })[0]).toHaveAttribute('href', '/painel/competicoes/c1/eventos');
     fireEvent.click(screen.getByRole('button', { name: 'Sortear de novo' }));
     fireEvent.click(screen.getAllByRole('button', { name: 'Sortear de novo' }).at(-1) as HTMLElement);
     expect(redraw.mutate).toHaveBeenCalledWith({ faseId: 'f1', distribuicao: undefined }, expect.any(Object));

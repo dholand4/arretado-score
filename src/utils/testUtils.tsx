@@ -4,7 +4,7 @@ import type { ReactElement, ReactNode } from 'react';
 import { MemoryRouter, type InitialEntry } from 'react-router-dom';
 import { ThemeProvider } from 'styled-components';
 import { theme } from '@/constants/theme';
-import { ConfirmProvider } from '@/providers/ConfirmProvider';
+import { ConfirmContext, ConfirmProvider } from '@/providers/ConfirmProvider';
 import { createQueryClient } from '@/providers/QueryProvider';
 
 function ThemeWrapper({ children }: { children: ReactNode }) {
@@ -31,6 +31,19 @@ export function createQueryWrapper() {
   client.setDefaultOptions({ queries: { retry: false } });
   return function QueryWrapper({ children }: { children: ReactNode }) {
     return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+  };
+}
+
+// Para hooks que perguntam antes de salvar (useConfirmAction): confirma na hora, sem diálogo.
+export function createConfirmingQueryWrapper() {
+  const QueryWrapper = createQueryWrapper();
+  const confirmContext = { confirm: () => Promise.resolve(true), autoConfirm: true };
+  return function ConfirmingQueryWrapper({ children }: { children: ReactNode }) {
+    return (
+      <QueryWrapper>
+        <ConfirmContext.Provider value={confirmContext}>{children}</ConfirmContext.Provider>
+      </QueryWrapper>
+    );
   };
 }
 

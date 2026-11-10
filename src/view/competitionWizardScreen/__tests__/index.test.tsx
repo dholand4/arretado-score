@@ -4,7 +4,7 @@ import type { ICompeticao } from '@/@types/competition';
 import { useAuth } from '@/hooks/useAuth';
 import { useCategories } from '@/hooks/useCategories';
 import { useCompetition, useCreateCompetition } from '@/hooks/useCompetitions';
-import { usePhases } from '@/hooks/usePhases';
+import { useGamesProgress, usePhases } from '@/hooks/usePhases';
 import { useTeams } from '@/hooks/useTeams';
 import { renderScreen } from '@/utils/testUtils';
 import { CompetitionWizardScreen } from '..';
@@ -54,7 +54,11 @@ beforeEach(() => {
     isLoading: false,
     error: null,
     savePhases: mutation(),
+    startCompetition: mutation(),
+    redrawGroups: mutation(),
   } as unknown as ReturnType<typeof usePhases>);
+  // A etapa Revisão embute a visão geral, que acompanha o andamento dos jogos.
+  vi.mocked(useGamesProgress).mockReturnValue({ games: [], isLoading: false, error: null } as unknown as ReturnType<typeof useGamesProgress>);
 });
 
 function renderAt(path: string) {
@@ -198,7 +202,7 @@ describe('CompetitionWizardScreen', () => {
       setActive: mutation(),
     } as unknown as ReturnType<typeof useCompetition>);
     renderAt('/painel/competicoes/c1/configuracao?etapa=fases');
-    expect(screen.getByText(/Só o admin master pode alterar as fases/)).toBeInTheDocument();
+    expect(screen.getByText(/Só o Admin pode alterar as fases/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Salvar rascunho' })).toBeDisabled();
   });
 });

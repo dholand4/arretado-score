@@ -83,7 +83,7 @@ function setup(status = 'em_andamento', events: IEvento[] = [event]) {
 describe('EventsScreen', () => {
   it('asks to start the competition first', () => {
     setup('rascunho', []);
-    expect(screen.getByRole('heading', { level: 1, name: 'Dias de jogos' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Lançar jogos' })).toBeInTheDocument();
     expect(screen.getByText('Competição ainda não iniciada')).toBeInTheDocument();
   });
 
@@ -92,10 +92,10 @@ describe('EventsScreen', () => {
     hooks.createEvent.mutate.mockImplementation((_vars, options) =>
       options.onSuccess(montagem({ precisa_confirmar: true, evento_id: null })),
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Novo dia de jogos' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Lançar jogos' }));
     expect(screen.getByLabelText('Local')).toHaveValue('Ginásio Municipal');
     fireEvent.change(screen.getByLabelText('Quantidade de jogos'), { target: { value: '3' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Montar dia' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Lançar' }));
     expect(hooks.createEvent.mutate).toHaveBeenCalledWith(
       { input: expect.objectContaining({ qtd_jogos: 3, local: 'Ginásio Municipal' }), permitirDuplo: false },
       expect.any(Object),
@@ -119,9 +119,9 @@ describe('EventsScreen', () => {
     hooks.createEvent.mutate.mockImplementationOnce((_vars, options) =>
       options.onSuccess(montagem({ precisa_confirmar: true, evento_id: null })),
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Novo dia de jogos' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Lançar jogos' }));
     fireEvent.change(screen.getByLabelText('Quantidade de jogos'), { target: { value: '3' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Montar dia' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Lançar' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Montar só 2 jogos' }));
     expect(hooks.createEvent.mutate).toHaveBeenLastCalledWith(
       { input: expect.objectContaining({ qtd_jogos: 2 }), permitirDuplo: false },
