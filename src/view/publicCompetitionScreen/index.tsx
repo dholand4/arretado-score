@@ -96,6 +96,7 @@ export function PublicCompetitionScreen() {
                 caption={categoria.titulo_ranking}
                 rows={sortRanking(ranking.linhas.filter((l) => l.categoria_id === categoria.id), 'total')}
                 limit={3}
+                playerHref={(jogadorId) => paths.publicPlayer(slug, jogadorId)}
               />
             ))}
           </Rankings>

@@ -1,8 +1,9 @@
+import { InlineLinkGlobal } from '@/components/inlineLinkGlobal';
 import { Heading, Number, PlayerCell, Points, Scroll, Section, Table } from './style';
 import type { IBoxScoreProps } from './types';
 
 // Estatísticas por jogador de um time no jogo (detalhe público, seção 9.1).
-export function BoxScoreGlobal({ teamName, score, players, categories, stats }: IBoxScoreProps) {
+export function BoxScoreGlobal({ teamName, score, players, categories, stats, playerHref }: IBoxScoreProps) {
   return (
     <Section aria-label={`Estatísticas de ${teamName}`}>
       <Heading>
@@ -23,15 +24,20 @@ export function BoxScoreGlobal({ teamName, score, players, categories, stats }: 
             </tr>
           </thead>
           <tbody>
-            {players.map((player) => (
-              <tr key={player.id}>
-                <Number>{player.numero ?? '–'}</Number>
-                <PlayerCell>{player.apelido || player.nome}</PlayerCell>
-                {categories.map((category) => (
-                  <td key={category.id}>{stats[player.id]?.[category.id] ?? 0}</td>
-                ))}
-              </tr>
-            ))}
+            {players.map((player) => {
+              const nome = player.apelido || player.nome;
+              return (
+                <tr key={player.id}>
+                  <Number>{player.numero ?? '–'}</Number>
+                  <PlayerCell>
+                    {playerHref ? <InlineLinkGlobal to={playerHref(player.id)}>{nome}</InlineLinkGlobal> : nome}
+                  </PlayerCell>
+                  {categories.map((category) => (
+                    <td key={category.id}>{stats[player.id]?.[category.id] ?? 0}</td>
+                  ))}
+                </tr>
+              );
+            })}
           </tbody>
         </Table>
       </Scroll>

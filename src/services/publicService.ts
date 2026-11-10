@@ -2,6 +2,9 @@ import type { IJogoLista } from '@/@types/game';
 import type {
   IPublicCompetition,
   IPublicGameDetail,
+  IPublicPlayerDetail,
+  IPublicPlayerGame,
+  IPublicPlayerProfile,
   IPublicTeam,
   IPublicTeamSummary,
   IRankingData,
@@ -105,6 +108,73 @@ export const publicService = {
         jogador: jogadorPorId.get(l.jogador_id as string) ?? null,
         timeNome: timePorId.get(l.time_id as string) ?? '',
       })),
+    };
+  },
+
+  // Página do jogador (seção 6.7.1): números iguais aos do ranking e o jogo a jogo.
+  async getPlayer(jogadorId: string): Promise<IPublicPlayerDetail> {
+    const { data, error } = await supabase
+      .from('jogadores')
+      .select(`${PLAYER_FIELDS}, competicao_id, posicao, ativo`)
+      .eq('id', jogadorId)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) throw new AppError('Jogador não encontrado.');
+    const jogador = data as unknown as IPublicPlayerProfile;
+
+    const [time, categorias, ranking, presencas, estatisticas] = await Promise.all([
+      supabase.from('times').select('id, nome, sigla, logo_url').eq('id', jogador.time_id).maybeSingle(),
+      supabase
+        .from('categorias_estatistica')
+        .select(CATEGORY_FIELDS)
+        .eq('competicao_id', jogador.competicao_id)
+        .eq('ativa', true)
+        .order('ordem'),
+      supabase
+        .from('v_ranking_estatisticas')
+        .select('categoria_id, total, jogos')
+        .eq('jogador_id', jogadorId)
+        .eq('escopo', 'competicao'),
+      supabase.from('jogo_jogadores').select('jogo_id, time_id').eq('jogador_id', jogadorId),
+      supabase.from('sumula_estatisticas').select('jogo_id, categoria_id, valor').eq('jogador_id', jogadorId),
+    ]);
+    for (const r of [time, categorias, ranking, presencas, estatisticas]) if (r.error) throw r.error;
+
+    const timePorJogo = new Map((presencas.data ?? []).map((p) => [p.jogo_id, p.time_id]));
+    let jogos: IJogoLista[] = [];
+    if (timePorJogo.size > 0) {
+      const lista = await supabase.from('jogos').select(GAME_LIST_SELECT).in('id', [...timePorJogo.keys()]);
+      if (lista.error) throw lista.error;
+      jogos = lista.data as unknown as IJogoLista[];
+    }
+
+    const valoresPorJogo = new Map<string, Record<string, number>>();
+    for (const e of estatisticas.data ?? []) {
+      valoresPorJogo.set(e.jogo_id, { ...valoresPorJogo.get(e.jogo_id), [e.categoria_id]: e.valor });
+    }
+    // Só jogo encerrado com súmula completa, como nos rankings (seção 6.7).
+    const jogoAJogo: IPublicPlayerGame[] = jogos
+      .filter((jogo) => jogo.status === 'encerrado' && !jogo.so_placar)
+      .map((jogo) => ({
+        jogo,
+        time_id: timePorJogo.get(jogo.id) ?? jogador.time_id,
+        valores: valoresPorJogo.get(jogo.id) ?? {},
+      }));
+
+    // A view traz uma linha por time em que o jogador atuou: soma para ter o total dele.
+    const numeros = (categorias.data ?? []).map((categoria) => {
+      const linhas = (ranking.data ?? []).filter((r) => r.categoria_id === categoria.id);
+      const total = linhas.reduce((soma, r) => soma + (r.total ?? 0), 0);
+      const disputados = linhas.reduce((soma, r) => soma + (r.jogos ?? 0), 0);
+      return { categoria, total, jogos: disputados, media: disputados > 0 ? total / disputados : 0 };
+    });
+
+    return {
+      jogador,
+      time: time.data,
+      jogosDisputados: Math.max(0, ...numeros.map((n) => n.jogos)),
+      numeros,
+      jogos: jogoAJogo,
     };
   },
 

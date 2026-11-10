@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 
 export { List, Section, SectionTitle, Stack } from '@/view/publicCompetitionScreen/style';
@@ -13,6 +14,12 @@ export const Roster = styled.ul`
 
 export const Player = styled.li`
   display: flex;
+`;
+
+// O cartão inteiro abre a página do jogador.
+export const PlayerLink = styled(Link)`
+  display: flex;
+  flex: 1;
   flex-direction: column;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.xs}px;
@@ -20,7 +27,15 @@ export const Player = styled.li`
   border: ${({ theme }) => theme.sizes.borderWidth}px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radius.md}px;
   background-color: ${({ theme }) => theme.colors.surface};
+  color: ${({ theme }) => theme.colors.text};
   text-align: center;
+  text-decoration: none;
+  transition: border-color ${({ theme }) => theme.transition.fast};
+
+  &:hover,
+  &:focus-visible {
+    border-color: ${({ theme }) => theme.colors.primary};
+  }
 `;
 
 export const PlayerNumber = styled.span`

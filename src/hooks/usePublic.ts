@@ -48,6 +48,11 @@ export function usePublicTeam(timeId: string) {
   return { equipe: query.data, isLoading: query.isPending, error: query.error, refetch: query.refetch };
 }
 
+export function usePublicPlayer(jogadorId: string) {
+  const query = useQuery({ queryKey: QUERY_KEYS.publicPlayer(jogadorId), queryFn: () => publicService.getPlayer(jogadorId) });
+  return { atleta: query.data, isLoading: query.isPending, error: query.error, refetch: query.refetch };
+}
+
 // Formato da competição para o visitante: fases com status e grupos, e o resumo em fluxo.
 export function usePublicFormat(competicaoId: string | undefined) {
   const query = useQuery({
@@ -64,7 +69,7 @@ export function usePublicFormat(competicaoId: string | undefined) {
 }
 
 // Atualização ao vivo (seção 9.1): qualquer mudança em jogos, séries ou súmula
-// da competição recarrega jogos, detalhe, fases, tabela, playoffs e rankings.
+// da competição recarrega jogos, detalhe, fases, tabela, playoffs, rankings, times e jogadores.
 export function useRealtimeCompetition(competicaoId: string | undefined, slug: string) {
   const queryClient = useQueryClient();
   useEffect(() => {
@@ -78,6 +83,7 @@ export function useRealtimeCompetition(competicaoId: string | undefined, slug: s
         QUERY_KEYS.rankingAll,
         QUERY_KEYS.bracket(slug),
         ['public-team'],
+        ['public-player'],
       ]) {
         void queryClient.invalidateQueries({ queryKey: key });
       }

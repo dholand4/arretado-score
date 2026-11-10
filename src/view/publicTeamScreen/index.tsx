@@ -13,6 +13,7 @@ import { filterGames, gameCardTexts, gameStatus } from '@/utils/games';
 import {
   List,
   Player,
+  PlayerLink,
   PlayerName,
   PlayerNumber,
   Roster,
@@ -65,9 +66,11 @@ export function PublicTeamScreen() {
           <Roster>
             {equipe.jogadores.map((jogador) => (
               <Player key={jogador.id}>
-                <AvatarGlobal name={jogador.nome} src={jogador.foto_url} size="lg" />
-                <PlayerNumber>{jogador.numero ?? '–'}</PlayerNumber>
-                <PlayerName>{jogador.apelido || jogador.nome}</PlayerName>
+                <PlayerLink to={paths.publicPlayer(slug, jogador.id)}>
+                  <AvatarGlobal name={jogador.nome} src={jogador.foto_url} size="lg" />
+                  <PlayerNumber>{jogador.numero ?? '–'}</PlayerNumber>
+                  <PlayerName>{jogador.apelido || jogador.nome}</PlayerName>
+                </PlayerLink>
               </Player>
             ))}
           </Roster>

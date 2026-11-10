@@ -458,6 +458,14 @@ Para quando os vencedores de um mata-mata não fecham a fase seguinte. Ex.: 6 ti
 - Filtro por fase (padrão: competição inteira).
 - Jogos `so_placar` e W.O. não entram.
 
+#### 6.7.1 Página do jogador
+Página pública de cada atleta (`/c/:slug/jogadores/:jogadorId`), aberta pelo elenco do time, pelos rankings e pelo box score do jogo.
+- **Cabeçalho**: foto, nome (e apelido), número, posição e o time, com link para a página do time. Jogador inativo continua com a página (mantém o histórico) e aparece marcado como "Inativo".
+- **Números na competição**: quantidade de jogos (presenças) e, para cada categoria ativa, o total e a média por jogo. Vêm de `v_ranking_estatisticas` (competição inteira), então batem com os rankings.
+- **Jogo a jogo**: um jogo por linha, do mais recente para o mais antigo: data, adversário, resultado do time do jogador (V, D ou E, com o placar) e o valor de cada categoria ativa naquele jogo. Cada linha abre o detalhe do jogo.
+- Entram só os jogos `encerrado` com súmula completa em que o jogador teve presença. Jogos `so_placar` e W.O. não entram, como nos rankings.
+- Não há tabela nem coluna nova: tudo sai de `jogo_jogadores`, `sumula_estatisticas` e `v_ranking_estatisticas`, com a mesma RLS do visitante (10.2).
+
 ---
 
 ## 7. Usuários e autenticação
@@ -511,6 +519,7 @@ Para quando os vencedores de um mata-mata não fecham a fase seguinte. Ex.: 6 ti
 | `/c/:slug/rankings` | Rankings por categoria (abas com o título de cada uma) |
 | `/c/:slug/times` | Lista de times |
 | `/c/:slug/times/:timeId` | Elenco com fotos, jogos do time, estatísticas do time |
+| `/c/:slug/jogadores/:jogadorId` | Página do jogador (6.7.1): cabeçalho, números na competição e jogo a jogo |
 
 Atualização ao vivo via Supabase Realtime nas páginas de jogos, tabela e detalhe do jogo.
 
@@ -645,6 +654,13 @@ Implemente uma etapa por vez. Ao final de cada uma, rode o projeto, confira os c
 - ✅ "Agora em quadra" traz o primeiro jogo sem resultado; trocar o confronto gera a arte dele; jogo encerrado sai como "Resultado" com o placar.
 - ✅ Logo com fundo preto fica num círculo preto; logo transparente, num círculo branco.
 - ✅ No celular, "Compartilhar" abre o menu com a imagem; no computador, "Baixar PNG" salva o arquivo.
+
+**Etapa 12 — Página do jogador**
+- Rota pública `/c/:slug/jogadores/:jogadorId` (6.7.1), com links a partir do elenco do time, dos rankings e do box score. Sem mudança no banco.
+- ✅ Tocar num jogador no elenco, no ranking ou no box score abre a página dele.
+- ✅ Os totais e as médias são os mesmos do ranking; o jogo a jogo lista cada partida com adversário, resultado e os números do jogador.
+- ✅ Jogo "só placar" e W.O. não aparecem no jogo a jogo nem contam nos números.
+- ✅ Jogador sem jogos mostra o cabeçalho e o aviso de que ainda não há números; visitante não vê jogador de liga em rascunho.
 
 ---
 

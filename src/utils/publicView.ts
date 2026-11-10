@@ -1,6 +1,6 @@
 import type { IJogoLista } from '@/@types/game';
-import type { IRankingRow } from '@/@types/public';
-import { TIME_ZONE } from './date';
+import type { IPublicPlayerGame, IRankingRow } from '@/@types/public';
+import { formatDayMonth, TIME_ZONE } from './date';
 import { hasResult } from './games';
 
 const diaFormat = new Intl.DateTimeFormat('pt-BR', {
@@ -65,4 +65,38 @@ export function sortRanking(linhas: IRankingRow[], ordem: RankingOrder, minimoJo
       ? b.media - a.media || b.total - a.total
       : b.total - a.total || b.media - a.media || (a.jogador?.nome ?? '').localeCompare(b.jogador?.nome ?? ''),
   );
+}
+
+// Média por jogo com uma casa decimal: "12,5".
+export function formatAverage(valor: number): string {
+  return valor.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+}
+
+export type PlayerGameOutcome = 'V' | 'D' | 'E';
+
+export interface IPlayerGameLine {
+  data: string;
+  adversario: string;
+  resultado: PlayerGameOutcome;
+  // Placar visto pelo time do jogador: pontos dele primeiro.
+  placar: string;
+}
+
+// Linha do "jogo a jogo" da página do jogador (seção 6.7.1), vista pelo time em que ele atuou.
+export function playerGameLine(jogo: IJogoLista, timeId: string): IPlayerGameLine {
+  const emCasa = jogo.time_casa_id === timeId;
+  const adversario = (emCasa ? jogo.fora?.nome : jogo.casa?.nome) ?? 'A definir';
+  const pro = emCasa ? jogo.placar_casa : jogo.placar_fora;
+  const contra = emCasa ? jogo.placar_fora : jogo.placar_casa;
+  return {
+    data: formatDayMonth(jogo.inicio_previsto),
+    adversario,
+    resultado: jogo.vencedor_id === null ? 'E' : jogo.vencedor_id === timeId ? 'V' : 'D',
+    placar: `${pro ?? '–'} × ${contra ?? '–'}`,
+  };
+}
+
+// Jogo a jogo do mais recente para o mais antigo; sem data no fim.
+export function sortPlayerGames(jogos: IPublicPlayerGame[]): IPublicPlayerGame[] {
+  return [...jogos].sort((a, b) => newerFirst(a.jogo, b.jogo));
 }

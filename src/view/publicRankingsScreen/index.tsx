@@ -9,6 +9,7 @@ import { SegmentedGlobal } from '@/components/segmentedGlobal';
 import { SelectGlobal } from '@/components/selectGlobal';
 import { usePublicCompetition, useRanking } from '@/hooks/usePublic';
 import { useRouteParams } from '@/hooks/useRouteParams';
+import { paths } from '@/routes/types';
 import { sortRanking, type RankingOrder } from '@/utils/publicView';
 import { matchesSearch } from '@/utils/text';
 import { Controls, Stack } from './style';
@@ -19,8 +20,8 @@ const ORDENS: { value: RankingOrder; label: string }[] = [
 ];
 
 // Um ranking por categoria ativa, com filtro de fase e ordem por total ou média (seção 6.7).
-// Usado também nos destaques do painel do admin.
-export function RankingsContent({ competicaoId }: { competicaoId: string | undefined }) {
+// Usado também nos destaques do painel do admin. Com o slug da liga, o nome abre a página do jogador.
+export function RankingsContent({ competicaoId, slug }: { competicaoId: string | undefined; slug?: string }) {
   const [faseId, setFaseId] = useState('');
   const { ranking, isLoading, error, refetch } = useRanking(competicaoId, faseId || null);
   const [categoriaId, setCategoriaId] = useState('');
@@ -82,7 +83,12 @@ export function RankingsContent({ competicaoId }: { competicaoId: string | undef
         ) : !linhas.some((l) => matchesSearch(busca, l.jogador?.nome, l.jogador?.apelido, l.timeNome)) ? (
           <EmptyStateGlobal title="Ninguém encontrado" description={`Nenhum jogador ou time com “${busca.trim()}” neste ranking.`} />
         ) : (
-          <RankingTableGlobal rows={linhas} caption={`${categoria.titulo_ranking} — ${categoria.nome}`} query={busca} />
+          <RankingTableGlobal
+            rows={linhas}
+            caption={`${categoria.titulo_ranking} — ${categoria.nome}`}
+            query={busca}
+            playerHref={slug ? (jogadorId) => paths.publicPlayer(slug, jogadorId) : undefined}
+          />
         )}
       </Stack>
     );
@@ -97,7 +103,7 @@ export function PublicRankingsScreen() {
   return (
     <>
       <PageHeaderGlobal title="Rankings" />
-      <RankingsContent competicaoId={competicao?.id} />
+      <RankingsContent competicaoId={competicao?.id} slug={slug} />
     </>
   );
 }

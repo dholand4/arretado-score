@@ -33,6 +33,8 @@ export function PublicGameScreen() {
   const presentesDo = (timeId: string) =>
     sortByNumber(jogadores.filter((j) => j.time_id === timeId && presentes.includes(j.id)));
 
+  const playerHref = (jogadorId: string) => paths.publicPlayer(slug, jogadorId);
+
   const mesaAoVivo = aoVivo.ctx?.mesa && aoVivo.ctx.mesa.status !== 'encerrada' ? aoVivo.ctx : null;
 
   return (
@@ -83,6 +85,7 @@ export function PublicGameScreen() {
             players={presentesDo(jogo.time_casa_id)}
             categories={categorias}
             stats={estatisticas}
+            playerHref={playerHref}
           />
           <BoxScoreGlobal
             teamName={fora}
@@ -90,6 +93,7 @@ export function PublicGameScreen() {
             players={presentesDo(jogo.time_fora_id)}
             categories={categorias}
             stats={estatisticas}
+            playerHref={playerHref}
           />
         </Teams>
       )}

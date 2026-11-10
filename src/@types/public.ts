@@ -39,6 +39,32 @@ export interface IPublicTeamSummary extends Pick<Tables<'times'>, 'id' | 'nome' 
   jogadores: { count: number }[];
 }
 
+// Página do jogador (seção 6.7.1).
+export type IPublicPlayerProfile = IPublicPlayer & Pick<IJogador, 'competicao_id' | 'posicao' | 'ativo'>;
+
+export interface IPublicPlayerNumber {
+  categoria: IPublicCategory;
+  total: number;
+  jogos: number;
+  media: number;
+}
+
+// Um jogo do "jogo a jogo": o time pelo qual o jogador atuou e o valor de cada categoria.
+export interface IPublicPlayerGame {
+  jogo: IJogoLista;
+  time_id: string;
+  valores: Record<string, number>;
+}
+
+export interface IPublicPlayerDetail {
+  jogador: IPublicPlayerProfile;
+  time: Pick<Tables<'times'>, 'id' | 'nome' | 'sigla' | 'logo_url'> | null;
+  // Presenças em jogos encerrados com súmula completa.
+  jogosDisputados: number;
+  numeros: IPublicPlayerNumber[];
+  jogos: IPublicPlayerGame[];
+}
+
 export interface IPublicTeam {
   time: Pick<Tables<'times'>, 'id' | 'nome' | 'sigla' | 'logo_url'>;
   jogadores: IPublicPlayer[];

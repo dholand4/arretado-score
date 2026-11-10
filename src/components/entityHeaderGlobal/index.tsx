@@ -2,11 +2,11 @@ import { AvatarGlobal } from '@/components/avatarGlobal';
 import { Actions, Badges, Container, Identity, Subtitle, Texts, Title } from './style';
 import type { IEntityHeaderProps } from './types';
 
-export function EntityHeaderGlobal({ title, subtitle, imageUrl, badges, actions }: IEntityHeaderProps) {
+export function EntityHeaderGlobal({ title, subtitle, imageUrl, imageShape = 'square', badges, actions }: IEntityHeaderProps) {
   return (
     <Container>
       <Identity>
-        <AvatarGlobal name={title} src={imageUrl} size="lg" shape="square" />
+        <AvatarGlobal name={title} src={imageUrl} size="lg" shape={imageShape} />
         <Texts>
           <Title>{title}</Title>
           {subtitle && <Subtitle>{subtitle}</Subtitle>}

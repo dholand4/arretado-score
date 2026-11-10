@@ -45,6 +45,8 @@ export const ROUTE_PATTERNS = {
   publicRankings: '/c/:slug/rankings',
   publicTeams: '/c/:slug/times',
   publicTeam: '/c/:slug/times/:teamId',
+  // Etapa 12
+  publicPlayer: '/c/:slug/jogadores/:playerId',
   // Etapa 7
   competitionFinance: '/painel/competicoes/:competitionId/financeiro',
   competitionHighlights: '/painel/competicoes/:competitionId/destaques',
@@ -85,6 +87,7 @@ export const paths = {
   publicRankings: (slug: string) => `/c/${slug}/rankings` as const,
   publicTeams: (slug: string) => `/c/${slug}/times` as const,
   publicTeam: (slug: string, teamId: string) => `/c/${slug}/times/${teamId}` as const,
+  publicPlayer: (slug: string, playerId: string) => `/c/${slug}/jogadores/${playerId}` as const,
   competitionFinance: (competitionId: string) => `/painel/competicoes/${competitionId}/financeiro` as const,
   competitionHighlights: (competitionId: string) => `/painel/competicoes/${competitionId}/destaques` as const,
   competitionStandings: (competitionId: string) => `/painel/competicoes/${competitionId}/tabela` as const,
@@ -98,6 +101,7 @@ export type RoutePath = StaticPath | DynamicPath;
 export interface IRouteParams {
   competitionId: string;
   teamId: string;
+  playerId: string;
   gameId: string;
   slug: string;
   token: string;

@@ -1,12 +1,12 @@
 import { AvatarGlobal } from '@/components/avatarGlobal';
+import { InlineLinkGlobal } from '@/components/inlineLinkGlobal';
+import { formatAverage } from '@/utils/publicView';
 import { matchesSearch } from '@/utils/text';
 import { Name, Names, Player, PlayerCell, Scroll, Table, Team, Total } from './style';
 import type { IRankingTableProps } from './types';
 
-const media = (valor: number) => valor.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-
 // Colunas da seção 6.7: posição, foto, jogador, time, total, jogos e média.
-export function RankingTableGlobal({ rows, caption, limit, query = '' }: IRankingTableProps) {
+export function RankingTableGlobal({ rows, caption, limit, query = '', playerHref }: IRankingTableProps) {
   const posicionadas = (limit ? rows.slice(0, limit) : rows).map((row, index) => ({ row, posicao: index + 1 }));
   const visiveis = posicionadas.filter(({ row }) =>
     matchesSearch(query, row.jogador?.nome, row.jogador?.apelido, row.timeNome),
@@ -34,14 +34,14 @@ export function RankingTableGlobal({ rows, caption, limit, query = '' }: IRankin
                   <Player>
                     <AvatarGlobal name={row.jogador?.nome ?? nome} src={row.jogador?.foto_url} size="sm" />
                     <Names>
-                      <Name>{nome}</Name>
+                      <Name>{playerHref ? <InlineLinkGlobal to={playerHref(row.jogador_id)}>{nome}</InlineLinkGlobal> : nome}</Name>
                       <Team>{row.timeNome}</Team>
                     </Names>
                   </Player>
                 </PlayerCell>
                 <Total>{row.total}</Total>
                 <td>{row.jogos}</td>
-                <td>{media(row.media)}</td>
+                <td>{formatAverage(row.media)}</td>
               </tr>
             );
           })}

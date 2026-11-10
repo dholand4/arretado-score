@@ -38,6 +38,7 @@ export const PublicBracketScreen = lazy(() => import('@/view/publicBracketScreen
 export const PublicCompetitionScreen = lazy(() => import('@/view/publicCompetitionScreen').then((m) => ({ default: m.PublicCompetitionScreen })));
 export const PublicGameScreen = lazy(() => import('@/view/publicGameScreen').then((m) => ({ default: m.PublicGameScreen })));
 export const PublicGamesScreen = lazy(() => import('@/view/publicGamesScreen').then((m) => ({ default: m.PublicGamesScreen })));
+export const PublicPlayerScreen = lazy(() => import('@/view/publicPlayerScreen').then((m) => ({ default: m.PublicPlayerScreen })));
 export const PublicRankingsScreen = lazy(() => import('@/view/publicRankingsScreen').then((m) => ({ default: m.PublicRankingsScreen })));
 export const PublicStandingsScreen = lazy(() => import('@/view/publicStandingsScreen').then((m) => ({ default: m.PublicStandingsScreen })));
 export const PublicTeamScreen = lazy(() => import('@/view/publicTeamScreen').then((m) => ({ default: m.PublicTeamScreen })));
