@@ -4,6 +4,7 @@ import {
   clockAt,
   clockFromMesa,
   formatGameClock,
+  finalPlayItems,
   formatShotClock,
   liveBoardTeams,
   livePlayItems,
@@ -11,6 +12,7 @@ import {
   mergeLances,
   nextStep,
   periodLabel,
+  playsMatchScore,
   snapshotClock,
   summarizeLive,
   timeoutLimit,
@@ -234,5 +236,35 @@ describe('ao vivo público', () => {
     expect(liveSituation('aguardando_aprovacao')).toBe('Aguardando aprovação');
     expect(liveSituation('encerrada')).toBe('FINAL');
     expect(liveSituation(null)).toBe('Em breve');
+  });
+
+  it('keeps only the valid plays for the finished game page, newest first', () => {
+    const c = {
+      ...ctx(),
+      lances: [
+        lance({ id: 'p1', time_id: 'A', jogador_id: 'a1', valor: 2 }),
+        lance({ id: 'x1', time_id: 'A', jogador_id: 'a1', valor: 3, anulado: true }),
+        lance({ id: 'p2', time_id: 'B', jogador_id: null, valor: 3, periodo: 2 }),
+      ],
+    };
+    const itens = finalPlayItems(c);
+    expect(itens.map((i) => i.id)).toEqual(['p2', 'p1']);
+    expect(itens[0]).toMatchObject({ periodo: '2º', texto: '+3 QuixaRocks', anulado: false });
+    expect(itens[1].texto).toBe('+2 #7 Bebeto');
+  });
+
+  it('tells when the score sheet no longer matches the plays', () => {
+    const c = {
+      ...ctx(),
+      lances: [
+        lance({ time_id: 'A', valor: 2 }),
+        lance({ time_id: 'A', valor: 3, anulado: true }),
+        lance({ time_id: 'B', valor: 3 }),
+        lance({ time_id: 'B', tipo: 'falta', valor: null, tipo_falta: 'pessoal' }),
+      ],
+    };
+    expect(playsMatchScore(c, 2, 3)).toBe(true);
+    expect(playsMatchScore(c, 4, 3)).toBe(false);
+    expect(playsMatchScore(c, null, null)).toBe(false);
   });
 });

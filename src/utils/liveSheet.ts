@@ -290,3 +290,15 @@ export function livePlayItems(ctx: IMesaContexto) {
     pendente: false,
   }));
 }
+
+// Lance a lance de um jogo já encerrado, para a página do jogo: só o que valeu, do mais recente
+// para o mais antigo (seção 6.5.1).
+export function finalPlayItems(ctx: IMesaContexto) {
+  return livePlayItems({ ...ctx, lances: ctx.lances.filter((l) => !l.anulado) });
+}
+
+// A súmula normal manda: se o placar foi corrigido depois, ele deixa de bater com a soma dos lances.
+export function playsMatchScore(ctx: IMesaContexto, placarCasa: number | null, placarFora: number | null): boolean {
+  const { placar } = summarizeLive(ctx.lances, 1, ctx.competicao, { casa: ctx.casa.id, fora: ctx.fora.id });
+  return placar.casa === placarCasa && placar.fora === placarFora;
+}

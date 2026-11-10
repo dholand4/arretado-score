@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo } from 'react';
 import { QUERY_KEYS } from '@/constants/queryKeys';
+import { liveSheetService } from '@/services/liveSheetService';
 import { phasesService } from '@/services/phasesService';
 import { publicService } from '@/services/publicService';
 import { supabase } from '@/services/supabaseService';
@@ -23,6 +24,18 @@ export function usePublicGames(competicaoId: string | undefined) {
 export function usePublicGame(jogoId: string) {
   const query = useQuery({ queryKey: QUERY_KEYS.publicGame(jogoId), queryFn: () => publicService.getGame(jogoId) });
   return { detalhe: query.data, isLoading: query.isPending, error: query.error, refetch: query.refetch };
+}
+
+// Lances de um jogo já encerrado pela mesa (seção 6.5.1): uma leitura só, sem Realtime. Usa a mesma
+// chave do jogo ao vivo, então quem assistia ao jogo já tem os lances quando ele termina.
+export function usePublicPlayLog(jogoId: string, enabled: boolean) {
+  const query = useQuery({
+    queryKey: QUERY_KEYS.liveGame(jogoId),
+    queryFn: () => liveSheetService.getContext(jogoId),
+    enabled,
+  });
+  // Desligado, não devolve o que o jogo ao vivo deixou no cache (a chave é a mesma).
+  return { mesa: enabled ? query.data : undefined, isLoading: enabled && query.isPending, error: query.error };
 }
 
 export function useRanking(competicaoId: string | undefined, faseId: string | null) {

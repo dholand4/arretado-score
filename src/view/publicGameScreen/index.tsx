@@ -6,13 +6,14 @@ import { LinkButtonGlobal } from '@/components/linkButtonGlobal';
 import { LiveBoardGlobal } from '@/components/liveBoardGlobal';
 import { LivePlayLogGlobal } from '@/components/livePlayLogGlobal';
 import { LoaderGlobal } from '@/components/loaderGlobal';
+import { PlayByPlayGlobal } from '@/components/playByPlayGlobal';
 import { ScoreboardGlobal } from '@/components/scoreboardGlobal';
 import { useLiveGame } from '@/hooks/useLiveGame';
-import { usePublicGame } from '@/hooks/usePublic';
+import { usePublicGame, usePublicPlayLog } from '@/hooks/usePublic';
 import { useRouteParams } from '@/hooks/useRouteParams';
 import { paths } from '@/routes/types';
 import { describeGame, gameStatus, hasResult } from '@/utils/games';
-import { liveBoardTeams, livePlayItems, liveSituation, periodLabel } from '@/utils/liveSheet';
+import { finalPlayItems, liveBoardTeams, livePlayItems, liveSituation, periodLabel, playsMatchScore } from '@/utils/liveSheet';
 import { sortByNumber } from '@/utils/scoreSheet';
 import { Info, LiveTitle, Stack, Teams } from './style';
 
@@ -21,7 +22,10 @@ export function PublicGameScreen() {
   const { slug, gameId } = useRouteParams('slug', 'gameId');
   const { detalhe, isLoading, error, refetch } = usePublicGame(gameId);
   // Lance a lance enquanto o jogo não tem resultado (súmula ao vivo aberta pela mesa).
-  const aoVivo = useLiveGame(gameId, detalhe ? !hasResult(detalhe.jogo) : false);
+  const temResultado = detalhe ? hasResult(detalhe.jogo) : false;
+  const aoVivo = useLiveGame(gameId, detalhe ? !temResultado : false);
+  // Depois de encerrado, o lance a lance da mesa continua na página (seção 6.5.1).
+  const historico = usePublicPlayLog(gameId, temResultado);
 
   if (isLoading) return <LoaderGlobal label="Carregando jogo" />;
   if (error || !detalhe) return <ErrorStateGlobal error={error} onRetry={() => void refetch()} />;
@@ -34,6 +38,10 @@ export function PublicGameScreen() {
     sortByNumber(jogadores.filter((j) => j.time_id === timeId && presentes.includes(j.id)));
 
   const playerHref = (jogadorId: string) => paths.publicPlayer(slug, jogadorId);
+
+  const lancesFinais = temResultado && historico.mesa ? finalPlayItems(historico.mesa) : [];
+  const placarCorrigido =
+    historico.mesa && lancesFinais.length > 0 && !playsMatchScore(historico.mesa, jogo.placar_casa, jogo.placar_fora);
 
   const mesaAoVivo = aoVivo.ctx?.mesa && aoVivo.ctx.mesa.status !== 'encerrada' ? aoVivo.ctx : null;
 
@@ -96,6 +104,19 @@ export function PublicGameScreen() {
             playerHref={playerHref}
           />
         </Teams>
+      )}
+      {lancesFinais.length > 0 && (
+        <>
+          <LiveTitle>Lance a lance</LiveTitle>
+          <PlayByPlayGlobal
+            itens={lancesFinais}
+            note={
+              placarCorrigido
+                ? 'O placar foi corrigido na súmula depois do jogo; os lances mostram o que a mesa registrou.'
+                : undefined
+            }
+          />
+        </>
       )}
       <LinkButtonGlobal to={paths.publicGames(slug)} label="← Todos os jogos" variant="ghost" size="sm" />
     </Stack>
